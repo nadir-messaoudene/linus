@@ -1,0 +1,186 @@
+<odoo>
+  <data>
+
+    <record id="view_instance_tree_shopify" model="ir.ui.view">
+      <field name="name">shopify.instance.tree</field>
+      <field name="model">marketplace.instance</field>
+      <field name="inherit_id" ref="syncoria_base_marketplace.list" />
+      <field name="arch" type="xml">
+          <xpath expr="//field[@name='marketplace_instance_type']" position="after">
+              <field name="name"/>
+              <field name="warehouse_id"/>
+              <field name="marketplace_state"/>
+        </xpath>
+      </field>
+    </record>
+    
+    <record id="view_instance_form_shopify" model="ir.ui.view">
+      <field name="name">shopify.instance.form</field>
+      <field name="model">marketplace.instance</field>
+      <field name="inherit_id" ref="syncoria_base_marketplace.view_instance_form"/>
+      <field name="arch" type="xml">
+        <xpath expr="//header" position="inside">
+          <button string="Connect" class="btn btn-primary" name="action_check_acess" type="object" attrs="{  'invisible': [('marketplace_state','in',('confirm'))]  }" />
+          <button string="Disconnect" class="btn btn-primary" name="action_cancel_state" type="object" attrs="{  'invisible': [('marketplace_state','in',('draft'))]  }" />
+          <!-- <button string="Activate Webhook" class="btn btn-primary" name="action_activate_webhook" type="object" attrs="{  'invisible': [('marketplace_state','in',('draft'))]  }" /> -->
+          <field name="marketplace_state" widget="statusbar" statusbar_visible="draft,confirm"/>
+        </xpath>
+        <xpath expr="//field[@name='marketplace_instance_type']" position="after">
+              <field name="marketplace_is_shopify" invisible="1"/>
+        </xpath>
+        <xpath expr="//sheet" position="inside">
+          <notebook 
+          attrs="{'invisible': [ ('marketplace_is_shopify', '=', False )]}">
+              <page string="Credentials" >
+                <group>
+                  <group>
+                    <field name="marketplace_secret_key" />
+                    <field name="marketplace_host" placeholder="yourdomain.myshopify.com" />
+                    <field name="marketplace_country_id" />
+                    <field name="marketplace_image_url" />
+                  </group>
+                  <group>
+                    <field name="marketplace_api_key" />
+                    <field name="marketplace_api_password" />
+                    <field name="marketplace_api_version"  attrs="{'required': [ ('marketplace_is_shopify', '=', 'shopify' )]}"/>
+                  </group>
+                </group>
+              </page>
+
+              <page string="Options" >
+                <group>
+                  <group>
+                    <field name="company_id" />
+                    <field name="warehouse_id" />
+                    <field name="user_id" />
+                  </group>
+                  <group>
+                    <field name="langauge_id" />
+                    <field name="fiscal_position_id" />
+                    
+                  </group>
+                </group>
+              </page>
+
+              <page string="Product Bulk Export Operation" >
+                <group>
+                  <group>
+                    <field name="set_price" />
+                    <field name="set_stock" />
+                  </group>
+                  <group>
+                    <field name="publish_in_website" />
+                    <field name="set_image" />
+                  </group>
+                </group>
+              </page>
+
+              <page string="Product Bulk Sync Operation" >
+                <group>
+                  <group>
+                    <field name="sync_product_image" />
+                  </group>
+                  <group>
+                    <field name="sync_price" />
+                  </group>
+                  <group>
+                    <field name="marketplace_fetch_quantity" />
+                  </group>
+                  
+                </group>
+              </page>
+
+
+              <page string="Product Information" >
+                <group>
+                  <group>
+                    <field name="discount_product_id" />
+                  </group>
+                  <group>
+                    <field name="calculate_discount" />
+                  </group>
+                  <group>
+                    <field name="default_invoice_policy" widget="radio"/>
+                  </group>
+                   <group>
+                    <field name="duplicate_barcode_check"/>
+                  </group>
+                </group>
+              </page>
+
+              <page string="Payment Information" >
+                <group>
+                  <group>
+                    <field name="pricelist_id" />
+                  </group>
+                  <group>
+                    <field name="payment_term_id" />
+                    <field name="marketplace_journal_id" />
+                    <field name="marketplace_payment_journal_id" />
+                    <field name="marketplace_inbound_method_id" />
+                    <field name="marketplace_outbound_method_id" />
+                    <field name="debit_account_id" />
+                    <field name="credit_account_id" />
+                  </group>
+                </group>
+              </page>
+
+
+              <page string="Order Information" >
+                <group>
+                  <group>
+                    <field name="ao_import"/>
+                    <label for="ao_import_interval" string=""/>
+                    <div attrs="{'invisible': [('ao_import','=',False)]  }">
+                      <field name="ao_import_interval" class="oe_inline" attrs="{'required': [('ao_import','=',True)]  }"/>
+                      <field name="ao_import_interval_type" class="oe_inline" attrs="{'required': [('ao_import','=',True)]  }"/>
+                      <field name="ao_import_nextcall" class="oe_inline" attrs="{'required': [('ao_import','=',True)]  }"/>
+                      <field name="ao_import_user_id" class="oe_inline" attrs="{'required': [('ao_import','=',True)]  }"/>
+                    </div>
+                    <field name="auto_create_product"/>
+                    <field name="notify_customer"/>
+                    <field name="sales_team_id"/>
+                  </group>
+                  <group>
+                     <field name="ao_update"/>
+                    <label for="ao_update_interval" string=""/>
+                    <div attrs="{   'invisible': [('ao_update','=',False)]  }">
+                      <field name="ao_update_interval" class="oe_inline" attrs="{'required': [('ao_update','=',True)]  }"/>
+                      <field name="ao_update_interval_type" class="oe_inline" attrs="{'required': [('ao_update','=',True)]  }"/>
+                      <field name="ao_update_nextcall" class="oe_inline" attrs="{'required': [('ao_update','=',True)]  }"/>
+                      <field name="ao_update_user_id" class="oe_inline" attrs="{'required': [('ao_update','=',True)]  }"/>
+                    </div>
+                    <field name="auto_create_invoice"/>
+                    <field name="order_tracking_ref"/>
+                    <field name="order_prefix"/>
+                    <field name="shopify_use_pricelist_price" readonly="1"/>
+                  </group>
+                </group>
+              </page>
+              
+              <!-- <page string="Webhooks" >
+                <group>
+                 <field name="marketplace_webhooks_ids" string="Webhooks">
+                    <tree string="Webhook" create="true" delete="true" edit="true" editable="bottom">
+                      <field name="name"/>
+                      <field name="marketplace_instance_id" invisible="1" />
+                      <field name="shopify_address"/>
+                      <field name="shopify_topic"/>
+                    </tree>
+                  </field>
+                </group>
+                <group>
+                  <button string="Remove All Webhooks" class="btn btn-primary" name="action_remove_webhook" type="object"/>
+                </group>
+              </page> -->
+
+          </notebook>
+        </xpath>
+      
+     
+      </field>
+    </record>
+
+
+  </data>
+</odoo>

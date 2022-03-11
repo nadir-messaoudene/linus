@@ -1,0 +1,101 @@
+<odoo>
+  <data>
+
+
+    <!-- explicit list view definition -->
+
+    <record model="ir.ui.view" id="marketplace_webhooks_list">
+      <field name="name">Webhooks List</field>
+      <field name="model">marketplace.webhooks</field>
+      <field name="arch" type="xml">
+        <tree>
+          <field name="name"/>
+          <field name="marketplace_instance_id"/>
+        </tree>
+      </field>
+    </record>
+
+
+    <!-- Form view for "marketplace.webhooks" -->
+    <record id="view_model_form" model="ir.ui.view">
+      <field name="name">view.marketplace.webhooks.form</field>
+      <field name="model">marketplace.webhooks</field>
+      <field name="arch" type="xml">
+
+        <form string="Webhook" create="true" delete="true" edit="true">
+          <header>
+            <field name="state" invisible="1"/>
+            <button string="Create Shopify Webhook" class="btn btn-primary" name="action_create_webhook" type="object" attrs="{'invisible': ['|', ('state','not in',('draft')), ('shopify_id','!=', 0)]  }" />
+            <button string="Update Shopify Webhook" class="btn btn-primary" name="action_update_webhook" type="object" attrs="{'invisible': ['|', ('state','not in',('confirm')), ('shopify_id','!=', 0)]  }" />
+
+            <field name="state" widget="statusbar" statusbar_visible="draft,connected"/>
+          </header>
+          <sheet>
+            <div class="oe_title">
+              <label for="name" class="oe_edit_only" />
+              <h1>
+                <field name="name" placeholder="Describe the item..." />
+              </h1>
+            </div>
+            <group>
+              <group>
+                <field name="marketplace_instance_id"/>
+                <field name="marketplace_instance_type" invisible="1"/>
+              </group>
+            </group>
+            <notebook>
+              <page string="Shopify Webhook" attrs="{'invisible':[('marketplace_instance_type','!=','shopify')] }">
+                <group>
+                  <group>
+                    <field name="shopify_id"/>
+                    <field name="shopify_api_version"/>
+                    <field name="shopify_address"/>
+                  </group>
+                  <group>
+                    <field name="shopify_topic"/>
+                    <field name="shopify_format"/>
+                    <field name="shopify_fields"/>
+                  </group>
+                </group>
+              </page>
+            </notebook>
+          </sheet>
+        </form>
+
+
+
+      </field>
+    </record>
+
+
+
+
+
+    <!-- actions opening views on models -->
+
+    <record model="ir.actions.act_window" id="action_window">
+      <field name="name">Webhooks Window</field>
+      <field name="res_model">marketplace.webhooks</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+
+
+    <!-- server action to the one above -->
+
+    <record model="ir.actions.server" id="action_server">
+      <field name="name">marketplace.webhooks server</field>
+      <field name="model_id" ref="model_marketplace_webhooks"/>
+      <field name="state">code</field>
+      <field name="code">
+        action = {
+          "type": "ir.actions.act_window",
+          "view_mode": "tree,form",
+          "res_model": model._name,
+        }
+      </field>
+    </record>
+
+    <!-- <menuitem name="Webhooks" id="shopify_webhooks" parent="shopify_configuration" action="action_window"/> -->
+
+  </data>
+</odoo>

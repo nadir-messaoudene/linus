@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+
+        <record id="view_res_partner_inherited" model="ir.ui.view">
+            <field name="name">view.res.partnerform.inherited</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form" />
+            <field name="type">form</field>
+            <!-- <field name="res_domain">[('marketplace_type','!=',False)]</field> -->
+            <field name="arch" type="xml">
+                <!-- <xpath expr="//sheet" position="before">
+                    <field name="marketplace_type" invisible="1" string="Marketplace"/>
+                    <button string="Create Shopify Customer" class="btn btn-primary" name="create_shopify_customer" type="object" attrs="{  'invisible': ['|', ('marketplace_type','=',False),('shopify_id','!=',False)]  }" />
+                    <button string="Update Shopify Customer" class="btn btn-primary" name="update_shopify_customer" type="object" attrs="{  'invisible': ['|', ('marketplace_type','=',False),('shopify_id','=',False)]  }" />
+                </xpath> -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="Shopify">
+                        <group>
+                            <group>
+                                <field name="marketplace_type" string="Marketplace"/>
+                                <!-- <field name="property_payment_method_id" /> -->
+                            </group>
+                        </group>
+                        <group attrs="{  'invisible': [('marketplace_type','!=','shopify')]  }">
+                            <group>
+                                <h3>Shopify IDS</h3>
+                                <field name="shopify_id" string="Shopify Id"/>
+                                <field name="shopify_add_id" string="Shopify Address Id" readonly="1"/>
+                                <field name="shopify_warehouse_id" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="shopify_accepts_marketing"/>
+                                <field name="multipass_identifier"/>
+                                <field name="shopify_state" widget="radio"/>
+                                <field name="shopify_verified_email"/>
+                            </group>
+                            <group>
+                                <h3>Customer Profile</h3>
+                                <field name="shopify_last_order_id" readonly="1"/>
+                                <field name="shopify_last_order_name" readonly="1"/>
+                                <field name="orders_count" readonly="1"/>
+                                <field name="shopify_total_spent" readonly="1"/>
+                            </group>
+                            <group>
+                                <h3>Tax Exempt</h3>
+                                <field name="shopify_tax_exempt"/>
+                                <field name="shopify_tax_exemptions_ids"/>
+                                <field name="shopify_tax_settings"/>
+                            </group>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
+
+        <!-- Form view for "model" -->
+        <record id="view_partner_tree" model="ir.ui.view">
+            <field name="name">view.res.partner</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_tree" />
+            <field name="arch" type="xml">
+
+                <xpath expr="//field[@name='company_id']" position="after">
+                    <field name="shopify_id" />
+                    
+                </xpath>
+
+            </field>
+        </record>
+
+
+
+    </data>
+</odoo>

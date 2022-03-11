@@ -1,0 +1,66 @@
+<odoo>
+  <data>
+    <!-- explicit list view definition -->
+
+    <record model="ir.ui.view" id="syncoria_base_marketplace.list">
+      <field name="name">Marketplace Instance list</field>
+      <field name="model">marketplace.instance</field>
+      <field name="arch" type="xml">
+        <tree>
+          <field name="marketplace_instance_type" invisible="1"/>
+        </tree>
+      </field>
+    </record>
+
+
+    <!-- actions opening views on models -->
+
+    <record model="ir.actions.act_window" id="syncoria_base_marketplace.action_window">
+      <field name="name">Marketplace window</field>
+      <field name="res_model">marketplace.instance</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+
+
+    <!-- server action to the one above -->
+
+    <record model="ir.actions.server" id="syncoria_base_marketplace.action_server">
+      <field name="name">syncoria_base_marketplace server</field>
+      <field name="model_id" ref="model_marketplace_instance"/>
+      <field name="state">code</field>
+      <field name="code">
+        action = {
+          "type": "ir.actions.act_window",
+          "view_mode": "tree,form",
+          "res_model": model._name,
+        }
+      </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_instance_form" model="ir.ui.view">
+        <field name="name">marketplace.instance.form</field>
+        <field name="model">marketplace.instance</field>
+        <field name="arch" type="xml">
+          <form string="Instances">
+            <header>
+            </header>
+            <sheet>
+                <group name="instance_header">
+                    <group name="instance_details">
+                      <field name="name"/>
+                      <field name="marketplace_instance_type" widget="radio"/> 
+                    </group>
+                </group>
+            </sheet>
+            <div class="oe_chatter">
+              <field name="message_follower_ids" widget="mail_followers" groups="base.group_user"/>
+              <field name="activity_ids" widget="mail_activity"/>
+              <field name="message_ids" widget="mail_thread"/>
+          </div>
+          </form>
+        </field>
+    </record>
+
+  </data>
+</odoo>

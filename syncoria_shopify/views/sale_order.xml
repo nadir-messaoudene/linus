@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+
+        <record id="view_sale_order_inherited" model="ir.ui.view">
+            <field name="name">view.sale.order.form.inherited</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form" />
+            <field name="type">form</field>
+            <!-- <field name="domain">[('marketplace_type', '!=', False)]</field> -->
+            <field name="arch" type="xml">
+                <!-- <xpath expr="//header" position="inside">
+                    <button name="fetch_shopify_payments" string="Fetch Shopify Payments" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
+                    <button name="fetch_shopify_refunds" string="Fetch Shopify Refunds" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
+                </xpath> -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="Shopify">
+                        <group>
+                            <group>
+                                <field name="marketplace_type"/>
+                                <field name="shopify_id"/>
+                            </group>
+                        </group>
+                    </page>
+                    <!-- <page string="Shopify Transaction">
+                        <field name="shopify_transaction_ids">
+                            <tree string="Caption" create="false" delete="false" edit="false" editable="bottom">
+                                <field name="shopify_id"/>
+                                <field name="shopify_order_id"/>
+                                <field name="shopify_kind"/>
+                                <field name="shopify_gateway"/>
+                                <field name="shopify_status"/>
+                                <field name="shopify_message"/>
+                                <field name="shopify_test"/>
+                                <field name="shopify_authorization"/>
+                                <field name="shopify_location_id"/>
+                                <field name="shopify_source_name"/>
+                                <field name="shopify_amount"/>
+                                <field name="shopify_currency"/>
+                            </tree>
+                        </field>
+                    </page> -->
+                </xpath>
+            </field>
+
+        </record>
+
+    </data>
+</odoo>

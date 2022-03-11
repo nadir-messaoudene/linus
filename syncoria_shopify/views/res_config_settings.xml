@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="shopify_product_attribute_value_action" model="ir.actions.act_window">
+            <field name="name">Attribute Values</field>
+            <field name="res_model">product.attribute.value</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="product.attribute_tree_view"/>
+            <field name="help" type="html">
+                <p class="oe_view_no content_create">
+                   Click to create Attribute Values.
+                </p>
+            </field>
+        </record>
+
+        <record id="shopify_product_attribute_action" model="ir.actions.act_window">
+            <field name="name">Attributes</field>
+            <field name="res_model">product.attribute</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="product.attribute_tree_view"/>
+            <field name="help" type="html">
+                <p class="oe_view_no content_create">
+                    Click to create Attribute.
+                </p>
+            </field>
+        </record>
+
+        <record id="shopify_categories_action" model="ir.actions.act_window">
+            <field name="name">Categories</field>
+            <field name="res_model">product.category</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="product.product_category_search_view"/>
+            <field name="help" type="html">
+                <p class="oe_view_no content_create">
+                    Click to create a Category.
+                </p>
+            </field>
+        </record>
+
+        <record id="shopify_product_action" model="ir.actions.act_window">
+            <field name="name">Products</field>
+            <field name="res_model">product.template</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="view_id" ref="product.product_template_tree_view"/>
+            <field name="domain">[('marketplace_type','!=',False)]</field>
+            <field name="help" type="html">
+                <p class="oe_view_no content_create">
+                    Click to create a Product.
+                </p>
+            </field>
+        </record>
+
+        <record id="shopify_product_variants_action" model="ir.actions.act_window">
+            <field name="name">Products</field>
+            <field name="res_model">product.product</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="domain">[('marketplace_type','!=',False)]</field>
+            <field name="view_id" ref="product.product_product_tree_view"/>
+            <field name="help" type="html">
+                <p class="oe_view_no content_create">
+                    Click to create a Product.
+                </p>
+            </field>
+        </record>
+
+        <record id="shopify_invoice_action" model="ir.actions.act_window">
+            <field name="name">Invoices</field>
+            <field name="res_model">account.move</field>
+            <field name="view_mode">tree,kanban,form,pivot,graph,activity</field>
+            <field name="view_id" ref="account.view_invoice_tree"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                  Create a customer invoice
+                </p>
+            </field>
+        </record>
+
+        <record id="shopify_customer_action" model="ir.actions.act_window">
+            <field name="name">Customers</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">tree,form</field>
+            <!-- <field name="domain">[('marketplace_type', '!=', False)]</field> -->
+            <field name="view_id" ref="syncoria_shopify.view_partner_tree"/>
+            <field name="help" type="html">
+                <p class="oe_view_no content_create">
+                    Click to create a Customer.
+                </p>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="shopify_taxes_form">
+            <field name="name">shopify.tax.form</field>
+            <field name="model">account.tax</field>
+            <field name="inherit_id" ref="account.view_tax_form"/>
+            <field name="groups_id" eval="[(6, 0, [ref('base.group_erp_manager') ])]"/>
+            <field name="arch" type="xml">
+                <xpath expr="//notebook" position="inside">
+                    <page string="Shopify">
+                        <group>
+                            <group>
+                                <field name="shopify"/>
+                                <field name="marketplace_type" invisible="1"/>
+                            </group>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="shopify_taxes_action" model="ir.actions.act_window">
+            <field name="name">Taxes</field>
+            <field name="res_model">account.tax</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="account.view_tax_tree"/>
+            <field name="domain">[('marketplace_type','=','shopify')]</field>
+            <field name="help" type="html">
+                <p class="oe_view_no content_create">
+                    Click to create a Tax.
+                </p>
+            </field>
+        </record>
+
+        <record id="action_marketplace_act_window" model="ir.actions.act_window">
+            <field name="name">Marketplace Selection</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">res.config.settings</field>
+            <field name="view_mode">form</field>
+            <field name="target">inline</field>
+            <field name="context">{'module' : 'syncoria_shopify'}</field>
+        </record>
+
+        <record id="shopify_order_action" model="ir.actions.act_window">
+            <field name="name">Sale Shopify Form</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('marketplace_type', '!=', False)]</field>
+            <field name="view_id" ref="sale.view_quotation_tree_with_onboarding"/>
+            <field name="help" type="html">
+                <p class="oe_view_no content_create">
+                    Click to create an Order.
+                </p>
+            </field>
+        </record>
+
+        <record id="marketplace_settings_view_form" model="ir.ui.view">
+            <field name="name">base.marketplace.settings.view.form.inherit.sale</field>
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[hasclass('market_settings_block')]" position="replace">
+                    <div class="app_settings_block market_settings_block" data-string="Shopify" data-key="syncoria_shopify" web_icon="syncoria_shopify,static/description/icon.png">
+                        <h2>Marketplace Instances</h2>
+                        <div class="row mt16 o_settings_container">
+                            <div class="col-xs-12 col-md-6 o_setting_box">
+                                <div class="o_setting_right_pane">
+                                    <label for="marketplace_instance_id"/>
+                                    <field name="marketplace_instance_id" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="res_partner_action_customer" model="ir.actions.act_window">
+            <field name="name">Customers</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="domain">[('marketplace_type', '=', 'shopify')]</field>
+            <field name="context">{'search_default_customer': 1,'res_partner_search_mode': 'customer', 'default_is_company': True, 'default_customer_rank': 1, 'default_marketplace_type': 'shopify'}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                Create a new customer in your address book
+                </p>
+                <p>
+                Odoo helps you easily track all activities related to a customer.
+                </p>
+            </field>
+        </record>
+
+
+
+
+        <menuitem id="syncoria_shopify_main" name="Shopify" sequence="10" web_icon="syncoria_shopify,static/description/icon.png"/>
+        <menuitem id="shopify_sales" name="Sales" parent="syncoria_shopify_main" sequence="1"/>
+        <menuitem action="shopify_order_action" id="shopify_order" name="Orders" parent="shopify_sales" sequence="1"/>
+
+        <!-- <menuitem action="shopify_customer_action" id="shopify_customers" name="Customers" parent="syncoria_shopify_main" sequence="3"/> -->
+        <!-- <menuitem action="shopify_customer_action" id="shopify_customer" name="Customers" parent="shopify_customers" sequence="5"/> -->
+
+
+
+        <menuitem id="shopify_customers" parent="shopify_sales" action="syncoria_shopify.res_partner_action_customer" sequence="4" groups="sales_team.group_sale_salesman"/>
+
+
+        <menuitem id="shopify_products" name="Catalog" parent="syncoria_shopify_main" sequence="2"/>
+        <menuitem action="shopify_product_action" id="shopify_product_child" name="Products" parent="shopify_products" sequence="1"/>
+        <menuitem action="shopify_product_variants_action" id="shopify_product_variants_child" name="Product Variants" parent="shopify_products" sequence="2"/>
+        <menuitem action="shopify_categories_action" id="shopify_categories" name="Categories" parent="shopify_products" sequence="3"/>
+
+        <menuitem id="shopify_accounting" name="Invoices" parent="syncoria_shopify_main" sequence="4"/>
+        <menuitem action="shopify_invoice_action" id="shopify_invoice" name="Invoices" parent="shopify_accounting" sequence="1"/>
+
+        <menuitem id="shopify_sync" name="Synchronize" parent="syncoria_shopify_main" sequence="9"/>
+
+        <menuitem id="shopify_configuration" name="Configuration" parent="syncoria_shopify_main" sequence="10"/>
+        <menuitem action="syncoria_base_marketplace.action_window" id="shopify_configuration_settings" name="Settings" parent="shopify_configuration" sequence="1"/>
+
+        <menuitem name="Marketplace Selection" id="syncoria_shopify.marketplace_selection" parent="syncoria_shopify.shopify_configuration" action="action_marketplace_act_window"/>
+        <!-- <menuitem action="action_shopify_taxes" id="shopify_taxes" name="Taxes" parent="shopify_configuration" sequence="2"/> -->
+        <menuitem id="shopify_configuration_product" name="Products" parent="shopify_configuration" sequence="3"/>
+
+        <!-- <menuitem action="shopify_product_attribute_action" id="shopify_product_attribute" name="Attributes" parent="shopify_configuration_product" sequence="2"/> -->
+        <!-- <menuitem action="shopify_product_attribute_value_action" id="shopify_product_attribute_value" name="Attribute Values" parent="shopify_configuration_product" sequence="3"/> -->
+        <menuitem id="shopify_accounting_configurations" name="Accounting" parent="shopify_configuration" sequence="3" groups="base.group_erp_manager"/>
+        <menuitem action="shopify_taxes_action" id="shopify_taxes" name="Taxes" parent="shopify_accounting_configurations" sequence="1" groups="base.group_erp_manager"/>
+        <!-- <menuitem action="shopify_store_action" id="shopify_store" name="Magneto Store" parent="shopify_configuration" sequence="1"/> -->
+        <!-- <menuitem action="shopify_store_setting_action" id="shopify_store_setting" name="Magneto Store Setting" parent="shopify_configuration" sequence="1"/> -->
+
+    </data>
+</odoo>

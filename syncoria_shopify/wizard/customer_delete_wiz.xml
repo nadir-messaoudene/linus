@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data>
+    
+        <record id="shopify_customers_delete_wiz" model="ir.ui.view">
+             <field name="name">Shopify Customer Delete Wizard</field>
+            <field name="model">customer.delete.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <p>Do you want to delete this Customer from Shopify</p>
+                        <footer>
+                            <button string='Confirm' name="delete_customer_shopify"
+                                    type="object" class="btn-primary" />
+                            <button string="No" name="delete_shopify_not" class="btn-default"/>
+                      </footer>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_shopify_customers_delete" model="ir.actions.act_window">
+            <field name="name">Shopify Customer Delete</field>
+            <field name="res_model">customer.delete.wizard</field>
+            <field name="target">new</field>
+            <field name="view_mode">form</field>
+            <field name="view_ids"
+                   eval="[(5, 0, 0),
+                          (0, 0, {'view_mode': 'form', 'view_id': ref('shopify_customers_delete_wiz')})
+                          ]"
+            />
+        </record>
+        
+
+    </data>
+</odoo>
