@@ -53,8 +53,7 @@ class MarketplaceWebhooks(models.Model):
 
         headers = {
             'Content-Type': 'application/json',
-            'X-Shopify-Access-Token': mkplc_id.marketplace_api_password
-        }
+            'X-Shopify-Access-Token': mkplc_id.marketplace_api_password}
         data = self.get_wb_data(r_type)
         response = requests.request(headers=headers,
                                     data=data,

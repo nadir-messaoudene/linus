@@ -4,7 +4,6 @@
 #    __manifest__.py file at the root folder of this module.                  #
 ###############################################################################
 
-from email.policy import default
 import pprint
 from odoo import models, fields, api, _
 import requests
@@ -103,6 +102,11 @@ class ModelName(models.Model):
         domain="[('user_type_id.type', 'in', ('receivable', 'payable')), ('company_id', '=', company_id)]",
         check_company=True)#receivable
 
+
+    ##############################################################################################################
+    compute_pricelist_price = fields.Boolean(default=True)
+    ##############################################################################################################
+
     # destination_account_id = fields.Many2one(
     #     comodel_name='account.account',
     #     string='Destination Account',
@@ -137,15 +141,6 @@ class ModelName(models.Model):
     #                     ('internal_type', '=', 'payable'),
     #                     ('deprecated', '=', False),
     #                 ], limit=1)
-
-
-    #Fairechild Development
-    
-    shopify_use_pricelist_price = fields.Boolean(
-        string='Shopify Use Pricelist Price',
-        default=True,
-    )
-    
 
 
 

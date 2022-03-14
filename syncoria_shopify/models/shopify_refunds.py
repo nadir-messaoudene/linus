@@ -10,9 +10,9 @@ _logger = logging.getLogger(__name__)
 
 
 
-class ShopifyTransactions(models.Model):
-    _name = 'shopify.transactions'
-    _description = 'Shopify Transactions'
+class ShopifyRefunds(models.Model):
+    _name = 'shopify.refunds'
+    _description = 'Shopify Refunds'
     _rec_name = 'name'
 
 
@@ -28,6 +28,21 @@ class ShopifyTransactions(models.Model):
     )
     shopify_id = fields.Char(string='Id', readonly=1)
     shopify_order_id = fields.Char(string='Order Id', readonly=1)
+    shopify_note = fields.Char(string='Note', readonly=1)
+    shopify_user_id = fields.Char(string='User Id', readonly=1)
+    shopify_processed_at = fields.Char(string='Processed At', readonly=1)
+    shopify_restock = fields.Boolean(
+        string='Shopify Restock',
+    )
+    shopify_admin_graphql_api_id = fields.Char(string='Admin Graphql Api Id', readonly=1)
+    shopify_transaction_id = fields.Many2one(
+        string='Transaction ID',
+        comodel_name='shopify.transactions',
+        ondelete='restrict',
+    )
+    #####################################################################
+    ################Not RFequired########################################
+    #####################################################################
     shopify_kind = fields.Char(string='Kind', readonly=1)
     shopify_gateway = fields.Char(string='Gateway', readonly=1)
     shopify_status = fields.Char(string='Status', readonly=1)
@@ -36,9 +51,7 @@ class ShopifyTransactions(models.Model):
     shopify_test = fields.Char(string='Test', readonly=1)
     shopify_authorization = fields.Char(string='Authorization', readonly=1)
     shopify_location_id = fields.Char(string='Location Id', readonly=1)
-    shopify_user_id = fields.Char(string='User Id', readonly=1)
     shopify_parent_id = fields.Char(string='Parent Id', readonly=1)
-    shopify_processed_at = fields.Char(string='Processed At', readonly=1)
     shopify_device_id = fields.Char(string='Device Id', readonly=1)
     shopify_error_code = fields.Char(string='Error Code', readonly=1)
     shopify_source_name = fields.Char(string='Source Name', readonly=1)
@@ -46,18 +59,9 @@ class ShopifyTransactions(models.Model):
     shopify_currency_exchange_adjustment = fields.Char(string='Currency Exchange Adjustment', readonly=1)
     shopify_amount = fields.Char(string='Amount', readonly=1)
     shopify_currency = fields.Char(string='Currency', readonly=1)
-    shopify_admin_graphql_api_id = fields.Char(string='Admin Graphql Api Id', readonly=1)
-    shopify_payment_details = fields.Char(string='Payment Details', readonly=1)
-    shopify_payment_details_id = fields.Many2one(
-        string='Payment Details ID',
-        comodel_name='shopify.payment.details',
-        ondelete='restrict',
-    )
-    shopify_payment_receipt_id = fields.Many2one(
-        string='Receipt ID',
-        comodel_name='shopify.payment.receipt',
-        ondelete='restrict',
-    )
+    #####################################################################
+
+
 
 class ShopifyPaymentDetails(models.Model):
     _name = 'shopify.payment.details'

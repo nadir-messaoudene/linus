@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="seq_shopify_feed_products" model="ir.sequence">
+            <field name="name">Shopify Feed Productss</field>
+            <field name="code">shopify.feed.products</field>
+            <field name="prefix">FP</field>
+            <field name="padding">5</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <record id="seq_shopify_feed_orders" model="ir.sequence">
+            <field name="name">Shopify Feed Orders</field>
+            <field name="code">shopify.feed.orders</field>
+            <field name="prefix">FO</field>
+            <field name="padding">5</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <record id="seq_shopify_feed_customers" model="ir.sequence">
+            <field name="name">Shopify Feed Customers</field>
+            <field name="code">shopify.feed.customers</field>
+            <field name="prefix">FC</field>
+            <field name="padding">5</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <record id="seq_shopify_transactions" model="ir.sequence">
+            <field name="name">Shopify Transactions</field>
+            <field name="code">shopify.transactions</field>
+            <field name="prefix">ST</field>
+            <field name="padding">5</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <record id="seq_shopify_refunds" model="ir.sequence">
+            <field name="name">Shopify Refunds</field>
+            <field name="code">shopify.refunds</field>
+            <field name="prefix">SR</field>
+            <field name="padding">5</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+
+    </data>
+</odoo>

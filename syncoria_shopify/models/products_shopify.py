@@ -15,6 +15,21 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
+def get_instance_id(model):
+    ICPSudo = model.env['ir.config_parameter'].sudo()
+    try:
+        marketplace_instance_id = ICPSudo.get_param(
+            'syncoria_base_marketplace.marketplace_instance_id')
+        marketplace_instance_id = [int(s) for s in re.findall(
+            r'\b\d+\b', marketplace_instance_id)]
+    except:
+        marketplace_instance_id = False
+
+    if marketplace_instance_id:
+        marketplace_instance_id = model.env['marketplace.instance'].sudo().search(
+            [('id', '=', marketplace_instance_id[0])])
+    return marketplace_instance_id
+
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
 
@@ -65,14 +80,37 @@ class ProductTemplate(models.Model):
     shopify_price = fields.Float(
         string='Shopify Product Price',
     )
+    shopify_update_variants = fields.Boolean(
+        string='Shopify Update Variants',
+    )
     
     def computer_shopify_price(self):
+        marketplace_instance_id = get_instance_id(self)
         for rec in self:
-            rec.shopify_price = rec.list_price
-            if rec.shopify_currency_id:
-                if rec.shopify_currency_id != rec.currency_id:
-                    rec.shopify_price = rec.list_price*rec.shopify_currency_id.rate
-
+            # marketplace_instance_id.pricelist_id.currency_id.name
+            # rec.shopify_price = rec.list_price
+            # if rec.shopify_currency_id:
+            #     if rec.shopify_currency_id != rec.currency_id:
+            #         rec.shopify_price = rec.list_price*rec.shopify_currency_id.rate
+            pricelist_id = marketplace_instance_id.pricelist_id
+            pricelist_price =  marketplace_instance_id.compute_pricelist_price
+            if pricelist_price and pricelist_id and  'product.product' in str(self):
+                item_line = marketplace_instance_id.pricelist_id.item_ids.filtered(lambda l:l.product_tmpl_id.id == self.id)
+                if not item_line:
+                    _logger.warning("No Item Line found for {}".format(self))
+                rec.shopify_price = item_line.fixed_price
+                rec.message_post(body="Shopify Product Price updated for Product-{} with price-{}".format(rec.id, item_line.fixed_price))
+            if pricelist_price and pricelist_id and  'product.template' in str(self):
+                item_line = marketplace_instance_id.pricelist_id.item_ids.filtered(lambda l:l.product_tmpl_id.id == self.id)
+                if not item_line:
+                    _logger.warning("No Item Line found for {}".format(self))
+                rec.shopify_price = item_line.fixed_price
+                rec.message_post(body="Shopify Product Price updated for Product-{} with price-{}".format(rec.id, item_line.fixed_price))
+                if rec.shopify_update_variants:
+                    for variant in self.product_variant_ids:
+                        variant.shopify_price = item_line.fixed_price
+                    for variant in self.product_variant_id:
+                        variant.shopify_price = item_line.fixed_price
 
     def action_create_shopify_product(self):
         data = get_protmpl_vals(self, {})
@@ -160,12 +198,30 @@ class ProductProductShopify(models.Model):
         string='Shopify Product Price',
     )
     
+
+    
     def computer_shopify_price(self):
+        marketplace_instance_id = get_instance_id(self)
         for rec in self:
-            rec.shopify_price = rec.list_price
-            if rec.shopify_currency_id:
-                if rec.shopify_currency_id != rec.currency_id:
-                    rec.shopify_price = rec.list_price*rec.shopify_currency_id.rate
+            # marketplace_instance_id.pricelist_id.currency_id.name
+            # rec.shopify_price = rec.list_price
+            # if rec.shopify_currency_id:
+            #     if rec.shopify_currency_id != rec.currency_id:
+            #         rec.shopify_price = rec.list_price*rec.shopify_currency_id.rate
+            pricelist_id = marketplace_instance_id.pricelist_id
+            pricelist_price =  marketplace_instance_id.compute_pricelist_price
+            if pricelist_price and pricelist_id and  'product.product' in str(self):
+                item_line = marketplace_instance_id.pricelist_id.item_ids.filtered(lambda l:l.product_tmpl_id.id == rec.product_tmpl_id.id)
+                if not item_line:
+                    _logger.warning("No Item Line found for {}".format(self))
+                rec.shopify_price = item_line.fixed_price
+                rec.message_post(body="Shopify Product Price updated for Product-{} with price-{}".format(rec.id, item_line.fixed_price))
+            if pricelist_price and pricelist_id and  'product.template' in str(self):
+                item_line = marketplace_instance_id.pricelist_id.item_ids.filtered(lambda l:l.product_tmpl_id.id == rec.id)
+                if not item_line:
+                    _logger.warning("No Item Line found for {}".format(self))
+                rec.shopify_price = item_line.fixed_price
+                rec.message_post(body="Shopify Product Price updated for Product-{} with price-{}".format(rec.id, item_line.fixed_price))
 
 
 

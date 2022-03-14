@@ -34,7 +34,7 @@ class ShopifyConnect(models.Model):
 
         type = kwargs.get('type') or 'GET'
         complete_url = 'https://' + kwargs.get('url')
-        _logger.info("%s", complete_url)
+        _logger.info("complete_url===>>>%s", complete_url)
         headers = kwargs.get('headers')
 
         data = json.dumps(kwargs.get('data')) if kwargs.get('data') else None

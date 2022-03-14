@@ -14,4 +14,12 @@ from . import sync_history
 from . import stock
 from . import webhooks
 from . import shopify_warehouse
+
+#Feed
+from . import shopify_feed_products
+from . import shopify_feed_orders
+from . import shopify_feed_customers
+
+######
 from . import shopify_transactions
+from . import shopify_refunds

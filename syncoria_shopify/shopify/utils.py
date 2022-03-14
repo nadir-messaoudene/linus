@@ -13,6 +13,21 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
+def get_instance_id(model):
+    ICPSudo = model.env['ir.config_parameter'].sudo()
+    try:
+        marketplace_instance_id = ICPSudo.get_param(
+            'syncoria_base_marketplace.marketplace_instance_id')
+        marketplace_instance_id = [int(s) for s in re.findall(
+            r'\b\d+\b', marketplace_instance_id)]
+    except:
+        marketplace_instance_id = False
+
+    if marketplace_instance_id:
+        marketplace_instance_id = model.env['marketplace.instance'].sudo().search(
+            [('id', '=', marketplace_instance_id[0])])
+    return marketplace_instance_id
+
 
 def get_provar_vals(record, values):
     data = {}
@@ -69,6 +84,7 @@ def get_protmpl_vals(record, values):
     if 'product.template' in str(record):
         variants = []
         variants_rec = record.product_variant_ids
+        insatnce_id = get_instance_id(record) 
         for var in variants_rec:
             variant = {}
             count = 1
@@ -80,6 +96,10 @@ def get_protmpl_vals(record, values):
                 hs_code = var.hs_code
                 _logger.warning("Exception ===>>>%s", e.args)
 
+            shopify_price = record.list_price
+            if insatnce_id.pricelist_id.currency_id.id != record.currency_id.id:
+                shopify_price = record.shopify_price
+            
             for attrib in var.product_template_attribute_value_ids:
                 _logger.info(attrib.attribute_id.name)
                 _logger.info(attrib.name)
@@ -89,7 +109,7 @@ def get_protmpl_vals(record, values):
                 variant.update({
                     'id': var.shopify_id,
                     'title': var.name,
-                    'price': var.list_price,
+                    'price': shopify_price,
                     'sku': var.default_code,
                     'inventory_quantity': int(var.qty_available),
                     # 'position': 1,
@@ -157,9 +177,12 @@ def get_protmpl_vals(record, values):
         single_product = True
         product.update({"id": record.shopify_id})
     if not product['variants']:
+        shopify_price = record.list_price
+        if insatnce_id.pricelist_id.currency_id.id != record.currency_id.id:
+            shopify_price = record.shopify_price
         product['variants'] = [{
             'title': record.name,
-            'price': record.list_price,
+            'price': shopify_price,
             'sku': record.default_code,
             'barcode': record.barcode,
             'weight': record.weight,
@@ -177,10 +200,14 @@ def get_protmpl_vals(record, values):
         
         del product['product_type']
     else:
+
+        shopify_price = record.list_price
+        if insatnce_id.pricelist_id.currency_id.id != record.currency_id.id:
+            shopify_price = record.shopify_price
         product.update({
             'id': record.shopify_id or "",
             'title': record.name,
-            'price': record.list_price,
+            'price': shopify_price,
             'sku': record.default_code,
             'barcode': record.barcode,
             'weight': record.weight,

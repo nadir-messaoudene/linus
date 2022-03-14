@@ -33,8 +33,12 @@
         </record>
 
 
-        <menuitem name="Fetch Warehouses" id="fetch_shopify_warehouse" sequence="10"
-                  parent="syncoria_shopify.shopify_sync" action="syncoria_shopify.action_shopify_fetch_warehouse"/>
+        <menuitem 
+            name="Fetch Warehouses" 
+            id="fetch_shopify_warehouse" 
+            sequence="4"
+            parent="syncoria_shopify.shopify_sync" 
+            action="syncoria_shopify.action_shopify_fetch_warehouse"/>
 
 
     </data>

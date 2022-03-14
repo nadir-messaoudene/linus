@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+
+        <record model="ir.ui.view" id="view_shopify_feed_customers_tree">
+            <field name="name">view.shopify.feed.customers.tree</field>
+            <field name="model">shopify.feed.customers</field>
+            <field name="arch" type="xml">
+                <tree string="shopify_feed_customers_tree" create="true" delete="true" edit="true">
+                    <field name="name" />
+                    <field name="instance_id" />
+                    <field name="shopify_id" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_shopify_feed_customers_form" model="ir.ui.view">
+            <field name="name">view.shopify.feed.customers.form</field>
+            <field name="model">shopify.feed.customers</field>
+            <field name="arch" type="xml">
+                <form string="Shopify Feed Customers" create="true" delete="true" edit="true">
+                    <header>
+                        <!-- <button string="Process Customers" class="btn btn-primary" name="process_feed_customer" type="object" attrs="{  'invisible': [('state','in',('queue'))]  }" />-->
+                        <field name="state" widget="statusbar" statusbar_visible="draft,queue,processed,failed"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <label for="name" class="oe_edit_only" />
+                            <h1>
+                                <field name="name" class="oe_inline" placeholder="name" />
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="instance_id" />
+                                <field name="shopify_id" />
+                            </group>
+                            <group>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="customer_data" />
+                        </group>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids" widget="mail_followers" groups="base.group_user"/>
+                        <field name="activity_ids" widget="mail_activity"/>
+                        <field name="message_ids" widget="mail_thread"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_shopify_feed_customers_search" model="ir.ui.view">
+            <field name="name">view.shopify.feed.customers.search</field>
+            <field name="model">shopify.feed.customers</field>
+            <field name="type">search</field>
+            <field name="mode">primary</field>
+            <field name="arch" type="xml">
+                <search string="shopify_feed_customers_search">
+                    <field name="name" />
+                </search>
+            </field>
+        </record>
+
+
+        <record model="ir.actions.act_window" id="action_shopify_feed_customers_act_window">
+            <field name="name">shopify feed customers act_window</field>
+            <field name="res_model">shopify.feed.customers</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+
+        <record model="ir.actions.server" id="action_shopify_feed_customers">
+            <field name="name">shopify_feed_customers server</field>
+            <field name="model_id" ref="model_shopify_feed_customers"/>
+            <field name="state">code</field>
+            <field name="code">
+                action = {
+                "type": "ir.actions.act_window",
+                "view_mode": "tree,form",
+                "res_model": model._name,
+                }
+            </field>
+        </record>
+
+        <menuitem 
+            action="action_shopify_feed_customers"
+            id="shopify_feed_customers" 
+            name="Feed Customers" 
+            parent="shopify_feed_views" 
+            sequence="1"/>
+
+
+    </data>
+</odoo>

@@ -6,7 +6,7 @@
     'author': "Syncoria Inc",
     'website': "http://www.syncoria.com",
     'category': 'Uncategorized',
-    'version': '15.1.0.0.0',
+    'version': '15.1.3.0.0',
     'depends': ['base', 'mail', 'syncoria_base_marketplace', 'sale','sale_management', 'stock','sale_stock','delivery','product'],
     'images': [
         'static/description/banner.gif',
@@ -28,6 +28,18 @@
         'wizard/update_stock.xml',
         'wizard/customer_delete_wiz.xml',
         'wizard/fetch_warehouse_wiz_view.xml',
+        ################################################
+        'data/ir_sequence_data.xml',
+        'wizard/fetch_feed_products_wiz.xml',
+        'wizard/fetch_feed_orders_wiz.xml',
+        'wizard/fetch_feed_customers_wiz.xml',
+        #FEED
+        'views/feed_products.xml',
+        'views/feed_orders.xml',
+        'views/feed_customers.xml',
+        'views/shopify_transactions.xml',
+        'views/shopify_refunds.xml',
+        ################################################
         'views/webhooks.xml',
         # Data
         'data/ir_cron_data.xml',

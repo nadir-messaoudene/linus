@@ -230,7 +230,6 @@ class OrderFetchWizard(models.Model):
 
         cr = self._cr
         marketplace_instance_id = self._get_instance_id()
-
         version = '2021-04'
         version = marketplace_instance_id.marketplace_api_version or '2021-04'
         url = marketplace_instance_id.marketplace_host + \
@@ -440,16 +439,27 @@ class OrderFetchWizard(models.Model):
                             line['tax_lines'])
                         _logger.info("prod_rec===>>>>>" + str(prod_rec))
                         if line and line.get('quantity') > 0:
-                            ################################################################################
-                            ############################Process for Fairechild##############################
-                            ################################################################################
-
-
-                            ################################################################################
+                            #####################################################################################
+                            #TO DO: Compute Price from Pricelist
+                            price_unit =  line.get('price_set', {}).get('shop_money', {}).get('amount')
+                            pricelist_currency = marketplace_instance_id.pricelist_id.currency_id.name
+                            shop_currency_code = line.get('price_set', {}).get('shop_money',{}).get('currency_code')
+                            pre_currency_code = line.get('price_set', {}).get('presentment_money',{}).get('currency_code')
+                            if pricelist_currency and shop_currency_code:
+                                _logger.info("\npricelist_currency-{}\nshop_currency_code-{}\npre_currency_code-{}".format(pricelist_currency, shop_currency_code, pre_currency_code))
+                                if pricelist_currency == shop_currency_code:
+                                    _logger.info("Shop and Pricelist Currency Matches")
+                                else:
+                                    _logger.info("Shop and Pricelist Currency Not Matching")
+                                    price_unit = self.compute_price_unit(prod_rec, price_unit)
+                            
+                            
+                            _logger.info("price_unit-{}".format(price_unit))
+                            #####################################################################################
                             temp = {
                                 'product_id': prod_rec.id,
                                 'product_uom_qty': line['quantity'],
-                                'price_unit': line.get('price_set', {}).get('shop_money', {}).get('amount'),
+                                'price_unit': price_unit,
                                 'tax_id': [(6, 0, product_tax)],
                                 'name': str(prod_rec.name),
                             }
@@ -479,6 +489,10 @@ class OrderFetchWizard(models.Model):
                                     'sale.group_discount_per_so_line')
                                 # if group_dicnt == True:
                                 temp['discount'] = disc_per
+
+                            ##################################
+                            ###AD LINE ITEM ID
+                            ##################################
                             order_line.append((0, 0, temp))
 
                         order_vals['order_line'] = order_line
@@ -726,10 +740,29 @@ class OrderFetchWizard(models.Model):
                     #             line.get("price")) - float(line.get("discounted_price"))
                     #         disc_per = (
                     #             discount/line.get("price")) * 100
+                
+                #####################################################################################
+                #TO DO: Compute Price from Pricelist
+                delivery_price =  ship_line.get('price')
+                pricelist_currency = marketplace_instance_id.pricelist_id.currency_id.name
+                shop_currency_code = ship_line.get('price_set', {}).get('shop_money',{}).get('currency_code')
+                pre_currency_code = ship_line.get('price_set', {}).get('presentment_money',{}).get('currency_code')
+                if pricelist_currency and shop_currency_code:
+                    _logger.info("\npricelist_currency-{}\nshop_currency_code-{}\npre_currency_code-{}".format(pricelist_currency, shop_currency_code, pre_currency_code))
+                    if pricelist_currency == shop_currency_code:
+                        _logger.info("Shop and Pricelist Currency Matches")
+                    else:
+                        _logger.info("Shop and Pricelist Currency Not Matching")
+                        delivery_price = self.compute_price_unit(service, delivery_price)
+                        #Convert Price to Pricelist Currency
+                        delivery_price = marketplace_instance_id.pricelist_id.currency_id.rate*float(delivery_price)
+                
+                _logger.info("Shipping Pirce Unit-{}".format(delivery_price))
+                #####################################################################################
                 temp = {
                     'product_id': service.id,
                     'product_uom_qty': 1,
-                    'price_unit': ship_line.get('price'),
+                    'price_unit': delivery_price,
                     # 'discount': disc_per,
                     'tax_id': [(6, 0, ship_tax)],
                 }
@@ -763,6 +796,9 @@ class OrderFetchWizard(models.Model):
         service = VariantObj.search(
             [('name', '=', 'Discount')], limit=1) if not service else service
         if service:
+            #####################################################################################
+            #TO DO: Compute Price from Pricelist
+            #####################################################################################
             temp = {
                 'product_id': service.id,
                 'product_uom_qty': 1,
@@ -830,6 +866,9 @@ class OrderFetchWizard(models.Model):
         inv_vals['invoice_line_ids'] = []
 
         for line in order_id.order_line:
+            #####################################################################################
+            #TO DO: Compute Price from Pricelist
+            #####################################################################################
             inv_vals['invoice_line_ids'].append(
                 (0, 0,
                  {

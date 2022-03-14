@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 class CustomerFetchWizard(models.Model):
     _inherit = 'order.fetch.wizard'
 
+
     def shopify_fetch_customers_to_odoo(self, kwargs=None):
         """
             Fetch Customers

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+
+        <record model="ir.ui.view" id="view_shopify_feed_products_tree">
+            <field name="name">view.shopify.feed.products.tree</field>
+            <field name="model">shopify.feed.products</field>
+            <field name="arch" type="xml">
+                <tree string="Feed Products Tree" create="true" delete="true" edit="true">
+                    <field name="name" />
+                    <field name="instance_id" />
+                    <field name="shopify_id" />
+                    <field name="inventory_id" />
+                    <field name="product_id" />
+                    <field name="product_tmpl_id" />
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="action_shopify_feed_products_act_window">
+            <field name="name">Shopify Feed Products</field>
+            <field name="res_model">shopify.feed.products</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record model="ir.actions.server" id="action_shopify_feed_products">
+            <field name="name">shopify_feed_products server</field>
+            <field name="model_id" ref="model_shopify_feed_products"/>
+            <field name="state">code</field>
+            <field name="code">
+                action = {
+                "type": "ir.actions.act_window",
+                "view_mode": "tree,form",
+                "res_model": model._name,
+                }
+            </field>
+        </record>
+
+        <record id="view_shopify_feed_products_form" model="ir.ui.view">
+            <field name="name">view.shopify.feed.products.form</field>
+            <field name="model">shopify.feed.products</field>
+            <field name="arch" type="xml">
+                <form string="Shopify Feed Products" create="true" delete="true" edit="true">
+                    <header>
+                        <!-- <button string="Process" class="btn btn-primary" name="process_feed_product" type="object" attrs="{  'invisible': [('state','in',('queue'))]  }" />-->
+                        <button string="Update Product Variant" class="btn btn-primary" name="update_product_product" type="object" attrs="{  'invisible': [('product_id','=',False)]  }" />
+                        <button string="Update Product Template" class="btn btn-primary" name="update_product_template" type="object" attrs="{  'invisible': [('product_tmpl_id','=',False)]  }" />
+                        <field name="state" widget="statusbar" statusbar_visible="draft,queue,processed,failed"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <label for="name" class="oe_edit_only" />
+                            <h1>
+                                <field name="name" class="oe_inline" placeholder="name" />
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="instance_id" />
+                                <field name="shopify_id" />
+                                <field name="inventory_id" />
+                            </group>
+                            <group>
+                                <field name="parent" />
+                                <field name="title" />
+                                <field name="product_id" />
+                                <field name="product_tmpl_id" />
+                            </group>
+                        </group>
+                        <group>
+                            <field name="product_data" />
+                        </group>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids" widget="mail_followers" groups="base.group_user"/>
+                        <field name="activity_ids" widget="mail_activity"/>
+                        <field name="message_ids" widget="mail_thread"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_shopify_feed_products_search" model="ir.ui.view">
+            <field name="name">view.shopify.feed.products.search</field>
+            <field name="model">shopify.feed.products</field>
+            <field name="type">search</field>
+            <field name="mode">primary</field>
+            <field name="arch" type="xml">
+                <search string="shopify_feed_products_search">
+                    <field name="name" />
+                </search>
+            </field>
+        </record>
+
+
+        <menuitem 
+            id="shopify_feed_views" 
+            name="Feed" 
+            parent="syncoria_shopify_main" 
+            sequence="8"/>
+        <menuitem 
+            action="action_shopify_feed_products" 
+            id="shopify_feed_products" 
+            name="Feed Products" 
+            parent="shopify_feed_views" 
+            sequence="1"/>
+
+
+    </data>
+</odoo>

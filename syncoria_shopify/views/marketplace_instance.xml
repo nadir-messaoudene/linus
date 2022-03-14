@@ -121,6 +121,7 @@
                     <field name="marketplace_outbound_method_id" />
                     <field name="debit_account_id" />
                     <field name="credit_account_id" />
+                    
                   </group>
                 </group>
               </page>
@@ -153,7 +154,7 @@
                     <field name="auto_create_invoice"/>
                     <field name="order_tracking_ref"/>
                     <field name="order_prefix"/>
-                    <field name="shopify_use_pricelist_price" readonly="1"/>
+                    <field name="compute_pricelist_price" />
                   </group>
                 </group>
               </page>

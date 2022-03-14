@@ -123,7 +123,7 @@ class ProductsFetchWizard(models.Model):
                                 price = product.list_price
                                 if product.shopify_currency_id:
                                     price = product.shopify_price
-                                variant.update({"price" : price})
+                                variant.update({"price" : product.list_price})
                                 # variant.update({"inventory_quantity" : int(product.qty_available)})
                             # if marketplace_instance_id.publish_in_website:
                             #     variant.update({"inventory_quantity" : int(product.qty_available)})

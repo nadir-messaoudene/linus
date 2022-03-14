@@ -1,0 +1,78 @@
+<odoo>
+  <data>
+
+    <record model="ir.ui.view" id="shopify_refunds_list">
+      <field name="name">Shopify Refunds List</field>
+      <field name="model">shopify.refunds</field>
+      <field name="arch" type="xml">
+        <tree>
+          <field name="shopify_id"/>
+          <field name="shopify_order_id"/>
+          <field name="sale_id"/>
+          <field name="shopify_amount"/>
+          <field name="shopify_transaction_id"/>
+        </tree>
+      </field>
+    </record>
+
+    <record model="ir.actions.act_window" id="shopify_refunds_action_window">
+      <field name="name">Shopify Refunds Window</field>
+      <field name="res_model">shopify.refunds</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+
+
+    <record model="ir.actions.server" id="shopify_refunds_action_server">
+      <field name="name">Shopify Refunds server</field>
+      <field name="model_id" ref="model_shopify_refunds"/>
+      <field name="state">code</field>
+      <field name="code">
+        action = {
+          "type": "ir.actions.act_window",
+          "view_mode": "tree,form",
+          "res_model": model._name,
+        }
+      </field>
+    </record>
+
+
+
+    <record id="view_shopify_refunds_form" model="ir.ui.view">
+      <field name="name">Shopify Refunds Form</field>
+      <field name="model">shopify.refunds</field>
+      <field name="type">form</field>
+      <field name="arch" type="xml">
+        <form string="Shopify Refunds Form" create="true" delete="true" edit="true">
+          <sheet>
+            <div class="oe_title">
+              <label for="name" class="oe_edit_only" />
+              <h1>
+                <field name="name" placeholder="Describe the item..." />
+              </h1>
+            </div>
+            <group>
+              <group>
+                <field name="sale_id"/>
+                <field name="shopify_id"/>
+                <field name="shopify_transaction_id"/>
+                <field name="shopify_order_id"/>
+              </group>
+              <group>
+                <field name="shopify_note"/>
+                <field name="shopify_user_id"/>
+                <field name="shopify_processed_at"/>
+                <field name="shopify_restock"/>
+              </group>
+            </group>
+          </sheet>
+        </form>
+
+
+      </field>
+    </record>
+
+
+
+    <menuitem name="Shopify Refunds" id="shopify_refunds" sequence="5" parent="syncoria_shopify.shopify_sales" action="shopify_refunds_action_window"/>
+  </data>
+</odoo>

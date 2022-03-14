@@ -71,44 +71,44 @@ class SaleOrderShopify(models.Model):
         comodel_name='shopify.transactions',
         inverse_name='sale_id',
     )
-    
-    
-
+    shopify_refund_ids = fields.One2many(
+        string='Shopify Refunds',
+        comodel_name='shopify.refunds',
+        inverse_name='sale_id',
+    )
 
     def fetch_shopify_payments(self):
         _logger.info("fetch_shopify_payments")
+        message = ''
         for rec in self:
             if rec.shopify_id:
                 marketplace_instance_id = self._get_instance_id()
                 version = marketplace_instance_id.marketplace_api_version or '2021-01'
-                url = marketplace_instance_id.marketplace_host +  '/admin/api/%s/orders/%s/transactions.json' %(version,self.shopify_id)
+                url = marketplace_instance_id.marketplace_host +  '/admin/api/%s/orders/%s/transactions.json' %(version, rec.shopify_id)
                 headers = {'X-Shopify-Access-Token':marketplace_instance_id.marketplace_api_password}
                 type_req = 'GET'
                 try:
                     transactions_list = self.env['marketplace.connector'].marketplace_api_call(headers=headers, url=url, type=type_req,marketplace_instance_id=marketplace_instance_id)
                     if transactions_list.get('transactions'):
-                        self.process_shopify_transactions(transactions_list['transactions'])
-                    transactions = transactions_list['transactions']
-                    for transaction in transactions:
-                        _logger.warning("transaction-%s"%(transaction))
-
+                        message += '\nLength of Transaction List-{}'.format(len(transactions_list.get('transactions')))
+                        tran_recs = self.process_shopify_transactions(transactions_list['transactions'])
+                        message += '\nTransaction Record Created-{}'.format(len(tran_recs))
+                    rec.message_post(body=_(message))
                 except Exception as e:
                     _logger.warning("Exception-%s"%(e.args))
         
 
     def process_shopify_transactions(self, transactions):
+        tran_recs = []
         for transaction in transactions:
             sp_tran = self.env['shopify.transactions'].sudo()
             tran_id = sp_tran.search([('shopify_id','=',transaction['id'])])
             if not tran_id:
-                vals = {'sale_id':self.id, 'shopify_payment_details_id':[],'shopify_payment_receipt_id':[]}
+                vals = {'sale_id': self.id, 'shopify_payment_details_id':[],'shopify_payment_receipt_id':[]}
                 transaction = {k: v for k, v in transaction.items() if v is not False and v is not None}
                 for key, value in transaction.items():
-                    print(key,value)
                     if 'shopify_' + str(key) in list(sp_tran._fields) and key not in ['receipt','payment_details']:
                         vals['shopify_' + str(key)] = str(value)
-
-
 
 
                 if transaction.get('receipt'):
@@ -128,16 +128,46 @@ class SaleOrderShopify(models.Model):
                             vals['shopify_payment_details_id'] += [(0,0,pd)]
                 
 
-
                 tran_id = sp_tran.create(vals)
-                print("vals===>>>,", vals)
-                print("tran_id===>>>", tran_id)
-
-
-
+                tran_recs.append(tran_id.id)
+        return tran_recs
 
     def fetch_shopify_refunds(self):
         _logger.info("fetch_shopify_refunds")
+        message = ''
+        for rec in self:
+            if rec.shopify_id:
+                marketplace_instance_id = self._get_instance_id()
+                version = marketplace_instance_id.marketplace_api_version or '2021-01'
+                url = marketplace_instance_id.marketplace_host +  '/admin/api/%s/orders/%s/refunds.json' %(version, rec.shopify_id)
+                headers = {'X-Shopify-Access-Token':marketplace_instance_id.marketplace_api_password}
+                type_req = 'GET'
+                try:
+                    refunds_list = self.env['marketplace.connector'].marketplace_api_call(headers=headers, url=url, type=type_req,marketplace_instance_id=marketplace_instance_id)
+                    if refunds_list.get('refunds'):
+                        message = '\nLength of Refund List-{}'.format(len(refunds_list.get('refunds')))
+                        refund_recs = self.process_shopify_refund(refunds_list['refunds'])
+                        message += '\Refund Record Created-{}'.format(len(refund_recs))
+                    rec.message_post(body=_(message))
+                except Exception as e:
+                    _logger.warning("Exception-%s"%(e.args))
+
+
+    def process_shopify_refund(self, refunds):
+        refunds_recs = []
+        for refund in refunds:
+            sp_refunds = self.env['shopify.refunds'].sudo()
+            refund_id = sp_refunds.search([('shopify_id','=',refund['id'])])
+            if not refund_id:
+                vals = {'sale_id': self.id}
+                refund = {k: v for k, v in refund.items() if v is not False and v is not None}
+                for key, value in refund.items():
+                    if 'shopify_' + str(key) in list(sp_refunds._fields) and key not in ['receipt','payment_details']:
+                        vals['shopify_' + str(key)] = str(value)
+                refund_id = sp_refunds.create(vals)
+                refunds_recs.append(refund_id.id)
+        return refunds_recs
+
 
 
     def _get_instance_id(self):
@@ -160,8 +190,7 @@ class SaleOrderShopify(models.Model):
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
 
-    shopify_id = fields.Char(string="Shopify Id", readonly=True,
-                             store=True)
+    shopify_id = fields.Char(string="Shopify Id", readonly=True, store=True)
     marketplace_type = fields.Selection(
         [('shopify', 'Shopify')], string="Marketplace Type"
     )
