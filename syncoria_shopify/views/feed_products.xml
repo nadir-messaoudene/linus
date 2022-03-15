@@ -9,6 +9,7 @@
                 <tree string="Feed Products Tree" create="true" delete="true" edit="true">
                     <field name="name" />
                     <field name="instance_id" />
+                    <field name="title" />
                     <field name="shopify_id" />
                     <field name="inventory_id" />
                     <field name="product_id" />

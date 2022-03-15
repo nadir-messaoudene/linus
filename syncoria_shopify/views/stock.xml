@@ -29,8 +29,8 @@
                 </xpath>
 
                 <xpath expr="//header" position="inside">
-                    <button name="create_shopify_fulfillment" string="Create Shopify Fullfillment" type="object" class="oe_highlight" attrs="{ 'invisible' :['|', ('sale_id','=', False), '|' , ('picking_type_code', '=','incoming'), '|' ,  ('state','not in','done'), ('shopify_track_updated','=',True)] }" />
-                    <button name="return_shopify_fulfillment" string="Return Shopify Fullfillment" type="object" class="oe_highlight" attrs="{ 'invisible' :['|', ('sale_id','=', False), '|' , ('picking_type_code', '=','outgoing'), '|', ('state','not in','done'), ('shopify_track_updated','=',True)] }" />
+                    <button name="create_shopify_fulfillment" string="Create Shopify Fullfillment" type="object" class="oe_highlight" attrs="{ 'invisible' :['|', ('shopify_track_updated','=', True), '|', ('sale_id','=', False), '|' , ('picking_type_code', '=','incoming'), '|' ,  ('state','not in','done'), ('shopify_track_updated','=',True)] }" />
+                    <button name="return_shopify_fulfillment" string="Return Shopify Fullfillment" type="object" class="oe_highlight" attrs="{ 'invisible' :['|', ('shopify_track_updated','=', True), '|', ('sale_id','=', False), '|' , ('picking_type_code', '=','outgoing'), '|', ('state','not in','done'), ('shopify_track_updated','=',True)] }" />
                     <!-- <button name="update_shopify_tracking" string="Update Shopify Tracking" type="object" class="oe_highlight" attrs="{ 'invisible' :['|', ('sale_id','=', False), '|', ('state','not in','done'), ('shopify_track_updated','=',True)] }" /> -->
                     <!-- <button name="get_order_fullfillments" string="Get Order Fullfillments" type="object" class="oe_highlight"/> -->
                 </xpath>

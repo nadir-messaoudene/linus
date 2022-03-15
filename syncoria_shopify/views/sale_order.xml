@@ -18,6 +18,7 @@
                             <group>
                                 <field name="marketplace_type"/>
                                 <field name="shopify_id"/>
+                                <field name="shopify_order"/>
                             </group>
                         </group>
                     </page>
@@ -57,6 +58,27 @@
             </field>
 
         </record>
+
+
+        <record id="view_sale_order_inherited" model="ir.ui.view">
+            <field name="name">view.sale.order.tree.inherited</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_quotation_tree_with_onboarding" />
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+            
+                <xpath expr="//field[@name='name']" position="after">
+                    <field name="shopify_id"/>
+                    <field name="shopify_order"/>
+                </xpath>
+            
+               
+            </field>
+
+        </record>
+
+
+        	
 
     </data>
 </odoo>

@@ -23,7 +23,7 @@ class ProductsFetchWizard(models.Model):
     ], string="Operation Type")
 
     def shopify_update_stock_item(self,kwargs):
-        print("******shopify_update_stock_item")
+        _logger.info("******shopify_update_stock_item")
         warehouse_location = self.shopify_warehouse
         marketplace_instance_id = kwargs.get('marketplace_instance_id')
         Connector = self.env['marketplace.connector']

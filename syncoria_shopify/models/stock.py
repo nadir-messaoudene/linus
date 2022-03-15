@@ -95,7 +95,7 @@ class StockPicking(models.Model):
                         'shopify_service' : res_json.get('fulfillment',{}).get('service'),
                     })
                 self.message_post(body=_("Successfull Shopify Fulfillment for Picking-{}, Fulfillment Id-{}".format(self, self.shopify_id)))
-
+                self.shopify_track_updated = True
             else:
                 raise exceptions.UserError(_("Exception-{}".format(res.text)))
 

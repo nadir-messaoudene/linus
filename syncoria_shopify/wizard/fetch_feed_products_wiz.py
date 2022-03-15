@@ -111,7 +111,7 @@ class FeedProductsFetchWizard(models.Model):
         try:
             variant = self.env['shopify.feed.products'].sudo().create({
                 'instance_id': self.instance_id.id,
-                'parent': True,
+                'parent': False,
                 'title': product['title'],
                 'shopify_id': product['id'],
                 'inventory_id': product.get('inventory_item_id'),

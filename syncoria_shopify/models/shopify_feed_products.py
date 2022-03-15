@@ -31,7 +31,7 @@ class ShopifyFeedProducts(models.Model):
         ondelete='restrict',
     )
 
-    parent = fields.Boolean()
+    parent = fields.Boolean(default=False)
     title = fields.Char(copy=False)
     shopify_id = fields.Char(string='Shopify Id', readonly=1)
     inventory_id = fields.Char(string='Inventory Id', readonly=1)
