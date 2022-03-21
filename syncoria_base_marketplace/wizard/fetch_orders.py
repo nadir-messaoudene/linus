@@ -17,10 +17,17 @@ class OrderFetchWizard(models.Model):
     _description = 'Order Fetch Wizard'
 
     
-    # date_from = fields.Datetime(
-    #     string='field_name',
-    #     default=fields.Datetime.now,
-    # )
+    fetch_type = fields.Selection([
+        ('to_odoo', 'Fetch Products from Shopify'),
+    ], default='to_odoo', string="Operation Type")
+
+    instance_id = fields.Many2one(
+        string='Marketplace Instance',
+        comodel_name='marketplace.instance',
+        ondelete='restrict',
+    )
+    date_from = fields.Date('From')
+    date_to = fields.Date('To')
     
 
     def _get_instance_id(self):

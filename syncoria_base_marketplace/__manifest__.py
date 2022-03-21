@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': "Base Marketplace",
-    'version': '15.0.2.0.0',
+    'version': '15.0.3.0.0',
     'summary': """Base Module for Marketplace""",
     'description': """Base Module for Marketplace""",
     'category': 'Extra Tools',

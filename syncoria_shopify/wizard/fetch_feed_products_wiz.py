@@ -81,19 +81,15 @@ class FeedProductsFetchWizard(models.Model):
         if configurable_products.get('products'):
             for product in configurable_products.get('products'):
                 try:
-                    self.create_parent_product(product)
+                    self.create_feed_parent_product(product)
                     if product.get('variants'):
-                        # if len(product.get('variants')) == 1:
-                        #     """Simple Product"""
-                        # if len(product.get('variants')) > 1:
-                        #     """Complex Product"""
                         if len(product.get('variants')) > 0:
                             for var in product.get('variants'):
-                                self.create_variant_product(var)
+                                self.create_feed_variant_product(var)
                 except Exception as e:
                     _logger.warning("Exception-{}".format(e.args))
 
-    def create_parent_product(self, product):
+    def create_feed_parent_product(self, product):
         try:
             record = self.env['shopify.feed.products'].sudo().create({
                 'instance_id': self.instance_id.id,
@@ -104,10 +100,11 @@ class FeedProductsFetchWizard(models.Model):
                 'product_data': str(product),
             })
             record._cr.commit()
+            _logger.info("Shopify Feed Parent Product Created-{}".format(record))
         except Exception as e:
             _logger.warning("Exception-{}".format(e.args))
 
-    def create_variant_product(self, product):
+    def create_feed_variant_product(self, product):
         try:
             variant = self.env['shopify.feed.products'].sudo().create({
                 'instance_id': self.instance_id.id,
@@ -118,5 +115,9 @@ class FeedProductsFetchWizard(models.Model):
                 'product_data': str(product),
             })
             variant._cr.commit()
+            _logger.info("Shopify Feed Varaint Product Created-{}".format(record))
         except Exception as e:
             _logger.warning("Exception-{}".format(e.args))
+
+
+    #TO DO: Feed Products to Odoo Products

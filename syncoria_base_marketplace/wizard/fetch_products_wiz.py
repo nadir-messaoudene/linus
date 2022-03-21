@@ -21,6 +21,15 @@ class ProductsFetchWizard(models.Model):
         ('to_odoo', 'Fetch Products From shopify'),
         ('from_odoo', 'Update Products to shopify')
     ], string="Operation Type")
+    
+    instance_id = fields.Many2one(
+        string='Marketplace Instance',
+        comodel_name='marketplace.instance',
+        ondelete='restrict',
+    )
+    date_from = fields.Date('From')
+    date_to = fields.Date('To')
+
 
 
     def _get_instance_id(self):

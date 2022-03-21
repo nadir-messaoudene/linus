@@ -16,7 +16,7 @@ class FeedOrderFetchWizard(models.Model):
     _description = 'Feed Customers Fetch Wizard'
 
     fetch_type = fields.Selection([
-        ('to_odoo', 'Fetch Products from Shopify'),
+        ('to_odoo', 'Fetch Customers from Shopify'),
     ], default='to_odoo', string="Operation Type")
 
     instance_id = fields.Many2one(
@@ -78,3 +78,7 @@ class FeedOrderFetchWizard(models.Model):
                 e = customer_list.get('errors')
             _logger.warning("Exception occured: %s", e)
             raise UserError(_("Error Occured: %s") % e)
+
+
+        
+    #TO DO: Feed Customers to Odoo Customers

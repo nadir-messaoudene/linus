@@ -9,6 +9,9 @@ import logging
 import base64
 import re
 from odoo import models, fields, exceptions, _
+from odoo.exceptions import UserError, ValidationError
+
+
 from odoo.http import request
 from pprint import pprint
 
@@ -114,7 +117,7 @@ class ProductsFetchWizard(models.Model):
         
         _logger.info("START===>>>")
         for product in config_products:
-            _logger.info("product===>>>%s", product.get('id'))
+            _logger.info("product===>>>{}".format(product.get('id')))
             if str(product['id']) not in existing_prod_ids:
                 try:
                     product_categ_ids = []
@@ -522,7 +525,7 @@ class ProductsFetchWizard(models.Model):
                     # return existing_prod_ids
 
                 except Exception as e:
-                    _logger.warning("Exception-%s",e.args)
+                    _logger.warning("Exception-{}".format(e.args))
         
         print("STOP===>>>", product)
         if 'call_button'  in str(request.httprequest):
@@ -798,6 +801,7 @@ class ProductsFetchWizard(models.Model):
 
     def shopify_fetch_products_to_odoo(self, kwargs):
         update_products_no = 0
+        sp_product_list = []
         existing_ids = []
         cr = self._cr
         # fetching products already fetched from shopify to skip those already created
@@ -866,6 +870,18 @@ class ProductsFetchWizard(models.Model):
             else:
                 sp_product_list = [configurable_products.get('product')] if type(configurable_products.get('products')) != list else configurable_products.get('products')
 
+
+            if configurable_products.get('errors') and 'products.fetch.wizard' in self._name:
+                errors = "Error: %s".format(configurable_products.get('errors'))
+                _logger.warning(errors)
+                raise UserError(_(errors))
+            ###############################################################
+            #Create Feed Order from Shopify################################
+            ###############################################################
+            if not configurable_products.get('errors'):
+                for sp_product in sp_product_list:
+                    self.create_feed_parent_product(sp_product, marketplace_instance_id)
+            ###############################################################
             update_products_no = len(sp_product_list)
 
             # from pprint import pprint
@@ -943,8 +959,7 @@ class ProductsFetchWizard(models.Model):
             _logger.info("Exception occured: %s", e)
             raise exceptions.UserError(_("Error Occured %s") % e)
 
-        _logger.info("%d products are successfully updated." %
-                     update_products_no)
+        _logger.info("%d products are successfully updated." % update_products_no)
 
         # self.update_sync_history({
         #     'last_product_sync': '',
@@ -960,6 +975,8 @@ class ProductsFetchWizard(models.Model):
         #         'type': 'ir.actions.client',
         #         'tag': 'reload'
         #     }
+
+
 
     def update_sync_history(self, vals):
         from datetime import datetime
@@ -1065,3 +1082,23 @@ class ProductsFetchWizard(models.Model):
         # ---------------------------------------------------------------------------
 
         return comb_arr, comb_indices
+
+
+    def create_feed_parent_product(self, product, instance_id):
+        try:
+            domain = [('parent', '=', True)]
+            domain += [('shopify_id', '=', product['id'])]
+            fp_product = self.env['shopify.feed.products'].sudo().search(domain)
+            if not fp_product:
+                record = self.env['shopify.feed.products'].sudo().create({
+                    'instance_id': instance_id.id,
+                    'parent': True,
+                    'title': product['title'],
+                    'shopify_id': product['id'],
+                    'inventory_id': product.get('inventory_item_id'),
+                    'product_data': str(product),
+                })
+                record._cr.commit()
+                _logger.info("Shopify Feed Parent Product Created-{}".format(record))
+        except Exception as e:
+            _logger.warning("Exception-{}".format(e.args))

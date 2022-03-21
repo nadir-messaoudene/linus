@@ -35,7 +35,7 @@ class FeedOrderFetchWizard(models.Model):
     _description = 'Feed Orders Fetch Wizard'
 
     fetch_type = fields.Selection([
-        ('to_odoo', 'Fetch Products from Shopify'),
+        ('to_odoo', 'Fetch Orders from Shopify'),
     ], default='to_odoo', string="Operation Type")
 
     instance_id = fields.Many2one(
@@ -46,6 +46,8 @@ class FeedOrderFetchWizard(models.Model):
 
     date_from = fields.Date('From')
     date_to = fields.Date('To')
+
+
 
     def _get_instance_id(self):
         ICPSudo = self.env['ir.config_parameter'].sudo()
@@ -105,3 +107,5 @@ class FeedOrderFetchWizard(models.Model):
         except Exception as e:
             _logger.warning("Exception {}".format(e.args))
                
+
+    #TO DO: Feed Customers to Odoo Orders
