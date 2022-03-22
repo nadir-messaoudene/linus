@@ -23,7 +23,7 @@
                         <!-- <button string="Process Customers" class="btn btn-primary" name="process_feed_customer" type="object" attrs="{  'invisible': [('state','in',('queue'))]  }" />-->
                         <field name="state" widget="statusbar" statusbar_visible="draft,queue,processed,failed"/>
                     </header>
-                    <sheet>
+                    <sheet name="Shopify Feed Customers">
                         <div class="oe_title">
                             <label for="name" class="oe_edit_only" />
                             <h1>
@@ -36,6 +36,7 @@
                                 <field name="shopify_id" />
                             </group>
                             <group>
+                                <field name="customer_wiz_id" invisible="1"/>
                             </group>
                         </group>
                         <group>

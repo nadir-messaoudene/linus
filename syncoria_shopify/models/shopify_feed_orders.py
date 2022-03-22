@@ -39,3 +39,8 @@ class ShopifyFeedOrders(models.Model):
                    ('processed', 'Processed'), 
                    ('failed', 'Failed')]
     )
+    order_wiz_id = fields.Many2one(
+        string='Order Wiz',
+        comodel_name='feed.order.fetch.wizard',
+        ondelete='restrict',
+    )

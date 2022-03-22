@@ -39,3 +39,8 @@ class ShopifyFeedCustomers(models.Model):
         selection=[('draft', 'draft'), ('queue', 'Queue'),
                    ('processed', 'Processed'), ('failed', 'Failed')]
     )
+    customer_wiz_id = fields.Many2one(
+        string='Customer Wiz',
+        comodel_name='feed.customers.fetch.wizard',
+        ondelete='restrict',
+    )

@@ -55,6 +55,12 @@ class ShopifyFeedProducts(models.Model):
         comodel_name='product.template',
         ondelete='restrict',
     )
+    product_wiz_id = fields.Many2one(
+        string='Product Wiz',
+        comodel_name='feed.products.fetch.wizard',
+        ondelete='restrict',
+    )
+    
 
     @api.onchange('product_tmpl_id')
     def _onchange_product_tmpl_id(self):
