@@ -101,6 +101,18 @@ class FeedProductsFetchWizard(models.Model):
             })
             record._cr.commit()
             _logger.info("Shopify Feed Parent Product Created-{}".format(record))
+            feed_product_tmpl = self.env['shopify.feed.products']
+            existing_product_tmpl = feed_product_tmpl.search([("shopify_id","=",product['id'])],limit=1)
+            if not existing_product_tmpl:
+                record = feed_product_tmpl.sudo().create({
+                    'instance_id': self.instance_id.id,
+                    'parent': True,
+                    'title': product['title'],
+                    'shopify_id': product['id'],
+                    'inventory_id': product.get('inventory_item_id'),
+                    'product_data': str(product),
+                })
+                record._cr.commit()
         except Exception as e:
             _logger.warning("Exception-{}".format(e.args))
 
@@ -116,6 +128,18 @@ class FeedProductsFetchWizard(models.Model):
             })
             variant._cr.commit()
             _logger.info("Shopify Feed Varaint Product Created-{}".format(record))
+            feed_product_tmpl = self.env['shopify.feed.products']
+            existing_product = feed_product_tmpl.search([("shopify_id", "=", product['id'])], limit=1)
+            if not existing_product:
+                variant = self.env['shopify.feed.products'].sudo().create({
+                    'instance_id': self.instance_id.id,
+                    'parent': False,
+                    'title': product['title'],
+                    'shopify_id': product['id'],
+                    'inventory_id': product.get('inventory_item_id'),
+                    'product_data': str(product),
+                })
+                variant._cr.commit()
         except Exception as e:
             _logger.warning("Exception-{}".format(e.args))
 

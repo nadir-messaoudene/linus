@@ -202,13 +202,33 @@ class OrderFetchWizard(models.Model):
                 cr.execute(query_str, (tuple(partner_vals.values()),))
                 res = cr.fetchone()
 
-                if res and len(child_ids) > 0:
+                if res:
                     partner = self.env['res.partner'].sudo().search([('id', '=', res[0])])
-                    _logger.info("Partner ===>>>",partner )
-                    partner.write({'child_ids':child_ids})
+                    self._process_customer_tags(partner,item)
+                    if len(child_ids) > 0:
+                        _logger.info("Partner ===>>>",partner )
+                        partner.write({'child_ids':child_ids})
 
 
         return res and res[0] or None
+
+
+    def _process_customer_tags(self,partner_id,values):
+        if values.get("tags"):
+            splited_tags = values.get("tags").split(',')
+            res_partner_cat = self.env['res.partner.category']
+            for tags in splited_tags:
+                existing_tags = res_partner_cat.search([
+                    ("name","=",tags),
+                    ("parent_id","=",self.env.ref("syncoria_shopify.shopify_tag").id)
+                ],limit=1)
+                if existing_tags:
+                    partner_id.write({'category_id' : [(4, existing_tags.id)]})
+                else:
+                    # new_tag=res_partner_cat.create({"name":tags,"color":1,"active":True,"parent_id":env.ref("syncoria_shopify.shopify_tag").id})
+                    # self._partner_vals['category_id'] = new_tag.id
+                    if tags!="":
+                        partner_id.write({'category_id': [(0,0, {"name":tags,"color":1,"active":True,"parent_id":self.env.ref("syncoria_shopify.shopify_tag").id})]})
 
     def fetch_query(self, vals):
         """constructing the query, from the provided column names"""
@@ -552,8 +572,10 @@ class OrderFetchWizard(models.Model):
                         for tag in tags:
                             tag_id = self.env['crm.tag'].search(
                                 [('name', '=', tag)])
-                            if len(tag_id) > 0:
-                                tag_ids += tag_id.ids
+                            if not tag_id and tag != "":
+                                tag_id=self.env['crm.tag'].create({"name":tag,"color":1})
+                            if tag_id:
+                                tag_ids.append((4,tag_id.id))
                         order_vals['tag_ids'] = tag_ids
                     except Exception as e:
                         _logger.warning(e)
@@ -644,6 +666,22 @@ class OrderFetchWizard(models.Model):
                 else:
                     current_order_id = OrderObj.search(
                         [('shopify_id', '=', i['id'])], order='id desc', limit=1)
+
+                    tags = i.get('tags').split(",")
+                    try:
+                        tag_ids = []
+                        for tag in tags:
+                            tag_id = self.env['crm.tag'].search(
+                                [('name', '=', tag)],limit=1)
+                            if not tag_id and tag != "":
+                                tag_id = self.env['crm.tag'].create({"name": tag, "color": 1})
+                                # current_order_id.write({"tag_ids":[(0,0, {"name": tag, "color": 1}))
+                            if tag_id:
+                                tag_ids.append(tag_id.id)
+                        current_order_id.tag_ids= tag_ids
+                    except Exception as e:
+                        _logger.warning(e)
+
                     if i['confirmed'] and current_order_id.state == 'draft':
                         current_order_id.action_confirm()
 
