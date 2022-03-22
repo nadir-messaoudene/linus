@@ -85,6 +85,29 @@ class CustomerFetchWizard(models.Model):
                                 "Customer is created with id %s", customer_id)
                         else:
                             logger.info("Unable to create Customer")
+                    else:
+
+                        partner = PartnerObj.search([("shopify_id","=",i['id'])],limit=1)
+                        tags = i.get('tags').split(",")
+                        try:
+                            tag_ids = []
+                            for tag in tags:
+                                tag_id = self.env['res.partner.category'].search([
+                                    ("name", "=", tags),
+                                    ("parent_id", "=", self.env.ref("syncoria_shopify.shopify_tag").id)
+                                ], limit=1)
+                                if not tag_id and tag != "":
+                                    tag_id = self.env['res.partner.category'].create(
+                                        {"name": tag, "color": 1, "active": True,
+                                         "parent_id": self.env.ref("syncoria_shopify.shopify_tag").id}
+                                    )
+                                    # current_order_id.write({"tag_ids":[(0,0, {"name": tag, "color": 1}))
+                                if tag_id:
+                                    tag_ids.append(tag_id.id)
+                            partner.category_id = tag_ids
+                        except Exception as e:
+                            logger.warning(e)
+
 
                 # self.update_sync_history({
                 #     'last_product_sync' : '',
