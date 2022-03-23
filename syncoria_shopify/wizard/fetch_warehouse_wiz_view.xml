@@ -10,6 +10,11 @@
                     <sheet>
                         <p>The operation may take some time to complete. It depends on the number of records.
                             Please wait patiently.</p>
+                        <group>
+                            <group>
+                                 <field name="instance_id" required="1" options="{'no_create': True}" />
+                            </group>
+                        </group>
                         <footer>
                             <button string='Fetch Shopify Warehouse' name="fetch_warehouse_to_odoo"
                                     type="object" class="btn-primary" />

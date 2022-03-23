@@ -21,6 +21,12 @@ class WarehouseFetchWizard(models.TransientModel):
     _name = 'shopify.warehouse.fetch.wizard'
     _description = 'Shopify Warehouse Wizard'
 
+    instance_id = fields.Many2one(
+        string='Marketplace Instance',
+        comodel_name='marketplace.instance',
+        ondelete='restrict',
+    )
+
     def _get_instance_id(self):
         ICPSudo = self.env['ir.config_parameter'].sudo()
         try:

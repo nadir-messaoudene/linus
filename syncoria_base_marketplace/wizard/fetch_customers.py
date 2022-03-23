@@ -4,7 +4,7 @@
 #    __manifest__.py file at the root folder of this module.                  #
 ###############################################################################
 
-from odoo import models, exceptions, _
+from odoo import models, exceptions, _,fields
 import logging
 import re
 
@@ -27,7 +27,10 @@ class CustomerFetchWizard(models.Model):
             pass
         print(marketplace_instance_id)
         if marketplace_instance_id:
-            marketplace_instance_id = self.env['marketplace.instance'].sudo().search([('id','=',marketplace_instance_id[0])])
+            if self.instance_id:
+                marketplace_instance_id =self.instance_id
+            else:
+                marketplace_instance_id = self.env['marketplace.instance'].sudo().search([('id','=',marketplace_instance_id[0])])
             kwargs = {'marketplace_instance_id': marketplace_instance_id}
             if hasattr(self, '%s_fetch_customers_to_odoo' % marketplace_instance_id.marketplace_instance_type):
                 return getattr(self, '%s_fetch_customers_to_odoo' % marketplace_instance_id.marketplace_instance_type)(kwargs)

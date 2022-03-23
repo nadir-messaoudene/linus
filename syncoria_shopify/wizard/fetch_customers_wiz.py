@@ -81,6 +81,7 @@ class CustomerFetchWizard(models.Model):
                         )
 
                         if customer_id:
+                            PartnerObj.browse(customer_id).write({"shopify_instance_id":marketplace_instance_id.id})
                             logger.info(
                                 "Customer is created with id %s", customer_id)
                         else:
@@ -88,6 +89,7 @@ class CustomerFetchWizard(models.Model):
                     else:
 
                         partner = PartnerObj.search([("shopify_id","=",i['id'])],limit=1)
+                        partner.write({"shopify_instance_id": marketplace_instance_id.id})
                         tags = i.get('tags').split(",")
                         try:
                             tag_ids = []
@@ -107,6 +109,8 @@ class CustomerFetchWizard(models.Model):
                             partner.category_id = tag_ids
                         except Exception as e:
                             logger.warning(e)
+
+
 
 
                 # self.update_sync_history({

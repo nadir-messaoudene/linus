@@ -11,7 +11,9 @@
                             <group>
                                 <field name="fetch_type" required="1" />
                             </group>
-                            <group></group>
+                            <group>
+                                <field name="instance_id" options="{'no_create': True}" required="1"/>
+                            </group>
                         </group>
                         <p attrs="{'invisible': [('fetch_type', '=', 'to_odoo')]}">The operation may take some time to complete. It depends on the number of records.
                             Please wait patiently.</p>

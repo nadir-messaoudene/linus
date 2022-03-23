@@ -12,7 +12,9 @@
                                 <field name="date_from" widget="date"/>
                                 <field name="date_to" widget="date"/>
                             </group>
-                            <group></group>
+                            <group>
+                                <field name="instance_id" options="{'no_create': True}" required="1"/>
+                            </group>
                         </group>
                         <p>The operation may take some time to complete. It depends on the number of records.
                             Please wait patiently.</p>
