@@ -18,6 +18,7 @@ class ResPartner(models.Model):
         string="Marketplace Type",
         
     )
+    shopify_instance_id = fields.Many2one("marketplace.instance", string="Shopify Instance ID")
 
         
 

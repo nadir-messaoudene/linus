@@ -9,7 +9,7 @@
     'website': "https://www.syncoria.com",
     'company': 'Syncoria Inc.',
     'maintainer': 'Syncoria Inc.',
-    'depends': ['base','stock','mail'],
+    'depends': ['base','stock','mail','sale'],
     'external_dependencies': {'python': []},
     'images': [
         'static/description/banner.png',

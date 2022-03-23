@@ -16,6 +16,7 @@ class MarketplaceSyncHistory(models.Model):
 
 
     marketplace_type = fields.Selection([], string="Marketplace Type")
+    shopify_instance_id = fields.Many2one("marketplace.instance", string="Shopify Instance ID")
 
     name = fields.Char(
         string='Name',

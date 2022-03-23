@@ -22,6 +22,7 @@ class StockPicking(models.Model):
     shopify_service = fields.Char(copy=False, readonly="1")
     shopify_track_updated = fields.Boolean(default=False, readonly=True, copy=False,)
     marketplace_type = fields.Selection(selection=[('shopify', 'Shopify')], default='shopify')
+    shopify_instance_id = fields.Many2one("marketplace.instance", string="Shopify Instance ID")
 
 
     # def action_validate(self):
@@ -264,9 +265,3 @@ class  InheritedStockwarehouse(models.Model):
     def _partner_id_change(self):
         if self.shopify_warehouse.partner_id:
             self.partner_id = self.shopify_warehouse.partner_id
-    shopify_warehouse_id = fields.Char(related='partner_id.shopify_warehouse_id',string="Shopify Warehouse ID",
-                                       store=True,
-                                       readonly=True,
-                                       )
-    shopify_warehouse_active = fields.Boolean(related='partner_id.shopify_warehouse_active',store=True,
-                                       readonly=True,)

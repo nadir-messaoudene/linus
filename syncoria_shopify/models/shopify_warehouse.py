@@ -11,6 +11,8 @@ class ShopifyWarehouse(models.Model):
     shopify_loc_name = fields.Char(
         string='Location Name')
 
+    marketplace_type = fields.Selection(selection=[('shopify', 'Shopify')], default='shopify')
+    shopify_instance_id = fields.Many2one("marketplace.instance", string="Shopify Instance ID")
     shopify_loc_add_one = fields.Char(string="Location Address1", )
     shopify_loc_add_two = fields.Char(string="Location Address2", )
     shopify_loc_city = fields.Char(string="Location City", )

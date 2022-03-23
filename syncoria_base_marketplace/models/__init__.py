@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from . import account
+from . import sale
+from . import warehouse
 from . import marketplace_connector
 from . import marketplace_instance
 from . import marketplace_products

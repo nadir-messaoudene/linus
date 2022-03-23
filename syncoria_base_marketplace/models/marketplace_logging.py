@@ -20,6 +20,7 @@ class MarketplaceLogging(models.Model):
     create_uid = fields.Integer(string='Created by', required=True)
     marketplace_type = fields.Selection(
         selection=[], default='channel_advisor', required=True)
+    shopify_instance_id = fields.Many2one("marketplace.instance", string="Shopify Instance ID")
     level = fields.Char(string='Level', required=True)
     summary = fields.Text(string='Summary', required=True)
     error = fields.Text(string='Error')
