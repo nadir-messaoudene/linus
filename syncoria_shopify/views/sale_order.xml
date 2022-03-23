@@ -2,8 +2,8 @@
 <odoo>
     <data>
 
-        <record id="view_sale_order_inherited" model="ir.ui.view">
-            <field name="name">view.sale.order.form.inherited</field>
+        <record id="shopify_view_sale_order_inherited" model="ir.ui.view">
+            <field name="name">view.sale.order.form.inherited.shopify</field>
             <field name="model">sale.order</field>
             <field name="inherit_id" ref="sale.view_order_form" />
             <field name="type">form</field>
@@ -17,6 +17,7 @@
                         <group>
                             <group>
                                 <field name="marketplace_type"/>
+                                <field name="shopify_instance_id" options="{'no_open': True,'no_create': True}"/>
                                 <field name="shopify_id"/>
                                 <field name="shopify_order"/>
                             </group>
@@ -70,6 +71,7 @@
                 <xpath expr="//field[@name='name']" position="after">
                     <field name="shopify_id"/>
                     <field name="shopify_order"/>
+                    <field name="shopify_instance_id"/>
                 </xpath>
             
                

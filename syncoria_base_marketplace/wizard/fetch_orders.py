@@ -64,6 +64,10 @@ class OrderFetchWizard(models.Model):
     def fetch_orders(self):
         marketplace_instance_id = self._get_instance_id()
         if marketplace_instance_id:
+            if self.instance_id:
+                marketplace_instance_id =self.instance_id
+            else:
+                marketplace_instance_id = self.env['marketplace.instance'].sudo().search([('id','=',marketplace_instance_id[0])])
             kwargs = {'marketplace_instance_id': marketplace_instance_id}
             if hasattr(self, '%s_fetch_orders' % marketplace_instance_id.marketplace_instance_type):
                 return getattr(self, '%s_fetch_orders' % marketplace_instance_id.marketplace_instance_type)(kwargs)

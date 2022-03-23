@@ -147,8 +147,10 @@ class OrderFetchWizard(models.Model):
             marketplace_instance_id = False
 
         if marketplace_instance_id:
-            marketplace_instance_id = self.env['marketplace.instance'].sudo().search(
-                [('id', '=', marketplace_instance_id[0])])
+            if self.instance_id:
+                marketplace_instance_id =self.instance_id
+            else:
+                marketplace_instance_id = self.env['marketplace.instance'].sudo().search([('id','=',marketplace_instance_id[0])])
         return marketplace_instance_id
 
     def shopify_find_customer_id(self, order, ids, partner_vals, main=False):
@@ -249,7 +251,11 @@ class OrderFetchWizard(models.Model):
         AccMove = self.env['account.move'].sudo()
 
         cr = self._cr
-        marketplace_instance_id = self._get_instance_id()
+        if not kwargs:
+            marketplace_instance_id = self._get_instance_id()
+        else:
+            marketplace_instance_id = kwargs.get("marketplace_instance_id")
+
         version = '2021-04'
         version = marketplace_instance_id.marketplace_api_version or '2021-04'
         url = marketplace_instance_id.marketplace_host + \
@@ -346,6 +352,7 @@ class OrderFetchWizard(models.Model):
 
                     # order_vals['marketplace'] = True
                     order_vals['marketplace_type'] = 'shopify'
+                    order_vals['shopify_instance_id'] = marketplace_instance_id.id
                     order_vals['shopify_id'] = str(i['id'])
                     order_vals['partner_id'] = customer_id
                     order_vals['shopify_status'] = i.get('confirmed')
@@ -666,6 +673,7 @@ class OrderFetchWizard(models.Model):
                 else:
                     current_order_id = OrderObj.search(
                         [('shopify_id', '=', i['id'])], order='id desc', limit=1)
+                    current_order_id.write({"shopify_instance_id": marketplace_instance_id.id})
 
                     tags = i.get('tags').split(",")
                     try:
