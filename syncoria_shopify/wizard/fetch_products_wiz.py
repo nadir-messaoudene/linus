@@ -21,20 +21,20 @@ _logger = logging.getLogger(__name__)
 class ProductsFetchWizard(models.Model):
     _inherit = 'products.fetch.wizard'
 
-    def _get_instance_id(self):
-        ICPSudo = self.env['ir.config_parameter'].sudo()
-        try:
-            marketplace_instance_id = ICPSudo.get_param(
-                'syncoria_base_marketplace.marketplace_instance_id')
-            marketplace_instance_id = [int(s) for s in re.findall(
-                r'\b\d+\b', marketplace_instance_id)]
-        except:
-            marketplace_instance_id = False
-
-        if marketplace_instance_id:
-            marketplace_instance_id = self.env['marketplace.instance'].sudo().search(
-                [('id', '=', marketplace_instance_id[0])])
-        return marketplace_instance_id
+    # def _get_instance_id(self):
+    #     ICPSudo = self.env['ir.config_parameter'].sudo()
+    #     try:
+    #         marketplace_instance_id = ICPSudo.get_param(
+    #             'syncoria_base_marketplace.marketplace_instance_id')
+    #         marketplace_instance_id = [int(s) for s in re.findall(
+    #             r'\b\d+\b', marketplace_instance_id)]
+    #     except:
+    #         marketplace_instance_id = False
+    #
+    #     if marketplace_instance_id:
+    #         marketplace_instance_id = self.env['marketplace.instance'].sudo().search(
+    #             [('id', '=', marketplace_instance_id[0])])
+    #     return marketplace_instance_id
 
     def shopify_update_categories(self, categ_list):
         """Updating category list from shopify to odoo"""
@@ -52,7 +52,9 @@ class ProductsFetchWizard(models.Model):
                                       config_products,
                                       existing_prod_ids,
                                       template,
-                                      attributes
+                                      attributes,
+                                      instance_id,
+                                      product_type
                                       ):
         """
             The aim of this function is to configure all the
@@ -135,6 +137,7 @@ class ProductsFetchWizard(models.Model):
 
                     template['name'] = product['title']
                     template['shopify_id'] = str(product['id'])
+                    template['shopify_instance_id'] = instance_id.id
                     #Product Type
                     #[consu] Consumable
                     #[service] Service
@@ -188,6 +191,7 @@ class ProductsFetchWizard(models.Model):
                     if product_tmpl_id:
                         pro_tmpl = self.env['product.template'].browse(
                             product_tmpl_id.id)
+                        pro_tmpl.write({"shopify_instance_id":instance_id.id})
                         product_tmpl_id = [product_tmpl_id.id]
 
                     else:
@@ -399,6 +403,7 @@ class ProductsFetchWizard(models.Model):
                                                         # 'list_price': child.get('price') or 0,
                                                         'marketplace_type': 'shopify',
                                                         'shopify_id': str(child['id']),
+                                                        'shopify_instance_id': instance_id.id,
                                                         'default_code': child['sku'],
                                                         'barcode': barcode,
                                                         'shopify_type': 'simple',
@@ -441,6 +446,7 @@ class ProductsFetchWizard(models.Model):
                                             'product_template_attribute_value_ids': product_template_attribute_value_ids,
                                             # 'list_price': child.get('price') or 0,
                                             'marketplace_type': 'shopify',
+                                            'shopify_instance_id': instance_id.id,
                                             'active': True,
                                             'shopify_id': str(child['id']),
                                             'default_code': child['sku'],
@@ -482,6 +488,11 @@ class ProductsFetchWizard(models.Model):
                                                 'new_quantity': product_stock,
                                             })
                                             inventory_wizard.change_product_qty()
+                                else:
+                                    product = self.env['product.product']
+
+                                    current_product = product.search([("shopify_id", "=", str(child['id']))])
+                                    current_product.write({"shopify_instance_id": instance_id.id})
 
                     else:
                         image_file = False
@@ -492,6 +503,7 @@ class ProductsFetchWizard(models.Model):
                         prod_vals = {
                             'product_tmpl_id': product_tmpl_id[0],
                             'marketplace_type': 'shopify',
+                            'shopify_instance_id': instance_id.id,
                             'shopify_id': str(product['id']),
                             'default_code': product.get('sku'),
                             'shopify_type': product.get('type_id') or 'simple',
@@ -526,6 +538,20 @@ class ProductsFetchWizard(models.Model):
 
                 except Exception as e:
                     _logger.warning("Exception-{}".format(e.args))
+            else:
+
+                #
+                # elif product_type == 'simple_product':
+                product_obj = self.env['product.template']
+
+                current_product = product_obj.search([("shopify_id","=",str(product['id']))])
+                current_product.write({"shopify_instance_id":instance_id.id})
+                if product_type == 'configurable_product':
+                    current_product.product_variant_ids.write({"shopify_instance_id":instance_id.id})
+
+
+
+
         
         print("STOP===>>>", product)
         if 'call_button'  in str(request.httprequest):
@@ -918,6 +944,8 @@ class ProductsFetchWizard(models.Model):
                     ids,
                     tmpl_vals,
                     attributes,
+                    marketplace_instance_id,
+                    'simple_product'
                 )
             _logger.info("end syncing simple products-->")
             # end syncing simple products
@@ -949,7 +977,9 @@ class ProductsFetchWizard(models.Model):
                     config_prod_list,
                     ids,
                     tmpl_vals,
-                    attributes
+                    attributes,
+                    marketplace_instance_id,
+                    'configurable_product'
                 )
             # end  creating configurable products
             _logger.info("existing_ids-->%s" % (existing_ids))
