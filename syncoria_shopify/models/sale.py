@@ -19,7 +19,8 @@ class SaleOrderShopify(models.Model):
                              store=True)
 
     marketplace_type = fields.Selection(
-        [('shopify', 'Shopify')], string="Marketplace Type"
+        selection_add= [('shopify', 'Shopify')],
+        string="Marketplace Type"
     )
     shopify_status = fields.Char(string="shopify status", readonly=True)
     shopify_order_date = fields.Datetime(string="shopify Order Date")

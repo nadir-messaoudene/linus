@@ -41,6 +41,6 @@ class ShopifyFeedOrders(models.Model):
     )
     order_wiz_id = fields.Many2one(
         string='Order Wiz',
-        comodel_name='feed.order.fetch.wizard',
+        comodel_name='feed.orders.fetch.wizard',
         ondelete='restrict',
     )

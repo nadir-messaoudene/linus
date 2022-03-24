@@ -6,6 +6,7 @@
 
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
+import json
 import re
 import logging
 _logger = logging.getLogger(__name__)
@@ -70,7 +71,7 @@ class FeedOrderFetchWizard(models.Model):
                 PartnerObj.create({
                     'instance_id': self.instance_id.id,
                     'shopify_id': customer['id'],
-                    'customer_data': str(customer),
+                    'customer_data': json.dumps(customer),
                 })
 
         except Exception as e:

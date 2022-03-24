@@ -255,7 +255,7 @@ class  InheritedStockwarehouse(models.Model):
                                        store=True,
                                        readonly=True,
                                        )
-    shopify_warehouse_active = fields.Boolean(related='shopify_warehouse.shopify_loc_active',store=True,
+    shopify_warehouse_active = fields.Boolean(string='Shopify Active', related='shopify_warehouse.shopify_loc_active',store=True,
                                        readonly=True,)
 
     shopify_warehouse = fields.Many2one("shopify.warehouse",string="Shopify Warehouse",help="If this field have value it will update qty of product/product variants.If not set value it will only update price. ")

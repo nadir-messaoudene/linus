@@ -24,7 +24,7 @@
             <field name="arch" type="xml">
                 <form string="Shopify Feed Products" create="true" delete="true" edit="true">
                     <header>
-                        <!-- <button string="Process" class="btn btn-primary" name="process_feed_product" type="object" attrs="{  'invisible': [('state','in',('queue'))]  }" />-->
+                        <button string="Process Feed Product" class="btn btn-primary" name="process_feed_product" type="object" attrs="{  'invisible': [('state','in',('queue'))]  }" />
                         <button string="Update Product Variant" class="btn btn-primary" name="update_product_product" type="object" attrs="{  'invisible': [('product_id','=',False)]  }" />
                         <button string="Update Product Template" class="btn btn-primary" name="update_product_template" type="object" attrs="{  'invisible': [('product_tmpl_id','=',False)]  }" />
                         <field name="state" widget="statusbar" statusbar_visible="draft,queue,processed,failed"/>

@@ -4,6 +4,7 @@
 #    __manifest__.py file at the root folder of this module.                  #
 ###############################################################################
 
+import json
 import requests
 import logging
 import base64
@@ -78,70 +79,57 @@ class FeedProductsFetchWizard(models.Model):
             marketplace_instance_id=instance_id
         )
 
+        _logger.info("Number of Products: {}".format(len(configurable_products.get('products'))))
+
+        feed_products = self.env['shopify.feed.products']
         if configurable_products.get('products'):
             for product in configurable_products.get('products'):
-                try:
-                    self.create_feed_parent_product(product)
-                    if product.get('variants'):
-                        if len(product.get('variants')) > 0:
-                            for var in product.get('variants'):
-                                self.create_feed_variant_product(var)
-                except Exception as e:
-                    _logger.warning("Exception-{}".format(e.args))
+                feed_products += self.create_feed_parent_product(product)
+
 
     def create_feed_parent_product(self, product):
+        shopify_feed_product = self.env['shopify.feed.products']
+        domain = [("shopify_id","=",product['id'])]
+        domain += [("product_wiz_id","=",self.id)]
+        feed_product = shopify_feed_product.search(domain,limit=1)
         try:
-            record = self.env['shopify.feed.products'].sudo().create({
-                'instance_id': self.instance_id.id,
-                'parent': True,
-                'title': product['title'],
-                'shopify_id': product['id'],
-                'inventory_id': product.get('inventory_item_id'),
-                'product_data': str(product),
-            })
-            record._cr.commit()
-            _logger.info("Shopify Feed Parent Product Created-{}".format(record))
-            feed_product_tmpl = self.env['shopify.feed.products']
-            existing_product_tmpl = feed_product_tmpl.search([("shopify_id","=",product['id'])],limit=1)
-            if not existing_product_tmpl:
-                record = feed_product_tmpl.sudo().create({
+            if not feed_product:
+                record = shopify_feed_product.sudo().create({
                     'instance_id': self.instance_id.id,
                     'parent': True,
                     'title': product['title'],
                     'shopify_id': product['id'],
                     'inventory_id': product.get('inventory_item_id'),
-                    'product_data': str(product),
+                    'product_data': json.dumps(product),
+                    'product_wiz_id' : self.id
                 })
-                record._cr.commit()
+                _logger.info("Shopify Feed Parent Product Created-{}".format(record))
+                self._cr.commit()
+            else:
+                _logger.info("Shopify Feed already exists-{}".format(record))
+
         except Exception as e:
             _logger.warning("Exception-{}".format(e.args))
-
-    def create_feed_variant_product(self, product):
-        try:
-            variant = self.env['shopify.feed.products'].sudo().create({
-                'instance_id': self.instance_id.id,
-                'parent': False,
-                'title': product['title'],
-                'shopify_id': product['id'],
-                'inventory_id': product.get('inventory_item_id'),
-                'product_data': str(product),
-            })
-            variant._cr.commit()
-            _logger.info("Shopify Feed Varaint Product Created-{}".format(record))
-            feed_product_tmpl = self.env['shopify.feed.products']
-            existing_product = feed_product_tmpl.search([("shopify_id", "=", product['id'])], limit=1)
-            if not existing_product:
-                variant = self.env['shopify.feed.products'].sudo().create({
-                    'instance_id': self.instance_id.id,
-                    'parent': False,
-                    'title': product['title'],
-                    'shopify_id': product['id'],
-                    'inventory_id': product.get('inventory_item_id'),
-                    'product_data': str(product),
-                })
-                variant._cr.commit()
-        except Exception as e:
-            _logger.warning("Exception-{}".format(e.args))
+        return feed_product
+    
+    
+    # def create_feed_variant_product(self, product):
+    #     try:
+    #         feed_product_tmpl = self.env['shopify.feed.products']
+    #         existing_product = feed_product_tmpl.search([("shopify_id", "=", product['id'])], limit=1)
+    #         if not existing_product:
+    #             variant = self.env['shopify.feed.products'].sudo().create({
+    #                 'instance_id': self.instance_id.id,
+    #                 'parent': False,
+    #                 'title': product['title'],
+    #                 'shopify_id': product['id'],
+    #                 'inventory_id': product.get('inventory_item_id'),
+    #                 'product_data': str(product),
+    #                 'product_wiz_id' : self.id
+    #             })
+    #             _logger.info("Shopify Feed Varaint Product Created-{}".format(variant))
+    #             variant._cr.commit()
+    #     except Exception as e:
+    #         _logger.warning("Exception-{}".format(e.args))
 
 
-    #TO DO: Feed Products to Odoo Products

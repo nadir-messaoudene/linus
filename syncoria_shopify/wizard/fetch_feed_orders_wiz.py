@@ -4,6 +4,7 @@
 #    __manifest__.py file at the root folder of this module.                  #
 ###############################################################################
 
+import json
 import logging
 import datetime
 from odoo import fields, models, exceptions, _
@@ -102,7 +103,7 @@ class FeedOrderFetchWizard(models.Model):
                 OrderObj.create({
                     'instance_id': self.instance_id.id,
                     'shopify_id': sp_order['id'],
-                    'order_data': str(sp_order),
+                    'order_data': json.dumps(sp_order),
                 })
         except Exception as e:
             _logger.warning("Exception {}".format(e.args))

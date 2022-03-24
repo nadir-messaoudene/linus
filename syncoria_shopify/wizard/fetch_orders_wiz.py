@@ -4,6 +4,7 @@
 #    __manifest__.py file at the root folder of this module.                  #
 ###############################################################################
 
+import json
 import logging
 import datetime
 from odoo import fields, models, exceptions, _
