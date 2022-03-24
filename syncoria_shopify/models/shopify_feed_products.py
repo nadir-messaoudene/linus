@@ -1132,3 +1132,45 @@ class ShopifyFeedProducts(models.Model):
                 _logger.info("Shopify Feed Parent Product Created-{}".format(record))
         except Exception as e:
             _logger.warning("Exception-{}".format(e.args))
+
+
+    def shopify_process_options(self, product, template):
+        template['attribute_line_ids'] = []
+        if product.get('options'):
+            oprions = product.get('options')
+            for option in oprions:
+                PA = self.env['product.attribute']
+                attribute_name = option.get('name')
+                attribute_id = PA.sudo().search(
+                    [('name', '=', option.get('name'))])
+                if not attribute_id:
+                    """Create Attribute"""
+                    attribute_id = PA.sudo().create({
+                        'create_variant': 'always',
+                        'display_type': 'radio',
+                        'name': attribute_name,
+                    })
+
+                values_ids = []
+                values = option.get('values')
+                for value in values:
+                    PTV = self.env['product.attribute.value']
+                    valud_id = PTV.sudo().search(
+                        [('name', '=', value)], limit=1)
+                    if not valud_id:
+                        valud_id = PTV.sudo().create({
+                            'attribute_id': attribute_id.id,
+                            'marketplace_type': 'shopify',
+                            'name': value,
+                        })
+                    values_ids.append(valud_id.id)
+
+                attribute_id.write({'value_ids': values_ids}) if value not in attribute_id.value_ids.mapped('name') else None
+
+            template['attribute_line_ids'].append(
+                [0, 0,
+                    {'attribute_id': attribute_id.id,
+                    'value_ids': [[6, False, values_ids]]}
+                 ])
+
+        return template
