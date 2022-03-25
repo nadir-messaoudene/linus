@@ -276,11 +276,30 @@ class OrderFetchWizard(models.Model):
 
         # Request Parameters
         type_req = 'GET'
+        params = {"limit": 250}
+        orders = []
         headers = {
             'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password}
-        order_list,next_link = self.env['marketplace.connector'].shopify_api_call(headers=headers,
-                                                                        url=url,
-                                                                        type=type_req)
+        while True:
+            fetched_orders, next_link = self.env['marketplace.connector'].shopify_api_call(headers=headers,
+                                                                                           url=url, type=type_req,
+                                                                                           marketplace_instance_id=marketplace_instance_id,
+                                                                                           params=params)
+            try:
+                orders += fetched_orders['orders']
+                if next_link:
+                    if next_link.get("next"):
+                        url = next_link.get("next").get("url")
+
+                    else:
+                        break
+                else:
+                    break
+            except Exception as e:
+                _logger.info("Exception occured: %s", e)
+                raise exceptions.UserError(_("Error Occured %s") % e)
+
+        order_list = {"orders": orders}
 
         if url and order_list:
             _logger.info("\nurl >>>>>>>>>>>>>>>>>>>>>>" + str(url) +
