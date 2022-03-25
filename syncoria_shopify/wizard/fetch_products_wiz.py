@@ -118,436 +118,448 @@ class ProductsFetchWizard(models.Model):
         # with their id and values both in odoo and shopify+++++
         
         _logger.info("START===>>>")
+        ####################################################################################
+        feed_products = self.env['shopify.feed.products']
         for product in config_products:
-            _logger.info("product===>>>{}".format(product.get('id')))
-            if str(product['id']) not in existing_prod_ids:
-                try:
-                    product_categ_ids = []
-                    if product.get('product_type'):
-                        product_categ_ids = [product.get('product_type')] or []
+            #1. Create a Feed Product
+            feed_products += self.env['shopify.feed.products'].create()
+        
+        #Process Feed Products
+        #for feed_product  in feed_products: 
+        #       feed_product.process_feed_products()
+        ####################################################################################
+         
+        # for product in config_products:
+        #     _logger.info("product===>>>{}".format(product.get('id')))
+        #     feed_products = []
+        #     if str(product['id']) not in existing_prod_ids:
 
-                    # getting odoo's category id from the shopify categ id
-                    # (which is already created)
-                    c_ids = []
-                    if product_categ_ids:
-                        cr.execute("select name from product_category "
-                                   "where name in %s",
-                                   (tuple(product_categ_ids),))
-                        c_ids = cr.fetchall()
+        #         # try:
+        #         #     product_categ_ids = []
+        #         #     if product.get('product_type'):
+        #         #         product_categ_ids = [product.get('product_type')] or []
 
-                    template['name'] = product['title']
-                    template['shopify_id'] = str(product['id'])
-                    template['shopify_instance_id'] = instance_id.id
-                    #Product Type
-                    #[consu] Consumable
-                    #[service] Service
-                    #[product] Storable
-                    template['detailed_type'] = 'product'
-                    template['active'] = True if product.get(
-                        'status') == 'active' else False
-                    template['active'] = True
-                    template['sale_ok'] = True
-                    template['purchase_ok'] = True
-                    template['marketplace_type'] = 'shopify'
-                    template['default_code'] = product.get('sku')
-                    # template['list_price'] = 0
-                    # New Fields
-                    template['shopify_published_scope'] = product.get(
-                        'published_scope')
-                    template['shopify_tags'] = product.get('tags')
-                    template['shopify_template_suffix'] = product.get(
-                        'template_suffix')
-                    template['shopify_variants'] = str(
-                        len(product.get('variants')))
+        #         #     # getting odoo's category id from the shopify categ id
+        #         #     # (which is already created)
+        #         #     c_ids = []
+        #         #     if product_categ_ids:
+        #         #         cr.execute("select name from product_category "
+        #         #                    "where name in %s",
+        #         #                    (tuple(product_categ_ids),))
+        #         #         c_ids = cr.fetchall()
 
-                    # -------------------------------------Invoice Policy------------------------------------------------
-                    marketplace_instance_id = self._get_instance_id()
-                    if marketplace_instance_id.default_invoice_policy:
-                        template['invoice_policy'] = marketplace_instance_id.default_invoice_policy
-                    # if marketplace_instance_id.sync_price == True:
-                    #     template['list_price'] = product.get('price') or 0
-                    # ---------------------------------------------------------------------------------------------------
+        #         #     template['name'] = product['title']
+        #         #     template['shopify_id'] = str(product['id'])
+        #         #     template['shopify_instance_id'] = instance_id.id
+        #         #     #Product Type
+        #         #     #[consu] Consumable
+        #         #     #[service] Service
+        #         #     #[product] Storable
+        #         #     template['detailed_type'] = 'product'
+        #         #     template['active'] = True if product.get(
+        #         #         'status') == 'active' else False
+        #         #     template['active'] = True
+        #         #     template['sale_ok'] = True
+        #         #     template['purchase_ok'] = True
+        #         #     template['marketplace_type'] = 'shopify'
+        #         #     template['default_code'] = product.get('sku')
+        #         #     # template['list_price'] = 0
+        #         #     # New Fields
+        #         #     template['shopify_published_scope'] = product.get(
+        #         #         'published_scope')
+        #         #     template['shopify_tags'] = product.get('tags')
+        #         #     template['shopify_template_suffix'] = product.get(
+        #         #         'template_suffix')
+        #         #     template['shopify_variants'] = str(
+        #         #         len(product.get('variants')))
 
-                    if len(product.get('variants')) > 1:
-                        template['shopify_type'] = 'config'
-                    else:
-                        template['shopify_type'] = 'simple'
-                        template['default_code'] = product.get('variants')[
-                            0].get('sku')
+        #         #     # -------------------------------------Invoice Policy------------------------------------------------
+        #         #     marketplace_instance_id = self._get_instance_id()
+        #         #     if marketplace_instance_id.default_invoice_policy:
+        #         #         template['invoice_policy'] = marketplace_instance_id.default_invoice_policy
+        #         #     # if marketplace_instance_id.sync_price == True:
+        #         #     #     template['list_price'] = product.get('price') or 0
+        #         #     # ---------------------------------------------------------------------------------------------------
 
-                    template['custom_option'] = False
-                    # New addition
-                    template['weight'] = product.get('weight') or 0
-                    if product.get('product_type'):
-                        categ_id = self.env['product.category'].search([
-                            ('name', '=', product.get('product_type'))
-                        ], limit=1)
-                        if len(categ_id) > 0:
-                            template['categ_id'] = categ_id.id
+        #         #     if len(product.get('variants')) > 1:
+        #         #         template['shopify_type'] = 'config'
+        #         #     else:
+        #         #         template['shopify_type'] = 'simple'
+        #         #         template['default_code'] = product.get('variants')[
+        #         #             0].get('sku')
 
-                    # creating products
-                    product_tmpl_id = self.env['product.template'].sudo().search(
-                        [('shopify_id', '=', str(product['id']))])
-                    if product_tmpl_id:
-                        pro_tmpl = self.env['product.template'].browse(
-                            product_tmpl_id.id)
-                        pro_tmpl.write({"shopify_instance_id":instance_id.id})
-                        product_tmpl_id = [product_tmpl_id.id]
+        #         #     template['custom_option'] = False
+        #         #     # New addition
+        #         #     template['weight'] = product.get('weight') or 0
+        #         #     if product.get('product_type'):
+        #         #         categ_id = self.env['product.category'].search([
+        #         #             ('name', '=', product.get('product_type'))
+        #         #         ], limit=1)
+        #         #         if len(categ_id) > 0:
+        #         #             template['categ_id'] = categ_id.id
 
-                    else:
-                        template = self.shopify_process_options(product, template)
-                        pro_tmpl = self.env['product.template'].sudo().create(template)
-                        product_tmpl_id = [pro_tmpl.id]
+        #         #     # creating products
+        #         #     product_tmpl_id = self.env['product.template'].sudo().search(
+        #         #         [('shopify_id', '=', str(product['id']))])
+        #         #     if product_tmpl_id:
+        #         #         pro_tmpl = self.env['product.template'].browse(
+        #         #             product_tmpl_id.id)
+        #         #         pro_tmpl.write({"shopify_instance_id":instance_id.id})
+        #         #         product_tmpl_id = [product_tmpl_id.id]
+
+        #         #     else:
+        #         #         template = self.shopify_process_options(product, template)
+        #         #         pro_tmpl = self.env['product.template'].sudo().create(template)
+        #         #         product_tmpl_id = [pro_tmpl.id]
 
 
-                    _logger.info("\nproduct_tmpl_id-->" + str(product_tmpl_id))
-                    _logger.info("\npro_tmpl-->" + str(pro_tmpl))
+        #         #     _logger.info("\nproduct_tmpl_id-->" + str(product_tmpl_id))
+        #         #     _logger.info("\npro_tmpl-->" + str(pro_tmpl))
 
-                    image_file = False
+        #         #     image_file = False
 
-                    if marketplace_instance_id.sync_product_image == True:
-                        try:
-                            for pic in product['images']:
-                                if 'src' in pic:
-                                    image_file = pic.get('src')
-                                    pro_tmpl.update({'image_1920': self.shopify_image_processing(image_file),
-                                                    'default_code': product.get('sku')})
-                        except:
-                            _logger.info(
-                                "unable to import image url of product sku %s", product.get('sku'))
+        #         #     if marketplace_instance_id.sync_product_image == True:
+        #         #         try:
+        #         #             for pic in product['images']:
+        #         #                 if 'src' in pic:
+        #         #                     image_file = pic.get('src')
+        #         #                     pro_tmpl.update({'image_1920': self.shopify_image_processing(image_file),
+        #         #                                     'default_code': product.get('sku')})
+        #         #         except:
+        #         #             _logger.info(
+        #         #                 "unable to import image url of product sku %s", product.get('sku'))
 
-                    if product.get('variants'):
-                        # here we create template for main product and variants for
-                        # the child products
+        #         #     if product.get('variants'):
+        #         #         # here we create template for main product and variants for
+        #         #         # the child products
 
-                        if len(product.get('variants')) == 1:
-                            pro_tmpl.write({
-                                # 'list_price': product.get('variants')[0].get('price'),
-                                'default_code': product.get('variants')[0].get('sku'),
-                                'weight': product.get('variants')[0].get('weight'),
-                                'qty_available': product.get('variants')[0].get('inventory_quantity'),
-                                # 'compare_at_price': product.get('variants')[0].get('compare_at_price'),
-                                # 'fulfillment_service': product.get('variants')[0].get('fulfillment_service'),
-                                # 'inventory_management': product.get('variants')[0].get('inventory_management'),
-                                # 'inventory_policy': product.get('variants')[0].get('inventory_policy'),
-                                # 'requires_shipping': product.get('variants')[0].get('requires_shipping'),
-                                # 'taxable': product.get('variants')[0].get('taxable'),
-                            })
+        #         #         if len(product.get('variants')) == 1:
+        #         #             pro_tmpl.write({
+        #         #                 # 'list_price': product.get('variants')[0].get('price'),
+        #         #                 'default_code': product.get('variants')[0].get('sku'),
+        #         #                 'weight': product.get('variants')[0].get('weight'),
+        #         #                 'qty_available': product.get('variants')[0].get('inventory_quantity'),
+        #         #                 # 'compare_at_price': product.get('variants')[0].get('compare_at_price'),
+        #         #                 # 'fulfillment_service': product.get('variants')[0].get('fulfillment_service'),
+        #         #                 # 'inventory_management': product.get('variants')[0].get('inventory_management'),
+        #         #                 # 'inventory_policy': product.get('variants')[0].get('inventory_policy'),
+        #         #                 # 'requires_shipping': product.get('variants')[0].get('requires_shipping'),
+        #         #                 # 'taxable': product.get('variants')[0].get('taxable'),
+        #         #             })
 
-                        if len(product.get('variants')) > 0:
-                            # since this product has variants, we need to get the
-                            # variant options associated with this product
-                            # we are updating the attributes associated with this product
-                            # (if it is not added to odoo already)
+        #         #         if len(product.get('variants')) > 0:
+        #         #             # since this product has variants, we need to get the
+        #         #             # variant options associated with this product
+        #         #             # we are updating the attributes associated with this product
+        #         #             # (if it is not added to odoo already)
 
-                            options = product.get('options')
-                            for option in options:
-                                option['attribute_id'] = option.get('id')
+        #         #             options = product.get('options')
+        #         #             for option in options:
+        #         #                 option['attribute_id'] = option.get('id')
 
-                            attributes_list = self._shopify_update_attributes(
-                                attributes_list,
-                                options,
-                                attributes['items']
-                            )
+        #         #             attributes_list = self._shopify_update_attributes(
+        #         #                 attributes_list,
+        #         #                 options,
+        #         #                 attributes['items']
+        #         #             )
 
-                            attrib_line = {}
-                            child_file = False
+        #         #             attrib_line = {}
+        #         #             child_file = False
 
-                            for child in product['variants']:
-                                variant_categ_ids = []
-                                variant_att_vals = []
+        #         #             for child in product['variants']:
+        #         #                 variant_categ_ids = []
+        #         #                 variant_att_vals = []
 
-                                option_keys = ['option1', 'option2', 'option3']
-                                option_names = []
-                                for key, value in child.items():
-                                    if key in option_keys:
-                                        if child[key] != None:
-                                            option_names.append(child[key])
+        #         #                 option_keys = ['option1', 'option2', 'option3']
+        #         #                 option_names = []
+        #         #                 for key, value in child.items():
+        #         #                     if key in option_keys:
+        #         #                         if child[key] != None:
+        #         #                             option_names.append(child[key])
 
-                                for option in options:
-                                    att_id = str(option['attribute_id'])
-                                    current_att_id = attributes_list[att_id]['id']
-                                    if current_att_id not in attrib_line:
-                                        attrib_line[current_att_id] = []
-                                    att_code = attributes_list[att_id]['code']
-                                    att_options = attributes_list[att_id]['options']
+        #         #                 for option in options:
+        #         #                     att_id = str(option['attribute_id'])
+        #         #                     current_att_id = attributes_list[att_id]['id']
+        #         #                     if current_att_id not in attrib_line:
+        #         #                         attrib_line[current_att_id] = []
+        #         #                     att_code = attributes_list[att_id]['code']
+        #         #                     att_options = attributes_list[att_id]['options']
 
-                                    # if child.get('custom_attributes'):
-                                    #     for att in child.get('custom_attributes'):
-                                    #         if att['attribute_code'] =='image':
-                                    #             child_file = att['value']
-                                    #         if att['attribute_code'] == att_code:
-                                    #             variant_att_vals.append(
-                                    #                 att_options[att['value']])
-                                    #             attrib_line[current_att_id].append(
-                                    #                 att_options[att['value']]) \
-                                    #                 if att_options[att['value']] not in \
-                                    #                 attrib_line[current_att_id] \
-                                    #                 else None
-                                    #         elif att[
-                                    #             'attribute_code'] == 'category_ids':
-                                    #             variant_categ_ids = attr.get(
-                                    #                 'value') or []
+        #         #                     # if child.get('custom_attributes'):
+        #         #                     #     for att in child.get('custom_attributes'):
+        #         #                     #         if att['attribute_code'] =='image':
+        #         #                     #             child_file = att['value']
+        #         #                     #         if att['attribute_code'] == att_code:
+        #         #                     #             variant_att_vals.append(
+        #         #                     #                 att_options[att['value']])
+        #         #                     #             attrib_line[current_att_id].append(
+        #         #                     #                 att_options[att['value']]) \
+        #         #                     #                 if att_options[att['value']] not in \
+        #         #                     #                 attrib_line[current_att_id] \
+        #         #                     #                 else None
+        #         #                     #         elif att[
+        #         #                     #             'attribute_code'] == 'category_ids':
+        #         #                     #             variant_categ_ids = attr.get(
+        #         #                     #                 'value') or []
 
-                                    att_code_id = self.env['product.attribute'].sudo().search(
-                                        [('name', '=', att_code)])
-                                    if att_code_id:
-                                        for key, value in attrib_line.items():
-                                            if key in att_code_id.ids:
-                                                attrib_line[key] = [
-                                                    value for key, value in att_options.items()]
+        #         #                     att_code_id = self.env['product.attribute'].sudo().search(
+        #         #                         [('name', '=', att_code)])
+        #         #                     if att_code_id:
+        #         #                         for key, value in attrib_line.items():
+        #         #                             if key in att_code_id.ids:
+        #         #                                 attrib_line[key] = [
+        #         #                                     value for key, value in att_options.items()]
 
-                                    print(attrib_line)
-                                    att_values = []
-                                    if att_options:
-                                        for key, value in att_options.items():
-                                            if key in option_names:
-                                                att_values.append(
-                                                    att_options[key])
+        #         #                     print(attrib_line)
+        #         #                     att_values = []
+        #         #                     if att_options:
+        #         #                         for key, value in att_options.items():
+        #         #                             if key in option_names:
+        #         #                                 att_values.append(
+        #         #                                     att_options[key])
 
-                                # attribute_id-->product.attribue
-                                for line in attrib_line:
-                                    if attrib_line[line]:
-                                        # cr.execute(
-                                        #     "insert into product_template_attribute_line "
-                                        #     "(attribute_id, product_tmpl_id, value_ids) "
-                                        #     "values(%s, %s. %s) returning id",
-                                        #     (line, product_tmpl_id[0], tuple(attrib_line[line])))
-                                        # line_id = cr.fetchone()
+        #         #                 # attribute_id-->product.attribue
+        #         #                 for line in attrib_line:
+        #         #                     if attrib_line[line]:
+        #         #                         # cr.execute(
+        #         #                         #     "insert into product_template_attribute_line "
+        #         #                         #     "(attribute_id, product_tmpl_id, value_ids) "
+        #         #                         #     "values(%s, %s. %s) returning id",
+        #         #                         #     (line, product_tmpl_id[0], tuple(attrib_line[line])))
+        #         #                         # line_id = cr.fetchone()
 
-                                        line_arr = [line] if type(
-                                            line) == int else line
-                                        domain = [('attribute_id', 'in', line_arr),
-                                                  ('product_tmpl_id', '=',
-                                                   product_tmpl_id[0]),
-                                                  ('value_ids', 'in', attrib_line[line])]
-                                        line_rec = self.env['product.template.attribute.line'].search(
-                                            domain)
-                                        if not line_rec:
-                                            print("product_tmpl_id")
-                                            print(product_tmpl_id)
+        #         #                         line_arr = [line] if type(
+        #         #                             line) == int else line
+        #         #                         domain = [('attribute_id', 'in', line_arr),
+        #         #                                   ('product_tmpl_id', '=',
+        #         #                                    product_tmpl_id[0]),
+        #         #                                   ('value_ids', 'in', attrib_line[line])]
+        #         #                         line_rec = self.env['product.template.attribute.line'].search(
+        #         #                             domain)
+        #         #                         if not line_rec:
+        #         #                             print("product_tmpl_id")
+        #         #                             print(product_tmpl_id)
 
-                                            Ptal = self.env['product.template.attribute.line'].sudo(
-                                            )
-                                            line_values = {
-                                                'attribute_id': line,
-                                                'product_tmpl_id': product_tmpl_id[0],
-                                                'value_ids': [(6, 0, attrib_line[line])]
-                                            }
-                                            print("line_values")
-                                            print(line_values)
-                                            print("Error Here")
-                                            line_rec = Ptal.create(line_values)
+        #         #                             Ptal = self.env['product.template.attribute.line'].sudo(
+        #         #                             )
+        #         #                             line_values = {
+        #         #                                 'attribute_id': line,
+        #         #                                 'product_tmpl_id': product_tmpl_id[0],
+        #         #                                 'value_ids': [(6, 0, attrib_line[line])]
+        #         #                             }
+        #         #                             print("line_values")
+        #         #                             print(line_values)
+        #         #                             print("Error Here")
+        #         #                             line_rec = Ptal.create(line_values)
 
-                                # creating variants
-                                if str(child['id']) not in existing_prod_ids:
-                                    var = self.get_variant_combs(child)
-                                    PtAv = self.env['product.template.attribute.value']
-                                    variant, variant_ids = var[0], var[1]
-                                    template_id = self.env['product.template'].search(
-                                        [('id', '=', product_tmpl_id[0]), ('active', 'in', (True, False))], limit=1)
+        #         #                 # creating variants
+        #         #                 if str(child['id']) not in existing_prod_ids:
+        #         #                     var = self.get_variant_combs(child)
+        #         #                     PtAv = self.env['product.template.attribute.value']
+        #         #                     variant, variant_ids = var[0], var[1]
+        #         #                     template_id = self.env['product.template'].search(
+        #         #                         [('id', '=', product_tmpl_id[0]), ('active', 'in', (True, False))], limit=1)
 
-                                    _logger.info(
-                                        "product_tmpl_id===>>>" + str(product_tmpl_id))
-                                    _logger.info(
-                                        "template_id==>" + str(template_id))
-                                    if product_tmpl_id and not template_id:
-                                        _logger.warning(
-                                            """Need to create Template if missing""")
+        #         #                     _logger.info(
+        #         #                         "product_tmpl_id===>>>" + str(product_tmpl_id))
+        #         #                     _logger.info(
+        #         #                         "template_id==>" + str(template_id))
+        #         #                     if product_tmpl_id and not template_id:
+        #         #                         _logger.warning(
+        #         #                             """Need to create Template if missing""")
 
-                                    product_template_attribute_value_ids = self.check_for_new_attrs(
-                                        template_id, options)
+        #         #                     product_template_attribute_value_ids = self.check_for_new_attrs(
+        #         #                         template_id, options)
 
-                                    # variant_att_vals = PtAv.search([('name', 'in', option_names)])
-                                    domain = [
-                                        ('combination_indices',
-                                         'in', variant_ids.ids),
-                                        ('product_tmpl_id', '=',
-                                         product_tmpl_id[0]),
-                                    ]
+        #         #                     # variant_att_vals = PtAv.search([('name', 'in', option_names)])
+        #         #                     domain = [
+        #         #                         ('combination_indices',
+        #         #                          'in', variant_ids.ids),
+        #         #                         ('product_tmpl_id', '=',
+        #         #                          product_tmpl_id[0]),
+        #         #                     ]
 
-                                    exit_prod_id = VariantObj.sudo().search(domain)
-                                    _logger.info("exit_prod_id===>%s" %
-                                                 (str(exit_prod_id)))
+        #         #                     exit_prod_id = VariantObj.sudo().search(domain)
+        #         #                     _logger.info("exit_prod_id===>%s" %
+        #         #                                  (str(exit_prod_id)))
 
-                                    # Search the Product with Attribute Values
-                                    print(option_names)
-                                    pro_var = VariantObj.sudo().search([
-                                        ('product_tmpl_id', '=',
-                                         product_tmpl_id[0]),
-                                        # ('marketplace_type','=', 'shopify'),
-                                    ])
+        #         #                     # Search the Product with Attribute Values
+        #         #                     print(option_names)
+        #         #                     pro_var = VariantObj.sudo().search([
+        #         #                         ('product_tmpl_id', '=',
+        #         #                          product_tmpl_id[0]),
+        #         #                         # ('marketplace_type','=', 'shopify'),
+        #         #                     ])
 
-                                    pro_var_flag = False
-                                    if pro_var:
-                                        print("pro_var")
-                                        for prod in pro_var:
-                                            print(
-                                                prod.product_template_attribute_value_ids)
-                                            if len(prod.product_template_attribute_value_ids) > 0:
-                                                if prod.product_template_attribute_value_ids[0].name == child.get('title'):
-                                                    # Update this product
-                                                    pro_var_flag = True
-                                                    weight = child['weight']
-                                                    if child['weight_unit'] != 'lb':
-                                                        weight = child['weight']/2.2
-                                                    barcode = None
-                                                    if child.get('barcode'):
-                                                        barcodes = self.env['product.product'].search([]).mapped(
-                                                            'barcode') + self.env['product.template'].search([]).mapped('barcode')
-                                                        if child.get('barcode') not in child.get('barcode'):
-                                                            barcode = child.get(
-                                                                'barcode')
+        #         #                     pro_var_flag = False
+        #         #                     if pro_var:
+        #         #                         print("pro_var")
+        #         #                         for prod in pro_var:
+        #         #                             print(
+        #         #                                 prod.product_template_attribute_value_ids)
+        #         #                             if len(prod.product_template_attribute_value_ids) > 0:
+        #         #                                 if prod.product_template_attribute_value_ids[0].name == child.get('title'):
+        #         #                                     # Update this product
+        #         #                                     pro_var_flag = True
+        #         #                                     weight = child['weight']
+        #         #                                     if child['weight_unit'] != 'lb':
+        #         #                                         weight = child['weight']/2.2
+        #         #                                     barcode = None
+        #         #                                     if child.get('barcode'):
+        #         #                                         barcodes = self.env['product.product'].search([]).mapped(
+        #         #                                             'barcode') + self.env['product.template'].search([]).mapped('barcode')
+        #         #                                         if child.get('barcode') not in child.get('barcode'):
+        #         #                                             barcode = child.get(
+        #         #                                                 'barcode')
 
-                                                    prod.write({
-                                                        # 'list_price': child.get('price') or 0,
-                                                        'marketplace_type': 'shopify',
-                                                        'shopify_id': str(child['id']),
-                                                        'shopify_instance_id': instance_id.id,
-                                                        'default_code': child['sku'],
-                                                        'barcode': barcode,
-                                                        'shopify_type': 'simple',
-                                                        'image_1920': self.shopify_image_processing(child_file) if marketplace_instance_id.sync_product_image == True else False,
-                                                        'combination_indices': variant_ids,
-                                                        'shopify_com': variant_ids,
-                                                        'weight': weight,
-                                                        'qty_available': child['inventory_quantity'],
-                                                        'compare_at_price': child['compare_at_price'],
-                                                        'fulfillment_service': child['fulfillment_service'],
-                                                        'inventory_management': child['inventory_management'],
-                                                        'inventory_policy': child['inventory_policy'],
-                                                        'requires_shipping': child['requires_shipping'],
-                                                        'taxable': child['taxable'],
-                                                    })
+        #         #                                     prod.write({
+        #         #                                         # 'list_price': child.get('price') or 0,
+        #         #                                         'marketplace_type': 'shopify',
+        #         #                                         'shopify_id': str(child['id']),
+        #         #                                         'shopify_instance_id': instance_id.id,
+        #         #                                         'default_code': child['sku'],
+        #         #                                         'barcode': barcode,
+        #         #                                         'shopify_type': 'simple',
+        #         #                                         'image_1920': self.shopify_image_processing(child_file) if marketplace_instance_id.sync_product_image == True else False,
+        #         #                                         'combination_indices': variant_ids,
+        #         #                                         'shopify_com': variant_ids,
+        #         #                                         'weight': weight,
+        #         #                                         'qty_available': child['inventory_quantity'],
+        #         #                                         'compare_at_price': child['compare_at_price'],
+        #         #                                         'fulfillment_service': child['fulfillment_service'],
+        #         #                                         'inventory_management': child['inventory_management'],
+        #         #                                         'inventory_policy': child['inventory_policy'],
+        #         #                                         'requires_shipping': child['requires_shipping'],
+        #         #                                         'taxable': child['taxable'],
+        #         #                                     })
 
-                                                    if marketplace_instance_id.marketplace_fetch_quantity == True:
-                                                        """Update Product Quantity in Odoo"""
-                                                        product_stock = child['inventory_quantity']
-                                                        # updating qty on hand
-                                                        UpdateQtyWiz = self.env['stock.change.product.qty']
-                                                        default_location = None
-                                                        company_user = self.env.user.company_id
-                                                        warehouse_id = marketplace_instance_id.warehouse_id
-                                                        if not warehouse_id:
-                                                            warehouse_id = self.env['stock.warehouse'].search([('company_id', '=', company_user.id)],
-                                                                                                              limit=1)
+        #         #                                     if marketplace_instance_id.marketplace_fetch_quantity == True:
+        #         #                                         """Update Product Quantity in Odoo"""
+        #         #                                         product_stock = child['inventory_quantity']
+        #         #                                         # updating qty on hand
+        #         #                                         UpdateQtyWiz = self.env['stock.change.product.qty']
+        #         #                                         default_location = None
+        #         #                                         company_user = self.env.user.company_id
+        #         #                                         warehouse_id = marketplace_instance_id.warehouse_id
+        #         #                                         if not warehouse_id:
+        #         #                                             warehouse_id = self.env['stock.warehouse'].search([('company_id', '=', company_user.id)],
+        #         #                                                                                               limit=1)
 
-                                                        inventory_wizard = UpdateQtyWiz.create({
-                                                            'product_id': prod.id,
-                                                            'product_tmpl_id': prod.product_tmpl_id.id,
-                                                            'new_quantity': product_stock,
-                                                        })
-                                                        inventory_wizard.change_product_qty()
+        #         #                                         inventory_wizard = UpdateQtyWiz.create({
+        #         #                                             'product_id': prod.id,
+        #         #                                             'product_tmpl_id': prod.product_tmpl_id.id,
+        #         #                                             'new_quantity': product_stock,
+        #         #                                         })
+        #         #                                         inventory_wizard.change_product_qty()
 
-                                    if pro_var_flag == False:
-                                        print("pro_vals")
-                                        pro_vals = {
-                                            'product_tmpl_id': product_tmpl_id[0],
-                                            'product_template_attribute_value_ids': product_template_attribute_value_ids,
-                                            # 'list_price': child.get('price') or 0,
-                                            'marketplace_type': 'shopify',
-                                            'shopify_instance_id': instance_id.id,
-                                            'active': True,
-                                            'shopify_id': str(child['id']),
-                                            'default_code': child['sku'],
-                                            'barcode': child['barcode'] if child['barcode'] != '' else False,
-                                            'shopify_type': 'simple',
-                                            'combination_indices': variant_ids,
-                                            'shopify_com': variant_ids,
-                                            'weight': child['weight'],
-                                            'qty_available': child['inventory_quantity'],
-                                            'compare_at_price': child['compare_at_price'],
-                                            'fulfillment_service': child['fulfillment_service'],
-                                            'inventory_management': child['inventory_management'],
-                                            'inventory_policy': child['inventory_policy'],
-                                            'requires_shipping': child['requires_shipping'],
-                                            'taxable': child['taxable'],
-                                        }
-                                        if marketplace_instance_id.sync_product_image == True:
-                                            pro_vals['image_1920'] = self.shopify_image_processing(
-                                                child_file)
+        #         #                     if pro_var_flag == False:
+        #         #                         print("pro_vals")
+        #         #                         pro_vals = {
+        #         #                             'product_tmpl_id': product_tmpl_id[0],
+        #         #                             'product_template_attribute_value_ids': product_template_attribute_value_ids,
+        #         #                             # 'list_price': child.get('price') or 0,
+        #         #                             'marketplace_type': 'shopify',
+        #         #                             'shopify_instance_id': instance_id.id,
+        #         #                             'active': True,
+        #         #                             'shopify_id': str(child['id']),
+        #         #                             'default_code': child['sku'],
+        #         #                             'barcode': child['barcode'] if child['barcode'] != '' else False,
+        #         #                             'shopify_type': 'simple',
+        #         #                             'combination_indices': variant_ids,
+        #         #                             'shopify_com': variant_ids,
+        #         #                             'weight': child['weight'],
+        #         #                             'qty_available': child['inventory_quantity'],
+        #         #                             'compare_at_price': child['compare_at_price'],
+        #         #                             'fulfillment_service': child['fulfillment_service'],
+        #         #                             'inventory_management': child['inventory_management'],
+        #         #                             'inventory_policy': child['inventory_policy'],
+        #         #                             'requires_shipping': child['requires_shipping'],
+        #         #                             'taxable': child['taxable'],
+        #         #                         }
+        #         #                         if marketplace_instance_id.sync_product_image == True:
+        #         #                             pro_vals['image_1920'] = self.shopify_image_processing(
+        #         #                                 child_file)
 
-                                        print("\npro_vals:\n", str(pro_vals))
+        #         #                         print("\npro_vals:\n", str(pro_vals))
 
-                                        if not VariantObj.sudo().search([('shopify_id', '=', str(child['id']))]):
-                                            prod_id = VariantObj.sudo().create(pro_vals)
+        #         #                         if not VariantObj.sudo().search([('shopify_id', '=', str(child['id']))]):
+        #         #                             prod_id = VariantObj.sudo().create(pro_vals)
 
-                                        _logger.info(
-                                            "product created %s", prod_id)
-                                        prod_id and existing_prod_ids.append(
-                                            str(child['id']))
+        #         #                         _logger.info(
+        #         #                             "product created %s", prod_id)
+        #         #                         prod_id and existing_prod_ids.append(
+        #         #                             str(child['id']))
 
-                                        if marketplace_instance_id.marketplace_fetch_quantity == True:
-                                            """Update Product Quantity in Odoo"""
-                                            product_stock = child['inventory_quantity']
-                                            # updating qty on hand
-                                            UpdateQtyWiz = self.env['stock.change.product.qty']
-                                            inventory_wizard = UpdateQtyWiz.create({
-                                                'product_id': prod_id.id,
-                                                'product_tmpl_id': prod_id.product_tmpl_id.id,
-                                                'new_quantity': product_stock,
-                                            })
-                                            inventory_wizard.change_product_qty()
-                                else:
-                                    product = self.env['product.product']
+        #         #                         if marketplace_instance_id.marketplace_fetch_quantity == True:
+        #         #                             """Update Product Quantity in Odoo"""
+        #         #                             product_stock = child['inventory_quantity']
+        #         #                             # updating qty on hand
+        #         #                             UpdateQtyWiz = self.env['stock.change.product.qty']
+        #         #                             inventory_wizard = UpdateQtyWiz.create({
+        #         #                                 'product_id': prod_id.id,
+        #         #                                 'product_tmpl_id': prod_id.product_tmpl_id.id,
+        #         #                                 'new_quantity': product_stock,
+        #         #                             })
+        #         #                             inventory_wizard.change_product_qty()
+        #         #                 else:
+        #         #                     product = self.env['product.product']
 
-                                    current_product = product.search([("shopify_id", "=", str(child['id']))])
-                                    current_product.write({"shopify_instance_id": instance_id.id})
+        #         #                     current_product = product.search([("shopify_id", "=", str(child['id']))])
+        #         #                     current_product.write({"shopify_instance_id": instance_id.id})
 
-                    else:
-                        image_file = False
-                        for pic in product['images']:
-                            if 'src' in pic:
-                                image_file = pic.get('src')
+        #         #     else:
+        #         #         image_file = False
+        #         #         for pic in product['images']:
+        #         #             if 'src' in pic:
+        #         #                 image_file = pic.get('src')
 
-                        prod_vals = {
-                            'product_tmpl_id': product_tmpl_id[0],
-                            'marketplace_type': 'shopify',
-                            'shopify_instance_id': instance_id.id,
-                            'shopify_id': str(product['id']),
-                            'default_code': product.get('sku'),
-                            'shopify_type': product.get('type_id') or 'simple',
-                            'custom_option': False,
-                            'combination_indices': self.get_variant_combs(child),
-                        }
-                        if marketplace_instance_id.sync_product_image == True:
-                            prod_vals['image_1920'] = self.shopify_image_processing(
-                                image_file)
+        #         #         prod_vals = {
+        #         #             'product_tmpl_id': product_tmpl_id[0],
+        #         #             'marketplace_type': 'shopify',
+        #         #             'shopify_instance_id': instance_id.id,
+        #         #             'shopify_id': str(product['id']),
+        #         #             'default_code': product.get('sku'),
+        #         #             'shopify_type': product.get('type_id') or 'simple',
+        #         #             'custom_option': False,
+        #         #             'combination_indices': self.get_variant_combs(child),
+        #         #         }
+        #         #         if marketplace_instance_id.sync_product_image == True:
+        #         #             prod_vals['image_1920'] = self.shopify_image_processing(
+        #         #                 image_file)
 
-                        if not VariantObj.sudo().search([('shopify_id', '=', str(product['id']))]):
-                            prod_id = VariantObj.sudo().create(prod_vals)
+        #         #         if not VariantObj.sudo().search([('shopify_id', '=', str(product['id']))]):
+        #         #             prod_id = VariantObj.sudo().create(prod_vals)
 
-                        _logger.info("product created %s", prod_id)
-                        prod_id and existing_prod_ids.append(
-                            str(product['id']))
+        #         #         _logger.info("product created %s", prod_id)
+        #         #         prod_id and existing_prod_ids.append(
+        #         #             str(product['id']))
 
-                    print("Variants creation Ends")
-                    print("Catergory creation Starts")
-                    for categ in c_ids:
-                        print(categ[0], product_tmpl_id[0])
-                        categ_id = self.env['product.category'].sudo().search([
-                            ('name', '=', categ[0])
-                        ], limit=1)
-                        cr.execute("insert into shopify_product_category(name,"
-                                   "categ_name, product_tmpl_id)"
-                                   " values (%s,%s,%s)",
-                                   (categ_id.id, categ[0], product_tmpl_id[0]))
-                    print("Catergory creation Ends")
+        #         #     print("Variants creation Ends")
+        #         #     print("Catergory creation Starts")
+        #         #     for categ in c_ids:
+        #         #         print(categ[0], product_tmpl_id[0])
+        #         #         categ_id = self.env['product.category'].sudo().search([
+        #         #             ('name', '=', categ[0])
+        #         #         ], limit=1)
+        #         #         cr.execute("insert into shopify_product_category(name,"
+        #         #                    "categ_name, product_tmpl_id)"
+        #         #                    " values (%s,%s,%s)",
+        #         #                    (categ_id.id, categ[0], product_tmpl_id[0]))
+        #         #     print("Catergory creation Ends")
 
-                    # return existing_prod_ids
+        #         #     # return existing_prod_ids
 
-                except Exception as e:
-                    _logger.warning("Exception-{}".format(e.args))
-            else:
+        #         # except Exception as e:
+        #         #     _logger.warning("Exception-{}".format(e.args))
+        #     else:
 
-                #
-                # elif product_type == 'simple_product':
-                product_obj = self.env['product.template']
 
-                current_product = product_obj.search([("shopify_id","=",str(product['id']))])
-                current_product.write({"shopify_instance_id":instance_id.id})
-                if product_type == 'configurable_product':
-                    current_product.product_variant_ids.write({"shopify_instance_id":instance_id.id})
+        #         product_obj = self.env['product.template']
+
+        #         current_product = product_obj.search([("shopify_id","=",str(product['id']))])
+        #         current_product.write({"shopify_instance_id":instance_id.id})
+        #         if product_type == 'configurable_product':
+        #             current_product.product_variant_ids.write({"shopify_instance_id":instance_id.id})
 
 
 
