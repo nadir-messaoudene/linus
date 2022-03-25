@@ -706,7 +706,11 @@ class OrderFetchWizard(models.Model):
                                 # current_order_id.write({"tag_ids":[(0,0, {"name": tag, "color": 1}))
                             if tag_id:
                                 tag_ids.append(tag_id.id)
-                        current_order_id.tag_ids= tag_ids
+
+                        if tag_ids:
+                            current_order_id.tag_ids= tag_ids
+                        else:
+                            current_order_id.tag_ids.unlink()
                     except Exception as e:
                         _logger.warning(e)
 

@@ -45,6 +45,17 @@ class CustomerFetchWizard(models.Model):
             marketplace_instance_id = kwargs.get('marketplace_instance_id')
             version = marketplace_instance_id.marketplace_api_version or '2021-01'
             url = marketplace_instance_id.marketplace_host +  '/admin/api/%s/customers.json'%version
+            if self.date_from and not self.date_to:
+                url += '?created_at_min=%s' % self.date_from.strftime(
+                    "%Y-%m-%dT00:00:00-04:00")
+            if not self.date_from and self.date_to:
+                url += '?created_at_max=%s' % self.date_to.strftime(
+                    "%Y-%m-%dT00:00:00-04:00")
+            if self.date_from and self.date_to:
+                url += '?created_at_min=%s' % self.date_from.strftime(
+                    "%Y-%m-%dT00:00:00-04:00")
+                url += '&created_at_max=%s' % self.date_to.strftime(
+                    "%Y-%m-%dT00:00:00-04:00")
             headers = {'X-Shopify-Access-Token':marketplace_instance_id.marketplace_api_password}
             type_req = 'GET'
             params = {"limit":250}
@@ -118,7 +129,10 @@ class CustomerFetchWizard(models.Model):
                                     # current_order_id.write({"tag_ids":[(0,0, {"name": tag, "color": 1}))
                                 if tag_id:
                                     tag_ids.append(tag_id.id)
-                            partner.category_id = tag_ids
+                            if tag_ids:
+                                partner.category_id = tag_ids
+                            else:
+                                partner.category_id.unlink()
                         except Exception as e:
                             logger.warning(e)
 
