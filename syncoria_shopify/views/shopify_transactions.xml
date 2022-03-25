@@ -84,14 +84,14 @@
                           <field name="shopify_payment_details"/>
                       </group>
                   </group>
-                  <group>
+                  <!-- <group>
                       <group>
                           <field name="shopify_payment_details_id"/>
                       </group>
                       <group>
                           <field name="shopify_payment_receipt_id"/>
                       </group>
-                  </group>
+                  </group> -->
               </sheet>
           </form>
           

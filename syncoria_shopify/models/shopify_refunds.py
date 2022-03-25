@@ -59,7 +59,6 @@ class ShopifyRefunds(models.Model):
     shopify_currency_exchange_adjustment = fields.Char(string='Currency Exchange Adjustment', readonly=1)
     shopify_amount = fields.Char(string='Amount', readonly=1)
     shopify_currency = fields.Char(string='Currency', readonly=1)
-    #####################################################################
 
 
 
@@ -84,4 +83,5 @@ class ShopifyPaymentReceipt(models.Model):
 
     testcase = fields.Char(string='CC Bin', readonly=1)
     authorization = fields.Char(string='AVS Result Code', readonly=1)
+    paid_amount = fields.Char(readonly=1)
     

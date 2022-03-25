@@ -89,7 +89,7 @@ class SaleOrderShopify(models.Model):
                 headers = {'X-Shopify-Access-Token':marketplace_instance_id.marketplace_api_password}
                 type_req = 'GET'
                 try:
-                    transactions_list = self.env['marketplace.connector'].marketplace_api_call(headers=headers, url=url, type=type_req,marketplace_instance_id=marketplace_instance_id)
+                    transactions_list,next_link = self.env['marketplace.connector'].marketplace_api_call(headers=headers, url=url, type=type_req,marketplace_instance_id=marketplace_instance_id)
                     if transactions_list.get('transactions'):
                         message += '\nLength of Transaction List-{}'.format(len(transactions_list.get('transactions')))
                         tran_recs = self.process_shopify_transactions(transactions_list['transactions'])
@@ -111,23 +111,54 @@ class SaleOrderShopify(models.Model):
                     if 'shopify_' + str(key) in list(sp_tran._fields) and key not in ['receipt','payment_details']:
                         vals['shopify_' + str(key)] = str(value)
 
+                receipt_vals_list = []
+                payment_details_vals_list = []
 
                 if transaction.get('receipt'):
                     if type(transaction.get('receipt')) == dict:
-                        vals['shopify_payment_details_id'] += [(0,0,transaction.get('receipt'))]
-                        self.env['shopify.payment.receipt'].sudo().create(transaction.get('receipt'))
+                        receipt = transaction.get('receipt')
+                        if receipt:
+                            receipt_vals = {}
+                            receipt_fields = list(self.env['shopify.payment.receipt']._fields)
+                            for key, value in receipt.items():
+                                if key in receipt_fields:
+                                    receipt_vals[key] = value
+                            receipt_vals_list += [receipt_vals]
+                            
                     if type(transaction.get('receipt')) == list:
                         for receipt in transaction.get('receipt'):
-                            vals['shopify_payment_details_id'] += [(0,0,receipt)]
+                            if receipt:
+                                receipt_vals = {}
+                                receipt_fields = list(self.env['shopify.payment.receipt']._fields)
+                                for key, value in receipt.items():
+                                    if key in receipt_fields:
+                                        receipt_vals[key] = value
+                                receipt_vals_list += [receipt_vals]
 
                 if transaction.get('payment_details'):
                     if type(transaction.get('payment_details')) == dict:
-                        vals['shopify_payment_details_id'] += [(0,0,transaction.get('payment_details'))]
-                        self.env['shopify.payment.details'].sudo().create(transaction.get('payment_details'))
+                        payment_details = transaction.get('payment_details')
+                        if payment_details:
+                            payment_details_vals = {}
+                            payment_details_fields = list(self.env['shopify.payment.details']._fields)
+                            for key, value in payment_details.items():
+                                if key in payment_details_fields:
+                                    payment_details_vals[key] = value
+                            payment_details_vals_list += [payment_details_vals]
+
                     if type(transaction.get('payment_details')) == list:
-                        for pd in transaction.get('payment_details'):
-                            vals['shopify_payment_details_id'] += [(0,0,pd)]
+                        for payment_details in transaction.get('payment_details'):
+                            if payment_details:
+                                payment_details_vals = {}
+                                payment_details_fields = list(self.env['shopify.payment.details']._fields)
+                                for key, value in payment_details.items():
+                                    if key in payment_details_fields:
+                                        payment_details_vals[key] = value
+                                payment_details_vals_list += [payment_details_vals]
                 
+
+                vals['shopify_payment_receipt_ids'] += [(0,0,receipt_vals_list)]
+                vals['shopify_payment_details_ids'] += [(0,0,payment_details_vals_list)]
 
                 tran_id = sp_tran.create(vals)
                 tran_recs.append(tran_id.id)
