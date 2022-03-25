@@ -106,7 +106,7 @@ class FeedProductsFetchWizard(models.Model):
     def create_feed_parent_product(self, product):
         shopify_feed_product = self.env['shopify.feed.products']
         domain = [("shopify_id","=",product['id'])]
-        domain += [("product_wiz_id","=",self.id)]
+        # domain += [("product_wiz_id","=",self.id)]
         feed_product = shopify_feed_product.search(domain,limit=1)
         try:
             if not feed_product:
@@ -117,7 +117,7 @@ class FeedProductsFetchWizard(models.Model):
                     'shopify_id': product['id'],
                     'inventory_id': product.get('inventory_item_id'),
                     'product_data': json.dumps(product),
-                    'product_wiz_id' : self.id
+                    # 'product_wiz_id' : self.id
                 })
                 _logger.info("Shopify Feed Parent Product Created-{}".format(record))
                 self._cr.commit()

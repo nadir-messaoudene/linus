@@ -96,50 +96,51 @@ class ShopifyFeedProducts(models.Model):
     #TO DO: Feed Products to Odoo Products
     def process_feed_product(self):
         """Convert Shopify Feed Product to Odoo Product"""
-        config_products = json.loads(self.product_data)
+        for rec in self:
+            config_products = json.loads(rec.product_data)
 
-        categ_list = []
-        existing_prod_ids = []
-        try:
-            attributes = {}
-            attributes['items'] = []
-
-            simple_products = {}
-            simple_products['items'] = []
-
-            if config_products.get('product_type') not in categ_list and config_products.get('product_type') != '':
-                categ_list.append(config_products.get('product_type'))
-
+            categ_list = []
+            existing_prod_ids = []
             try:
-                self.shopify_update_categories(categ_list)
+                attributes = {}
+                attributes['items'] = []
+
+                simple_products = {}
+                simple_products['items'] = []
+
+                if config_products.get('product_type') not in categ_list and config_products.get('product_type') != '':
+                    categ_list.append(config_products.get('product_type'))
+
+                try:
+                    self.shopify_update_categories(categ_list)
+                except Exception as e:
+                    _logger.warning("Exception occured %s", e)
+                    raise UserError(_("Error Occured %s") % e)
+
+                if len(config_products.get('variants')) == 1:
+                    simple_products['items'].append(config_products)
+
+                if config_products.get('options'):
+                    for option in config_products.get('options'):
+                        attribute = {}
+                        attribute['attribute_id'] = str(option.get('id'))
+                        attribute['label'] = str(option.get('name'))
+                        attribute['attribute_code'] = str(option.get('name'))
+                        attribute['options'] = option.get('values')
+                        attributes['items'].append(attribute)
+
+                tmpl_vals = self.find_default_vals('product.template')
+                product_type = 'configurable_product' if len(config_products.get('variants')) > 1 else 'simple_product'
+                config_products = [config_products]
+                self._shopify_import_products_list(config_products,
+                                          existing_prod_ids,
+                                          tmpl_vals,
+                                          attributes,
+                                          self.instance_id,
+                                          product_type)
             except Exception as e:
-                _logger.warning("Exception occured %s", e)
+                _logger.warning("Exception occured: %s", e)
                 raise UserError(_("Error Occured %s") % e)
-
-            if len(config_products.get('variants')) == 1:
-                simple_products['items'].append(config_products)
-
-            if config_products.get('options'):
-                for option in config_products.get('options'):
-                    attribute = {}
-                    attribute['attribute_id'] = str(option.get('id'))
-                    attribute['label'] = str(option.get('name'))
-                    attribute['attribute_code'] = str(option.get('name'))
-                    attribute['options'] = option.get('values')
-                    attributes['items'].append(attribute)
-
-            tmpl_vals = self.find_default_vals('product.template')
-            product_type = 'configurable_product' if len(config_products.get('variants')) > 1 else 'simple_product'
-            config_products = [config_products]
-            self._shopify_import_products_list(config_products,
-                                      existing_prod_ids,
-                                      tmpl_vals,
-                                      attributes,
-                                      self.instance_id,
-                                      product_type)
-        except Exception as e:
-            _logger.warning("Exception occured: %s", e)
-            raise UserError(_("Error Occured %s") % e)
 
     def shopify_update_categories(self, categ_list):
         """Updating category list from shopify to odoo"""
@@ -290,7 +291,7 @@ class ShopifyFeedProducts(models.Model):
 
                     # creating products
                     product_tmpl_id = self.env['product.template'].sudo().search(
-                        [('shopify_id', '=', str(product['id']))])
+                        [('shopify_id', '=', str(product['id'])),('shopify_instance_id','=',marketplace_instance_id.id)])
                     if product_tmpl_id:
                         pro_tmpl = self.env['product.template'].browse(
                             product_tmpl_id.id)
@@ -696,6 +697,8 @@ class ShopifyFeedProducts(models.Model):
                             str(product['id']))
 
                     print("Variants creation Ends")
+
+                    self.env.cr.commit()
                     
                     # print("Catergory creation Starts")
                     # for categ in c_ids:
@@ -1172,9 +1175,9 @@ class ShopifyFeedProducts(models.Model):
         if image_url:
             image = False
             if requests.get(image_url).status_code == 200:
-                print("image_url===>>>", image_url)
+                # print("image_url===>>>", image_url)
                 image = base64.b64encode(requests.get(image_url).content)
-                print("image===>>>", image)
+                # print("image===>>>", image)
             return image
         else:
             return False
