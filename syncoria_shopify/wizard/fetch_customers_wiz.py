@@ -47,9 +47,21 @@ class CustomerFetchWizard(models.Model):
             url = marketplace_instance_id.marketplace_host +  '/admin/api/%s/customers.json'%version
             headers = {'X-Shopify-Access-Token':marketplace_instance_id.marketplace_api_password}
             type_req = 'GET'
-            customer_list = self.env['marketplace.connector'].marketplace_api_call(headers=headers, url=url, type=type_req,marketplace_instance_id=marketplace_instance_id)
+            params = {"limit":250}
+            items=[]
+            while True:
+                customer_list,next_link = self.env['marketplace.connector'].marketplace_api_call(headers=headers, url=url, type=type_req,marketplace_instance_id=marketplace_instance_id,params=params)
+                items += customer_list['customers']
+                if next_link:
+                    if next_link.get("next"):
+                        url = next_link.get("next").get("url")
+
+                    else:
+                        break
+                else:
+                    break
+
             try:
-                items = customer_list['customers']
                 cr.execute("select shopify_id from res_partner "
                            "where shopify_id is not null")
                 partners = cr.fetchall()
