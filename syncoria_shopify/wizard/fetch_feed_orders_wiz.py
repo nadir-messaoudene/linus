@@ -108,5 +108,3 @@ class FeedOrderFetchWizard(models.Model):
         except Exception as e:
             _logger.warning("Exception {}".format(e.args))
                
-
-    #TO DO: Feed Customers to Odoo Orders

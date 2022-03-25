@@ -22,21 +22,6 @@
     </record>
 
 
-    <record model="ir.actions.server" id="shopify_refunds_action_server">
-      <field name="name">Shopify Refunds server</field>
-      <field name="model_id" ref="model_shopify_refunds"/>
-      <field name="state">code</field>
-      <field name="code">
-        action = {
-          "type": "ir.actions.act_window",
-          "view_mode": "tree,form",
-          "res_model": model._name,
-        }
-      </field>
-    </record>
-
-
-
     <record id="view_shopify_refunds_form" model="ir.ui.view">
       <field name="name">Shopify Refunds Form</field>
       <field name="model">shopify.refunds</field>
@@ -73,6 +58,13 @@
 
 
 
-    <menuitem name="Shopify Refunds" id="shopify_refunds" sequence="5" parent="syncoria_shopify.shopify_sales" action="shopify_refunds_action_window"/>
+    <menuitem 
+      name="Shopify Refunds" 
+      id="shopify_refunds" 
+      sequence="5" 
+      parent="syncoria_shopify.shopify_sales" 
+      action="shopify_refunds_action_window"/>
+
+      
   </data>
 </odoo>

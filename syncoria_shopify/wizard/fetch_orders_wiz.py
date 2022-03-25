@@ -349,12 +349,12 @@ class OrderFetchWizard(models.Model):
             partner_vals = PartnerObj.default_get(fields_list)
 
             for i in sp_orders:
-                ####################################################################################
-                #######Create Feed Orders###########################################################
                 feed_order_id = self.create_feed_orders(i)
                 print("feed_order_id ===>>>{}".format(feed_order_id))
-                ####################################################################################
-                ####################################################################################
+                ################################################################################
+                #Process Feed Order
+                ################################################################################
+
                 if str(i['id']) not in order_ids and i['confirmed'] == True:
                     # Process Only Shopify Confirmed Orders
                     # check the customer associated with the order, if the customer is new,
@@ -776,12 +776,10 @@ class OrderFetchWizard(models.Model):
         ################################################################
         ###########Fetch the Payments and Refund for the Orders#########
         ################################################################
-        for shopify_order in all_shopify_orders:
-            shopify_order.fetch_shopify_payments()
-            shopify_order.fetch_shopify_refunds()
-            shopify_order._cr.commit()
-
-
+        # for shopify_order in all_shopify_orders:
+        #     shopify_order.fetch_shopify_payments()
+        #     shopify_order.fetch_shopify_refunds()
+        #     shopify_order._cr.commit()
         #################################################################
 
 

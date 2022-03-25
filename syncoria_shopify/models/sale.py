@@ -157,8 +157,8 @@ class SaleOrderShopify(models.Model):
                                 payment_details_vals_list += [payment_details_vals]
                 
 
-                vals['shopify_payment_receipt_ids'] += [(0,0,receipt_vals_list)]
-                vals['shopify_payment_details_ids'] += [(0,0,payment_details_vals_list)]
+                vals['shopify_payment_receipt_id'] += [(0,0,receipt_vals_list)]
+                vals['shopify_payment_details_id'] += [(0,0,payment_details_vals_list)]
 
                 tran_id = sp_tran.create(vals)
                 tran_recs.append(tran_id.id)

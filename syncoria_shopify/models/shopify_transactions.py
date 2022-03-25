@@ -48,13 +48,17 @@ class ShopifyTransactions(models.Model):
     shopify_currency = fields.Char(string='Currency', readonly=1)
     shopify_admin_graphql_api_id = fields.Char(string='Admin Graphql Api Id', readonly=1)
     shopify_payment_details = fields.Char(string='Payment Details', readonly=1)
-
-    # shopify_payment_details_ids = fields.One2many('shopify.payment.details', 'transaction_id',
-    #     string='Payment Details ID',
-    # )
-    # shopify_payment_receipt_ids = fields.One2many('shopify.payment.receipt' , 'transaction_id',
-    #     string='Receipt ID',
-    # )
+    
+    shopify_payment_details_id = fields.Many2one(
+        string='Payment Details IDs',
+        comodel_name='shopify.payment.details',
+        ondelete='restrict',
+    )
+    shopify_payment_receipt_id = fields.Many2one(
+        string='Receipt IDs',
+        comodel_name='shopify.payment.receipt',
+        ondelete='restrict',
+    )
 
 
 class ShopifyPaymentDetails(models.Model):
@@ -70,7 +74,6 @@ class ShopifyPaymentDetails(models.Model):
     credit_card_wallet = fields.Char(string='CC Wallet', readonly=1)
     credit_card_expiration_month = fields.Char(string='CC Expiration Month', readonly=1)
     credit_card_expiration_year = fields.Char(string='CC Expiration Year', readonly=1)
-    transaction_id = fields.Many2one('shopify.transactions', ondelete='restrict')
     
 
 
@@ -80,6 +83,5 @@ class ShopifyPaymentReceipt(models.Model):
 
     testcase = fields.Char(string='CC Bin', readonly=1)
     authorization = fields.Char(string='AVS Result Code', readonly=1)
-    paid_amount = fields.Char(string='CC Bin', readonly=1)
-    transaction_id = fields.Many2one('shopify.transactions', ondelete='restrict', )
+    paid_amount = fields.Char(readonly=1)
     

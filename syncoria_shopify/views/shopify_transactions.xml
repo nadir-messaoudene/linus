@@ -25,24 +25,6 @@
       <field name="view_mode">tree,form</field>
     </record>
 
-
-    <!-- server action to the one above -->
-
-    <record model="ir.actions.server" id="shopify_transactions_action_server">
-      <field name="name">Shopify Transactions server</field>
-      <field name="model_id" ref="model_shopify_transactions"/>
-      <field name="state">code</field>
-      <field name="code">
-        action = {
-          "type": "ir.actions.act_window",
-          "view_mode": "tree,form",
-          "res_model": model._name,
-        }
-      </field>
-    </record>
-
-
-    
     <record id="view_shopify_transactions_form" model="ir.ui.view">
         <field name="name">Shopify Transactions Form</field>
         <field name="model">shopify.transactions</field>
@@ -55,7 +37,6 @@
                       <label for="name" class="oe_edit_only" />
                       <h1><field name="name" placeholder="Describe the item..." /></h1>
                   </div>
-
                   <group>
                       <group>
                           <field name="sale_id"/>
@@ -84,14 +65,14 @@
                           <field name="shopify_payment_details"/>
                       </group>
                   </group>
-                  <!-- <group>
+                  <group>
                       <group>
                           <field name="shopify_payment_details_id"/>
                       </group>
                       <group>
                           <field name="shopify_payment_receipt_id"/>
                       </group>
-                  </group> -->
+                  </group>
               </sheet>
           </form>
           
@@ -100,7 +81,12 @@
     </record>
     
 
+    <menuitem 
+      name="Shopify Transactions" 
+      id="shopify_transactions" 
+      sequence="4" 
+      parent="syncoria_shopify.shopify_sales" 
+      action="shopify_transactions_action_window"/>
 
-    <menuitem name="Shopify Transactions" id="shopify_transactions" sequence="4" parent="syncoria_shopify.shopify_sales" action="shopify_transactions_action_window"/>
   </data>
 </odoo>
