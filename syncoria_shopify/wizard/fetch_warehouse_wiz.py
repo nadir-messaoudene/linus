@@ -63,7 +63,7 @@ class WarehouseFetchWizard(models.TransientModel):
                 'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password }
             type_req = 'GET'
 
-            inventory_locations = self.env[
+            inventory_locations,next_link = self.env[
                 'marketplace.connector'].shopify_api_call(
                 headers=headers,
                 url=url,

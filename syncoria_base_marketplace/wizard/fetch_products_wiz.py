@@ -145,7 +145,7 @@ class ProductsFetchWizard(models.Model):
         for product in config_products:
             if str(product['id']) not in existing_prod_ids:
                 url = '/rest/V1/products/' + product['sku'] + '/options'
-                cust_options = self.env[
+                cust_options,next_link = self.env[
                     'shopify.connector'].shopify_api_call(
                     headers={},
                     url=url,
@@ -233,7 +233,7 @@ class ProductsFetchWizard(models.Model):
                         # variant options associated with this product
                         url = '/rest/V1/configurable-products/' + product[
                             'sku'] + '/options/all'
-                        options = self.env[
+                        options,next_link = self.env[
                             'shopify.connector'].shopify_api_call(
                             headers={},
                             url=url,
@@ -478,7 +478,7 @@ class ProductsFetchWizard(models.Model):
         updated_list = {}
         for product in product_data[0]:
             try:
-                product_list = self.env[
+                product_list,next_link = self.env[
                     'shopify.connector'].shopify_api_call(
                     headers=headers,
                     url=url,

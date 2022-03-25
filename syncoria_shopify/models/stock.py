@@ -78,7 +78,7 @@ class StockPicking(models.Model):
                 'Content-Type': 'application/json'
             }
             type_req = 'POST'
-            res = self.shopify_api_call(
+            res,next_link = self.shopify_api_call(
                 headers=headers,
                 url=url,
                 type=type_req,
@@ -167,7 +167,7 @@ class StockPicking(models.Model):
             }
             type_req = 'POST'
             data = {}
-            res = self.shopify_api_call(
+            res,next_link = self.shopify_api_call(
                 headers=headers,
                 url=url,
                 type=type_req,
@@ -203,7 +203,7 @@ class StockPicking(models.Model):
                 'Content-Type': 'application/json'
             }
             type_req = 'GET'
-            fullfillment = self.env[
+            fullfillment,next_link = self.env[
                 'marketplace.connector'].shopify_api_call(
                 headers=headers,
                 url=url,
@@ -233,7 +233,7 @@ class StockPicking(models.Model):
                 'Content-Type': 'application/json'
             }
             type_req = 'GET'
-            fullfillment = self.env[
+            fullfillment,next_link = self.env[
                 'marketplace.connector'].shopify_api_call(
                 headers=headers,
                 url=url,

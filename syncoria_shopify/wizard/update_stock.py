@@ -145,7 +145,7 @@ class ProductsFetchWizard(models.Model):
 
                             data = {'variant': variant}
                             product_url = host.marketplace_host + "/admin/api/%s/variants/%s.json" %(api_version, product.shopify_id)
-                            stock_item = Connector.shopify_api_call(
+                            stock_item,next_link = Connector.shopify_api_call(
                                 headers=headers,
                                 url=product_url,
                                 type=type_req,
@@ -223,7 +223,7 @@ class ProductsFetchWizard(models.Model):
         version = kwargs["marketplace_instance_id"].marketplace_api_version
         # product_url = host.marketplace_host + "/admin/api/%s/variants/%s.json" %(version, product.shopify_id)
         product_url = kwargs["host"].marketplace_host + "/admin/api/%s/inventory_levels/set.json" % (version)
-        stock_item = Connector.shopify_api_call(
+        stock_item,next_link = Connector.shopify_api_call(
             headers=headers,
             url=product_url,
             type=type_req,

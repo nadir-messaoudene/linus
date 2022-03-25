@@ -147,7 +147,7 @@ class ModelName(models.Model):
     
     def action_check_acess(self):
         url = self.marketplace_host + "/admin/oauth/access_scopes.json"
-        access = self.env['marketplace.connector'].shopify_api_call(
+        access,next_link = self.env['marketplace.connector'].shopify_api_call(
             headers={'X-Shopify-Access-Token': self.marketplace_api_password},
             url=url,
             type='GET')
@@ -175,7 +175,7 @@ class ModelName(models.Model):
     def action_activate_webhook(self):
         _logger.info("action_activate_webhook===>>>>")
         url = self.marketplace_host + "admin/api/%s/webhooks.json" %(self.marketplace_api_version)
-        access = self.env['marketplace.connector'].shopify_api_call(
+        access,next_link = self.env['marketplace.connector'].shopify_api_call(
             headers={'X-Shopify-Access-Token': self.marketplace_api_password},
             url=url,
             type='GET')
@@ -198,7 +198,7 @@ class ModelName(models.Model):
                 }
 
                 _logger.info("data ===>>>> %s", data)
-                webhooks = self.env['marketplace.connector'].shopify_api_call(
+                webhooks,next_link = self.env['marketplace.connector'].shopify_api_call(
                     headers={'X-Shopify-Access-Token': self.marketplace_api_password,
                                 'Content-Type': 'application/json'
                     },

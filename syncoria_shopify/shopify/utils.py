@@ -332,7 +332,7 @@ def update_product_images(record, product_data, req_type):
             'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password,
             'Content-Type': 'application/json'
         }
-        updated_products = shopify_api_call(
+        updated_products,next_link = shopify_api_call(
             headers=headers,
             url=url,
             type=type_req,
@@ -376,7 +376,7 @@ def shopify_pt_request(record, data, req_type):
         'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password,
         'Content-Type': 'application/json'
     }
-    created_products = shopify_api_call(
+    created_products,next_link = shopify_api_call(
         headers=headers,
         url=url,
         type=type_req,
@@ -559,7 +559,7 @@ def shopify_cus_req(self, data, req_type):
         'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password,
         'Content-Type': 'application/json'
     }
-    customer = self.env['marketplace.connector'].shopify_api_call(
+    customer,next_link = self.env['marketplace.connector'].shopify_api_call(
         headers=headers,
         url=url,
         type=type_req,
@@ -606,7 +606,7 @@ def shopify_add_req(self, data, req_type):
         'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password,
         'Content-Type': 'application/json'
     }
-    address = self.env['marketplace.connector'].shopify_api_call(
+    address,next_link = self.env['marketplace.connector'].shopify_api_call(
         headers=headers,
         url=url,
         type=type_req,
@@ -644,7 +644,7 @@ def shopify_inventory_request(record, data, req_type):
         'Content-Type': 'application/json'
     }
     
-    inventory_items = shopify_api_call(
+    inventory_items,next_link = shopify_api_call(
         headers=headers,
         url=url,
         type=type_req,

@@ -1074,7 +1074,7 @@ class ProductsFetchWizard(models.Model):
         updated_list = {}
         for product in product_data[0]:
             try:
-                product_list = self.env[
+                product_list,next_link = self.env[
                     'shopify.connector'].shopify_api_call(
                     headers=headers,
                     url=url,

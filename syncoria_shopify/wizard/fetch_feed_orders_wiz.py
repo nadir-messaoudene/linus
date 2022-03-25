@@ -90,7 +90,7 @@ class FeedOrderFetchWizard(models.Model):
         # Request Parameters
         type_req = 'GET'
         headers = {'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password}
-        order_list = self.env['marketplace.connector'].shopify_api_call(headers=headers,
+        order_list,next_link = self.env['marketplace.connector'].shopify_api_call(headers=headers,
                                                                         url=url,
                                                                         type=type_req)
 

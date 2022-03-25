@@ -973,7 +973,7 @@ class ShopifyFeedProducts(models.Model):
                 'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password}
             type_req = 'GET'
 
-            configurable_products = self.env[
+            configurable_products,next_link = self.env[
                 'marketplace.connector'].shopify_api_call(
                 headers=headers,
                 url=url,
@@ -1140,7 +1140,7 @@ class ShopifyFeedProducts(models.Model):
         updated_list = {}
         for product in product_data[0]:
             try:
-                product_list = self.env[
+                product_list,next_link = self.env[
                     'shopify.connector'].shopify_api_call(
                     headers=headers,
                     url=url,
