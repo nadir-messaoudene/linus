@@ -137,6 +137,79 @@ class ProductTemplate(models.Model):
                 raise UserError(
                     _("Marketplace type is not set for Shopify(Product: %s)") % record.name)
 
+    def server_action_shopify_update_stock(self):
+        Connector = self.env['marketplace.connector']
+        marketplace_instance_id = self.shopify_instance_id
+        url = f"/admin/api/{marketplace_instance_id.marketplace_api_version}/inventory_levels.json"
+        url = marketplace_instance_id.marketplace_host + url
+
+        headers = {'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password}
+        type_req = 'GET'
+
+        products = self._shopify_get_product_list(self.ids)
+        # for rec in self:
+
+        for item in products:
+            # location_id = item.location_id
+            # if not location_id and default_location:
+            #     location_id = default_location
+            # elif not location_id:
+            #     continue
+            # if item.default_code:
+            # product_url = url.replace("{api_version}", api_version)
+            # product_url = product_url.replace("{product_id}", item.shopify_id)
+            params = {"inventory_item_ids": item.shopify_inventory_id}
+            _logger.info("product_url-->", url)
+            stock_item, next_link = Connector.shopify_api_call(
+                headers=headers,
+                url=url,
+                type=type_req,
+                marketplace_instance_id=marketplace_instance_id,
+                params=params
+            )
+            try:
+                if stock_item.get('inventory_levels'):
+                    inventory_stocks = stock_item.get('inventory_levels')
+                    for stocks_info in inventory_stocks:
+                        self.change_product_qty(stocks_info, item)
+
+
+
+            except Exception as e:
+                _logger.warning("Exception-%s", e.args)
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload'
+        }
+
+    def _shopify_get_product_list(self, active_ids):
+        if self._context.get('active_model') == 'product.product':
+            products = self.env['product.product'].search([
+                ('marketplace_type', '=', 'shopify'),
+                ('id', 'in', active_ids)
+            ])
+            # product_templ_id =
+        if self._context.get('active_model') == 'product.template':
+            # Cannot find products
+            products = self.env['product.product'].search([
+                ('marketplace_type', '=', 'shopify'),
+                ('product_tmpl_id', 'in', active_ids)
+            ])
+        return products
+
+    def change_product_qty(self,stock_info,product_info):
+        warehouse = self.env['stock.warehouse'].search([("shopify_warehouse_id","=",stock_info.get("location_id")),("shopify_warehouse_active","=",True)],limit=1)
+        # Before creating a new quant, the quand `create` method will check if
+        # it exists already. If it does, it'll edit its `inventory_quantity`
+        # instead of create a new one.
+        if warehouse:
+            self.env['stock.quant'].with_context(inventory_mode=True).create({
+                'product_id': product_info.id,
+                'location_id': warehouse.lot_stock_id.id,
+                'inventory_quantity': stock_info.get('available'),
+            }).action_apply_inventory()
+
+
     # @api.model
     # def create(self, values):
     #     print(values)
