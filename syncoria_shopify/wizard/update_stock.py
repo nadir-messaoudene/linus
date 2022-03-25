@@ -40,7 +40,7 @@ class ProductsFetchWizard(models.Model):
 
         cr = self._cr
         if self.fetch_type == 'to_odoo':
-            url = "/admin/api/{api_version}/variants/{product_id}.json"
+            url = f"/admin/api/{api_version}/inventory_levels.json"
             url = marketplace_instance_id.marketplace_host +  url
             
             headers = {'X-Shopify-Access-Token':marketplace_instance_id.marketplace_api_password}
@@ -54,47 +54,57 @@ class ProductsFetchWizard(models.Model):
                 #     location_id = default_location
                 # elif not location_id:
                 #     continue
-                if item.default_code:
-                    product_url = url.replace("{api_version}", api_version)
-                    product_url = product_url.replace("{product_id}", item.shopify_id)
+                # if item.default_code:
+                    # product_url = url.replace("{api_version}", api_version)
+                    # product_url = product_url.replace("{product_id}", item.shopify_id)
+                params = {"inventory_item_ids":item.shopify_inventory_id}
+                _logger.info("product_url-->", url)
+                stock_item,next_link = Connector.shopify_api_call(
+                        headers=headers,
+                        url=url,
+                        type=type_req,
+                        marketplace_instance_id=marketplace_instance_id,
+                        params=params
+                )
+                try:
+                    if stock_item.get('inventory_levels'):
+                        inventory_stocks = stock_item.get('inventory_levels')
+                        for stocks_info in inventory_stocks:
+                            self.change_product_qty(stocks_info,item)
 
-                    _logger.info("product_url-->", product_url)
-                    stock_item = Connector.shopify_api_call(
-                            headers=headers,
-                            url=product_url,
-                            type=type_req,
-                            marketplace_instance_id=marketplace_instance_id
-                    )
 
-                    if not stock_item.get('products'):
-                        stock_item["products"] = [stock_item]
 
-                    try:
-                        if stock_item.get('products'):
-                            variants = stock_item.get('variants') or stock_item.get('variant')
-                            variants = [variants] if type(variants) == dict else variants
+                except Exception as e:
+                    _logger.warning("Exception-%s",e.args)
 
-                            _logger.info("variants ===>>>%s",variants)
-             
-                            for variant in variants:
-                                if str(variant['id']) == item.shopify_id:
-                                    product_stock = variant['inventory_quantity']
-                                    _logger.info("product_stock ===>>>%s",product_stock)
-                                    # updating qty on hand
-                                    inventory_wizard = UpdateQtyWiz.create({
-                                        'product_id': item.id,
-                                        'product_tmpl_id': item.product_tmpl_id.id,
-                                        'new_quantity': product_stock,
-                                    })
-                                    inventory_wizard.change_product_qty()
-                                    # updating unit price if changed
-                                    # if variant['price'] != item.list_price:
-                                    #     cr.execute("update product_template set list_price=%s "
-                                    #             "where id=%s",
-                                    #             (variant['price'], item.product_tmpl_id.id))
-                                    _logger.info("Successfully Updated %s", item.default_code)
-                    except Exception as e:
-                        _logger.warning("Exception-%s",e.args)
+
+
+                # try:
+                #     if stock_item.get('products'):
+                #         variants = stock_item.get('variants') or stock_item.get('variant')
+                #         variants = [variants] if type(variants) == dict else variants
+                #
+                #         _logger.info("variants ===>>>%s",variants)
+                #
+                #         for variant in variants:
+                #             if str(variant['id']) == item.shopify_id:
+                #                 product_stock = variant['inventory_quantity']
+                #                 _logger.info("product_stock ===>>>%s",product_stock)
+                #                 # updating qty on hand
+                #                 # inventory_wizard = UpdateQtyWiz.create({
+                #                 #     'product_id': item.id,
+                #                 #     'product_tmpl_id': item.product_tmpl_id.id,
+                #                 #     'new_quantity': product_stock,
+                #                 # })
+                #                 # inventory_wizard.change_product_qty()
+                #                 # updating unit price if changed
+                #                 # if variant['price'] != item.list_price:
+                #                 #     cr.execute("update product_template set list_price=%s "
+                #                 #             "where id=%s",
+                #                 #             (variant['price'], item.product_tmpl_id.id))
+                #                 _logger.info("Successfully Updated %s", item.default_code)
+                # except Exception as e:
+                #     _logger.warning("Exception-%s",e.args)
             return {
                 'type': 'ir.actions.client',
                 'tag': 'reload'
@@ -185,7 +195,17 @@ class ProductsFetchWizard(models.Model):
 
         # return
 
-
+    def change_product_qty(self,stock_info,product_info):
+        warehouse = self.env['stock.warehouse'].search([("shopify_warehouse_id","=",stock_info.get("location_id")),("shopify_warehouse_active","=",True)],limit=1)
+        # Before creating a new quant, the quand `create` method will check if
+        # it exists already. If it does, it'll edit its `inventory_quantity`
+        # instead of create a new one.
+        if warehouse:
+            self.env['stock.quant'].with_context(inventory_mode=True).create({
+                'product_id': product_info.id,
+                'location_id': warehouse.lot_stock_id.id,
+                'inventory_quantity': stock_info.get('available'),
+            }).action_apply_inventory()
 
     def _shopify_update_qty(self,**kwargs):
         Connector = self.env['marketplace.connector']

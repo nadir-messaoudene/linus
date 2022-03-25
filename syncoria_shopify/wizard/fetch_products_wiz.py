@@ -1156,8 +1156,6 @@ class ProductsFetchWizard(models.Model):
 
     def create_feed_parent_product(self, product, instance_id):
         try:
-            if product["id"]==6684289302579:
-                a="a"
             domain = [('parent', '=', True)]
             domain += [('shopify_id', '=', product['id'])]
             fp_product = self.env['shopify.feed.products'].sudo().search(domain, limit=1)
