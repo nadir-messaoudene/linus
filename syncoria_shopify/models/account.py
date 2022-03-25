@@ -22,16 +22,16 @@ class AccountInvoice(models.Model):
     )
 
     
-    def write(self, values):
-        print("AccountInvoice===>>>write===>>>" + str(values))
-        result = super(AccountInvoice, self).write(values)
-        return result
+    # def write(self, values):
+    #     print("AccountInvoice===>>>write===>>>" + str(values))
+    #     result = super(AccountInvoice, self).write(values)
+    #     return result
     
-    @api.model
-    def create(self, values):
-        print("AccountInvoice===>>>create===>>>" + str(values))
-        result = super(AccountInvoice, self).create(values)
-        return result
+    # @api.model
+    # def create(self, values):
+    #     print("AccountInvoice===>>>create===>>>" + str(values))
+    #     result = super(AccountInvoice, self).create(values)
+    #     return result
     
     # @api.onchange('partner_id', 'company_id')
     # def _onchange_partner_id_account_invoice_pricelist(self):

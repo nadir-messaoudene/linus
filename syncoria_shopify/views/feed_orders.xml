@@ -65,25 +65,12 @@
         </record>
 
 
-        <record model="ir.actions.act_window" id="action_shopify_feed_orders_act_window">
-            <field name="name">shopify feed orders act_window</field>
+        <record model="ir.actions.act_window" id="action_shopify_feed_orders">
+            <field name="name">Shopify Feed Orders</field>
             <field name="res_model">shopify.feed.orders</field>
             <field name="view_mode">tree,form</field>
         </record>
 
-
-        <record model="ir.actions.server" id="action_shopify_feed_orders">
-            <field name="name">shopify_feed_orders server</field>
-            <field name="model_id" ref="model_shopify_feed_orders"/>
-            <field name="state">code</field>
-            <field name="code">
-                action = {
-                "type": "ir.actions.act_window",
-                "view_mode": "tree,form",
-                "res_model": model._name,
-                }
-            </field>
-        </record>
 
         <menuitem 
             action="action_shopify_feed_orders"

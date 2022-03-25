@@ -250,6 +250,7 @@ class OrderFetchWizard(models.Model):
         CarrierObj = self.env['delivery.carrier'].sudo()
         ICPSudo = self.env['ir.config_parameter'].sudo()
         AccMove = self.env['account.move'].sudo()
+        all_shopify_orders = self.env['sale.order'].sudo()
 
         cr = self._cr
         if not kwargs:
@@ -348,6 +349,12 @@ class OrderFetchWizard(models.Model):
             partner_vals = PartnerObj.default_get(fields_list)
 
             for i in sp_orders:
+                ####################################################################################
+                #######Create Feed Orders###########################################################
+                feed_order_id = self.create_feed_orders(i)
+                print("feed_order_id ===>>>{}".format(feed_order_id))
+                ####################################################################################
+                ####################################################################################
                 if str(i['id']) not in order_ids and i['confirmed'] == True:
                     # Process Only Shopify Confirmed Orders
                     # check the customer associated with the order, if the customer is new,
@@ -672,6 +679,8 @@ class OrderFetchWizard(models.Model):
                         if not product_missing and order_vals['partner_id']:
                             order_id = OrderObj.create(order_vals)
                             _logger.info("Order Created: %s" % (order_id))
+                            all_shopify_orders += order_id
+
 
                             if i.get('confirmed'):
                                 order_id.action_confirm()
@@ -758,9 +767,23 @@ class OrderFetchWizard(models.Model):
             #     'product_sync_no': update_products_no,
             # })
 
+
         except Exception as e:
             _logger.info("Exception occured %s", e)
             raise exceptions.UserError(_("Error Occured:\n %s") % e)
+
+
+        ################################################################
+        ###########Fetch the Payments and Refund for the Orders#########
+        ################################################################
+        for shopify_order in all_shopify_orders:
+            shopify_order.fetch_shopify_payments()
+            shopify_order.fetch_shopify_refunds()
+            shopify_order._cr.commit()
+
+
+        #################################################################
+
 
         if 'call_button' in str(request.httprequest):
             return {

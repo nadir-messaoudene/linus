@@ -68,11 +68,7 @@ class FeedOrderFetchWizard(models.Model):
         customer_list = self.env['marketplace.connector'].marketplace_api_call(headers=headers, url=url, type=type_req,marketplace_instance_id=marketplace_instance_id)
         try:
             for customer in customer_list['customers']:
-                PartnerObj.create({
-                    'instance_id': self.instance_id.id,
-                    'shopify_id': customer['id'],
-                    'customer_data': json.dumps(customer),
-                })
+                self.create_feed_customer(customer)
 
         except Exception as e:
             if customer_list.get('errors'):
@@ -82,4 +78,22 @@ class FeedOrderFetchWizard(models.Model):
 
 
         
-    #TO DO: Feed Customers to Odoo Customers
+    def create_feed_customer(self, customer_data):
+        feed_customer_id = False
+        try:
+            domain = [('shopify_id', '=', customer_data['id'])]
+            feed_customer_id = self.env['shopify.feed.customers'].sudo().search(domain, limit=1)
+            if not feed_customer_id:
+                feed_customer_id = self.env['shopify.feed.customers'].sudo().create({
+                    'name': self.env['ir.sequence'].next_by_code('shopify.feed.customers'),
+                    'instance_id': self.instance_id.id,
+                    'shopify_id': customer_data['id'],
+                    'customer_data': json.dumps(customer_data),
+                    'state': 'draft'
+                })
+                feed_customer_id._cr.commit()
+                _logger.info(
+                    "Shopify Feed customer Created-{}".format(feed_customer_id))
+        except Exception as e:
+            _logger.warning("Exception-{}".format(e.args))
+        return feed_customer_id
