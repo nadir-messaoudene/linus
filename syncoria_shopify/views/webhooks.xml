@@ -1,9 +1,6 @@
 <odoo>
   <data>
 
-
-    <!-- explicit list view definition -->
-
     <record model="ir.ui.view" id="marketplace_webhooks_list">
       <field name="name">Webhooks List</field>
       <field name="model">marketplace.webhooks</field>
@@ -16,7 +13,6 @@
     </record>
 
 
-    <!-- Form view for "marketplace.webhooks" -->
     <record id="view_model_form" model="ir.ui.view">
       <field name="name">view.marketplace.webhooks.form</field>
       <field name="model">marketplace.webhooks</field>
@@ -62,40 +58,22 @@
           </sheet>
         </form>
 
-
-
       </field>
     </record>
 
 
 
-
-
-    <!-- actions opening views on models -->
-
-    <record model="ir.actions.act_window" id="action_window">
+    <record model="ir.actions.act_window" id="shopify_webhooks_action_window">
       <field name="name">Webhooks Window</field>
       <field name="res_model">marketplace.webhooks</field>
       <field name="view_mode">tree,form</field>
     </record>
 
-
-    <!-- server action to the one above -->
-
-    <record model="ir.actions.server" id="action_server">
-      <field name="name">marketplace.webhooks server</field>
-      <field name="model_id" ref="model_marketplace_webhooks"/>
-      <field name="state">code</field>
-      <field name="code">
-        action = {
-          "type": "ir.actions.act_window",
-          "view_mode": "tree,form",
-          "res_model": model._name,
-        }
-      </field>
-    </record>
-
-    <!-- <menuitem name="Webhooks" id="shopify_webhooks" parent="shopify_configuration" action="action_window"/> -->
+    <menuitem 
+      name="Webhooks" 
+      id="shopify_webhooks" 
+      parent="shopify_configuration" 
+      action="shopify_webhooks_action_window"/>
 
   </data>
 </odoo>
