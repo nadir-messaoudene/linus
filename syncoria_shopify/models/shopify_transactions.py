@@ -26,6 +26,12 @@ class ShopifyTransactions(models.Model):
         comodel_name='sale.order',
         ondelete='restrict',
     )
+    shopify_instance_id = fields.Many2one(
+        string='Marketplace Instance',
+        comodel_name='marketplace.instance',
+        ondelete='restrict',
+    )
+    shopify_id = fields.Char(string='Shopify Id', readonly=1)
     shopify_id = fields.Char(string='Id', readonly=1)
     shopify_order_id = fields.Char(string='Order Id', readonly=1)
     shopify_kind = fields.Char(string='Kind', readonly=1)
@@ -48,7 +54,6 @@ class ShopifyTransactions(models.Model):
     shopify_currency = fields.Char(string='Currency', readonly=1)
     shopify_admin_graphql_api_id = fields.Char(string='Admin Graphql Api Id', readonly=1)
     shopify_payment_details = fields.Char(string='Payment Details', readonly=1)
-    
     shopify_payment_details_id = fields.Many2one(
         string='Payment Details IDs',
         comodel_name='shopify.payment.details',
@@ -65,6 +70,16 @@ class ShopifyPaymentDetails(models.Model):
     _name = 'shopify.payment.details'
     _description = 'Shopify Payment Details'
 
+    name = fields.Char(
+        string='Name',
+        required=True,
+        copy=False,
+        default=lambda self: self.env['ir.sequence'].next_by_code('shopify.payment.details'))
+    shopify_instance_id = fields.Many2one(
+        string='Marketplace Instance',
+        comodel_name='marketplace.instance',
+        ondelete='restrict',
+    )
     credit_card_bin = fields.Char(string='CC Bin', readonly=1)
     avs_result_code = fields.Char(string='AVS Result Code', readonly=1)
     cvv_result_code = fields.Char(string='CVV Result Code', readonly=1)
@@ -81,6 +96,17 @@ class ShopifyPaymentReceipt(models.Model):
     _name = 'shopify.payment.receipt'
     _description = 'Shopify Payment Receipt'
 
+    name = fields.Char(
+        string='Name',
+        required=True,
+        copy=False,
+        default=lambda self: self.env['ir.sequence'].next_by_code('shopify.payment.receipt'))
+
+    shopify_instance_id = fields.Many2one(
+        string='Marketplace Instance',
+        comodel_name='marketplace.instance',
+        ondelete='restrict',
+    )
     testcase = fields.Char(string='CC Bin', readonly=1)
     authorization = fields.Char(string='AVS Result Code', readonly=1)
     paid_amount = fields.Char(readonly=1)

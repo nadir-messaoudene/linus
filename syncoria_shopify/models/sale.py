@@ -83,29 +83,36 @@ class SaleOrderShopify(models.Model):
         message = ''
         for rec in self:
             if rec.shopify_id:
-                marketplace_instance_id = self._get_instance_id()
+                marketplace_instance_id = rec.shopify_instance_id
                 version = marketplace_instance_id.marketplace_api_version or '2021-01'
                 url = marketplace_instance_id.marketplace_host +  '/admin/api/%s/orders/%s/transactions.json' %(version, rec.shopify_id)
                 headers = {'X-Shopify-Access-Token':marketplace_instance_id.marketplace_api_password}
                 type_req = 'GET'
                 try:
-                    transactions_list,next_link = self.env['marketplace.connector'].marketplace_api_call(headers=headers, url=url, type=type_req,marketplace_instance_id=marketplace_instance_id)
+                    transactions_list,next_link = self.env['marketplace.connector'].marketplace_api_call(
+                        headers=headers, 
+                        url=url, 
+                        type=type_req,
+                        marketplace_instance_id=marketplace_instance_id
+                    )
                     if transactions_list.get('transactions'):
                         message += '\nLength of Transaction List-{}'.format(len(transactions_list.get('transactions')))
-                        tran_recs = self.process_shopify_transactions(transactions_list['transactions'])
+                        tran_recs = rec.process_shopify_transactions(transactions_list['transactions'])
                         message += '\nTransaction Record Created-{}'.format(len(tran_recs))
                     rec.message_post(body=_(message))
                 except Exception as e:
                     _logger.warning("Exception-%s"%(e.args))
         
-
     def process_shopify_transactions(self, transactions):
         tran_recs = []
         for transaction in transactions:
             sp_tran = self.env['shopify.transactions'].sudo()
             tran_id = sp_tran.search([('shopify_id','=',transaction['id'])])
             if not tran_id:
-                vals = {'sale_id': self.id, 'shopify_payment_details_id':[],'shopify_payment_receipt_id':[]}
+                vals = {
+                    'sale_id': self.id, 
+                    'shopify_instance_id':self.shopify_instance_id.id,
+                }
                 transaction = {k: v for k, v in transaction.items() if v is not False and v is not None}
                 for key, value in transaction.items():
                     if 'shopify_' + str(key) in list(sp_tran._fields) and key not in ['receipt','payment_details']:
@@ -157,10 +164,21 @@ class SaleOrderShopify(models.Model):
                                 payment_details_vals_list += [payment_details_vals]
                 
 
-                vals['shopify_payment_receipt_id'] += [(0,0,receipt_vals_list)]
-                vals['shopify_payment_details_id'] += [(0,0,payment_details_vals_list)]
-
                 tran_id = sp_tran.create(vals)
+                if receipt_vals_list:
+                    for rv in receipt_vals_list:
+                        rv['shopify_instance_id'] = self.shopify_instance_id.id
+                    receipt_id = self.env['shopify.payment.receipt'].create(receipt_vals_list)
+                    if tran_id and receipt_id:
+                        tran_id.shopify_payment_receipt_id = receipt_id[0].id
+                        
+                if payment_details_vals_list:
+                    for pdv in payment_details_vals_list:
+                        pdv['shopify_instance_id'] = self.shopify_instance_id.id
+                    detail_id = self.env['shopify.payment.details'].create(payment_details_vals_list)
+                    if tran_id and detail_id:
+                        tran_id.shopify_payment_details_id = detail_id[0].id
+
                 tran_recs.append(tran_id.id)
         return tran_recs
 
@@ -169,7 +187,7 @@ class SaleOrderShopify(models.Model):
         message = ''
         for rec in self:
             if rec.shopify_id:
-                marketplace_instance_id = self._get_instance_id()
+                marketplace_instance_id = rec.shopify_instance_id
                 version = marketplace_instance_id.marketplace_api_version or '2021-01'
                 url = marketplace_instance_id.marketplace_host +  '/admin/api/%s/orders/%s/refunds.json' %(version, rec.shopify_id)
                 headers = {'X-Shopify-Access-Token':marketplace_instance_id.marketplace_api_password}
@@ -183,7 +201,6 @@ class SaleOrderShopify(models.Model):
                     rec.message_post(body=_(message))
                 except Exception as e:
                     _logger.warning("Exception-%s"%(e.args))
-
 
     def process_shopify_refund(self, refunds):
         refunds_recs = []
@@ -200,22 +217,56 @@ class SaleOrderShopify(models.Model):
                 refunds_recs.append(refund_id.id)
         return refunds_recs
 
+    # def _get_instance_id(self):
+    #     ICPSudo = self.env['ir.config_parameter'].sudo()
+    #     try:
+    #         marketplace_instance_id = ICPSudo.get_param(
+    #             'syncoria_base_marketplace.marketplace_instance_id')
+    #         marketplace_instance_id = [int(s) for s in re.findall(
+    #             r'\b\d+\b', marketplace_instance_id)]
+    #     except:
+    #         marketplace_instance_id = False
 
-
-    def _get_instance_id(self):
-        ICPSudo = self.env['ir.config_parameter'].sudo()
-        try:
-            marketplace_instance_id = ICPSudo.get_param(
-                'syncoria_base_marketplace.marketplace_instance_id')
-            marketplace_instance_id = [int(s) for s in re.findall(
-                r'\b\d+\b', marketplace_instance_id)]
-        except:
-            marketplace_instance_id = False
-
-        if marketplace_instance_id:
-            marketplace_instance_id = self.env['marketplace.instance'].sudo().search(
-                [('id', '=', marketplace_instance_id[0])])
-        return marketplace_instance_id
+    #     if marketplace_instance_id:
+    #         marketplace_instance_id = self.env['marketplace.instance'].sudo().search(
+    #             [('id', '=', marketplace_instance_id[0])])
+    #     return marketplace_instance_id
+    def process_shopify_invoice(self):
+        account_move = self.env['account.move'].sudo()
+        for rec in self:
+            success_tran_ids = rec.shopify_transaction_ids.filtered(lambda l:l.shopify_status == 'success')
+            paid_amount = sum([ float(amount) for amount in success_tran_ids.mapped('shopify_amount')])
+            if rec.amount_total == paid_amount:
+                move_id = account_move.search([('name', '=', rec.name)])
+                if not move_id:
+                    """Create an Invoice for the Sales Order"""
+                    #   {'lang': 
+                    # 'en_US', 'tz': 'Asia/Dhaka', 
+                    # 'uid': 2, 
+                    # 'allowed_company_ids': [1], 
+                    # 'active_model': 'sale.advance.payment.inv', 
+                    # 'open_invoices': True, 
+                    # 'active_id': 5, 
+                    # 'active_ids': [5],
+                    #  'default_move_type': 'out_invoice', 
+                    # 'default_partner_id': 217,
+                    #  'default_partner_shipping_id': 217, 
+                    # 'default_invoice_payment_term_id': None, 
+                    # 'default_invoice_origin': 'S00022', 
+                    # 'default_user_id': 2} 
+                    wiz = self.env['sale.advance.payment.inv'].with_context(
+                        active_ids=rec.ids, 
+                        open_invoices=True,
+                        # default_move_type='out_invoice',
+                        # default_invoice_payment_term_id=rec.payment_term_id.id,
+                        # default_invoice_origin=rec.name,
+                        # default_user_id=self.env.user.id,
+                        ).create({})
+                    move_vals = wiz.create_invoices()
+                    print("move_vals ===>>>", move_vals)
+                    # move_id = account_move.search([('name', '=', rec.name)])
+                    # if move_id:
+                    #     move_id.action_confirm()
 
 
 

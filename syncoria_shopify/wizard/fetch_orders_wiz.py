@@ -901,6 +901,10 @@ class OrderFetchWizard(models.Model):
         return order_vals
 
     def _create_invoice_shopify(self, order_id, sp_order):
+
+        wiz = self.env['sale.advance.payment.inv'].with_context(
+            active_ids=order_id.ids, open_invoices=True).create({})
+        move_vals = wiz.create_invoices()
         # ------------------------------------------------------------
         # values = {
         #     'advance_payment_method': 'delivered',

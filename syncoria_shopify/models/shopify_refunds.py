@@ -26,6 +26,12 @@ class ShopifyRefunds(models.Model):
         comodel_name='sale.order',
         ondelete='restrict',
     )
+    shopify_instance_id = fields.Many2one(
+        string='Marketplace Instance',
+        comodel_name='marketplace.instance',
+        ondelete='restrict',
+    )
+    shopify_id = fields.Char(string='Shopify Id', readonly=1)
     shopify_id = fields.Char(string='Id', readonly=1)
     shopify_order_id = fields.Char(string='Order Id', readonly=1)
     shopify_note = fields.Char(string='Note', readonly=1)
@@ -59,29 +65,3 @@ class ShopifyRefunds(models.Model):
     shopify_currency_exchange_adjustment = fields.Char(string='Currency Exchange Adjustment', readonly=1)
     shopify_amount = fields.Char(string='Amount', readonly=1)
     shopify_currency = fields.Char(string='Currency', readonly=1)
-
-
-
-class ShopifyPaymentDetails(models.Model):
-    _name = 'shopify.payment.details'
-    _description = 'Shopify Payment Details'
-
-    credit_card_bin = fields.Char(string='CC Bin', readonly=1)
-    avs_result_code = fields.Char(string='AVS Result Code', readonly=1)
-    cvv_result_code = fields.Char(string='CVV Result Code', readonly=1)
-    credit_card_number = fields.Char(string='CC Number', readonly=1)
-    credit_card_company = fields.Char(string='CC Company', readonly=1)
-    credit_card_name = fields.Char(string='CC Name', readonly=1)
-    credit_card_wallet = fields.Char(string='CC Wallet', readonly=1)
-    credit_card_expiration_month = fields.Char(string='CC Expiration Month', readonly=1)
-    credit_card_expiration_year = fields.Char(string='CC Expiration Year', readonly=1)
-
-
-class ShopifyPaymentReceipt(models.Model):
-    _name = 'shopify.payment.receipt'
-    _description = 'Shopify Payment Receipt'
-
-    testcase = fields.Char(string='CC Bin', readonly=1)
-    authorization = fields.Char(string='AVS Result Code', readonly=1)
-    paid_amount = fields.Char(readonly=1)
-    

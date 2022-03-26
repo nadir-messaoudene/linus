@@ -6,6 +6,7 @@
       <field name="model">shopify.refunds</field>
       <field name="arch" type="xml">
         <tree>
+          <field name="shopify_instance_id"/>
           <field name="shopify_id"/>
           <field name="shopify_order_id"/>
           <field name="sale_id"/>
@@ -16,7 +17,7 @@
     </record>
 
     <record model="ir.actions.act_window" id="shopify_refunds_action_window">
-      <field name="name">Shopify Refunds Window</field>
+      <field name="name">Shopify Refunds</field>
       <field name="res_model">shopify.refunds</field>
       <field name="view_mode">tree,form</field>
     </record>
@@ -37,7 +38,7 @@
             </div>
             <group>
               <group>
-                <field name="sale_id"/>
+                <field name="shopify_instance_id"/>
                 <field name="shopify_id"/>
                 <field name="shopify_transaction_id"/>
                 <field name="shopify_order_id"/>
@@ -49,6 +50,7 @@
                 <field name="shopify_restock"/>
               </group>
             </group>
+            
           </sheet>
         </form>
 

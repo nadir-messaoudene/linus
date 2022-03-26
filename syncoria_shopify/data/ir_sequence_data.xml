@@ -34,10 +34,18 @@
             <field name="company_id" eval="False"/>
         </record>
 
-        <record id="seq_shopify_refunds" model="ir.sequence">
-            <field name="name">Shopify Refunds</field>
-            <field name="code">shopify.refunds</field>
-            <field name="prefix">SR</field>
+        <record id="seq_shopify_payment_details" model="ir.sequence">
+            <field name="name">Shopify Payment Details</field>
+            <field name="code">shopify.payment.details</field>
+            <field name="prefix">SPD</field>
+            <field name="padding">5</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <record id="seq_shopify_payment_receipt" model="ir.sequence">
+            <field name="name">Shopify Payment Receipt</field>
+            <field name="code">shopify.payment.receipt</field>
+            <field name="prefix">SPR</field>
             <field name="padding">5</field>
             <field name="company_id" eval="False"/>
         </record>
