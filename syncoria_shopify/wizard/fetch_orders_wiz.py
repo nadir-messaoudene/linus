@@ -367,31 +367,31 @@ class OrderFetchWizard(models.Model):
                     # Values from configurations
                     print("customer_id===>>>," + str(customer_id))
                     product_missing = False
-                    if marketplace_instance_id:
-                        # Options
-                        order_vals['warehouse_id'] = marketplace_instance_id.warehouse_id.id if marketplace_instance_id.warehouse_id else None
-                        order_vals['company_id'] = marketplace_instance_id.company_id.id if marketplace_instance_id.company_id else None
-                        order_vals['user_id'] = marketplace_instance_id.user_id.id if marketplace_instance_id.user_id else None
-                        order_vals['fiscal_position_id'] = marketplace_instance_id.fiscal_position_id.id or None
-                        order_vals['pricelist_id'] = marketplace_instance_id.pricelist_id.id if marketplace_instance_id.pricelist_id else None
-                        order_vals['payment_term_id'] = marketplace_instance_id.payment_term_id.id if marketplace_instance_id.payment_term_id else None
-                        order_vals['team_id'] = marketplace_instance_id.sales_team_id.id if marketplace_instance_id.sales_team_id else None
+                    order_vals = self.get_sale_order_vals(marketplace_instance_id, customer_id, i)
+                    # if marketplace_instance_id:
+                    #     order_vals['warehouse_id'] = marketplace_instance_id.warehouse_id.id if marketplace_instance_id.warehouse_id else None
+                    #     order_vals['company_id'] = marketplace_instance_id.company_id.id if marketplace_instance_id.company_id else None
+                    #     order_vals['user_id'] = marketplace_instance_id.user_id.id if marketplace_instance_id.user_id else None
+                    #     order_vals['fiscal_position_id'] = marketplace_instance_id.fiscal_position_id.id or None
+                    #     order_vals['pricelist_id'] = marketplace_instance_id.pricelist_id.id if marketplace_instance_id.pricelist_id else None
+                    #     order_vals['payment_term_id'] = marketplace_instance_id.payment_term_id.id if marketplace_instance_id.payment_term_id else None
+                    #     order_vals['team_id'] = marketplace_instance_id.sales_team_id.id if marketplace_instance_id.sales_team_id else None
 
-                    # order_vals['marketplace'] = True
-                    order_vals['marketplace_type'] = 'shopify'
-                    order_vals['shopify_instance_id'] = marketplace_instance_id.id
-                    order_vals['shopify_id'] = str(i['id'])
-                    order_vals['partner_id'] = customer_id
-                    order_vals['shopify_status'] = i.get('confirmed')
-                    order_vals['shopify_order'] = i.get('name')
-                    order_vals['shopify_financial_status'] = i.get(
-                        'financial_status')
-                    order_vals['shopify_fulfillment_status'] = i.get(
-                        'fulfillment_status')
-                    order_vals['date_order'] = i.get('created_at')
-                    if i.get('created_at'):
-                        order_vals['date_order'] = i.get('created_at').split(
-                            "T")[0] + " " + i.get('created_at').split("T")[1].split("+")[0].split('-')[0]
+                    # # order_vals['marketplace'] = True
+                    # order_vals['marketplace_type'] = 'shopify'
+                    # order_vals['shopify_instance_id'] = marketplace_instance_id.id
+                    # order_vals['shopify_id'] = str(i['id'])
+                    # order_vals['partner_id'] = customer_id
+                    # order_vals['shopify_status'] = i.get('confirmed')
+                    # order_vals['shopify_order'] = i.get('name')
+                    # order_vals['shopify_financial_status'] = i.get(
+                    #     'financial_status')
+                    # order_vals['shopify_fulfillment_status'] = i.get(
+                    #     'fulfillment_status')
+                    # order_vals['date_order'] = i.get('created_at')
+                    # if i.get('created_at'):
+                    #     order_vals['date_order'] = i.get('created_at').split(
+                    #         "T")[0] + " " + i.get('created_at').split("T")[1].split("+")[0].split('-')[0]
 
                     # Ordervals based on marketplace configuration
                     # Tax Search
@@ -616,8 +616,7 @@ class OrderFetchWizard(models.Model):
 
                     if 'message_follower_ids' in order_vals:
                         order_vals.pop('message_follower_ids')
-                    order_vals['name'] = self.env['ir.sequence'].next_by_code(
-                        'sale.order')
+                    order_vals['name'] = self.env['ir.sequence'].next_by_code('sale.order')
 
                     # Set Billing Address
                     partner_invoice_id = False
@@ -649,14 +648,7 @@ class OrderFetchWizard(models.Model):
                     if not order_vals['partner_shipping_id']:
                         order_vals['partner_shipping_id'] = order_vals['partner_id']
 
-                    order_vals['pricelist_id'] = marketplace_instance_id.pricelist_id.id
 
-                    if marketplace_instance_id.sales_team_id:
-                        order_vals['team_id'] = marketplace_instance_id.sales_team_id.id
-                    if marketplace_instance_id.user_id:
-                        order_vals['user_id'] = marketplace_instance_id.user_id.id
-                    if marketplace_instance_id.payment_term_id:
-                        order_vals['payment_term_id'] = marketplace_instance_id.payment_term_id.id
 
                     # order_vals = self.process_discount_codes(i, order_vals)
                     pprint.pformat(order_vals)
@@ -776,10 +768,13 @@ class OrderFetchWizard(models.Model):
         ################################################################
         ###########Fetch the Payments and Refund for the Orders#########
         ################################################################
-        # for shopify_order in all_shopify_orders:
-        #     shopify_order.fetch_shopify_payments()
-        #     shopify_order.fetch_shopify_refunds()
-        #     shopify_order._cr.commit()
+        for shopify_order in all_shopify_orders:
+            shopify_order.fetch_shopify_payments()
+            shopify_order.fetch_shopify_refunds()
+            # shopify_order.process_shopify_invoice()
+            # shopify_order.shopify_invoice_register_payments()
+            shopify_order._cr.commit()
+            
         #################################################################
 
 
@@ -1414,7 +1409,55 @@ class OrderFetchWizard(models.Model):
 
         return vals
 
-    
+
+    def get_sale_order_vals(self, marketplace_instance_id, customer_id, i):
+        order_vals = {}
+        if marketplace_instance_id:
+            order_vals['warehouse_id'] = marketplace_instance_id.warehouse_id.id if marketplace_instance_id.warehouse_id else None
+            order_vals['company_id'] = marketplace_instance_id.company_id.id or self.env.company.id
+            order_vals['user_id'] = marketplace_instance_id.user_id.id if marketplace_instance_id.user_id else None
+            order_vals['fiscal_position_id'] = marketplace_instance_id.fiscal_position_id.id or None
+            order_vals['pricelist_id'] = marketplace_instance_id.pricelist_id.id if marketplace_instance_id.pricelist_id else None
+            order_vals['payment_term_id'] = marketplace_instance_id.payment_term_id.id if marketplace_instance_id.payment_term_id else None
+            order_vals['team_id'] = marketplace_instance_id.sales_team_id.id if marketplace_instance_id.sales_team_id else None
+            order_vals['shopify_instance_id'] = marketplace_instance_id.id
+
+            if marketplace_instance_id.sales_team_id:
+                order_vals['team_id'] = marketplace_instance_id.sales_team_id.id
+            if marketplace_instance_id.user_id:
+                order_vals['user_id'] = marketplace_instance_id.user_id.id
+            if marketplace_instance_id.payment_term_id:
+                order_vals['payment_term_id'] = marketplace_instance_id.payment_term_id.id
+
+
+        # order_vals['marketplace'] = True
+        order_vals['marketplace_type'] = 'shopify'
+        order_vals['shopify_instance_id'] = marketplace_instance_id.id
+        order_vals['shopify_id'] = str(i['id'])
+        order_vals['partner_id'] = customer_id
+        order_vals['shopify_status'] = i.get('confirmed')
+        order_vals['shopify_order'] = i.get('name')
+        order_vals['shopify_financial_status'] = i.get('financial_status')
+        order_vals['shopify_fulfillment_status'] = i.get('fulfillment_status')
+        order_vals['date_order'] = i.get('created_at')
+        if i.get('created_at'):
+            order_vals['date_order'] = i.get('created_at').split(
+                "T")[0] + " " + i.get('created_at').split("T")[1].split("+")[0].split('-')[0]
+
+        if customer_id:
+            customer = self.env['res.partner'].sudo().search([('id', '=', customer_id)], limit=1)
+            invoice_id = customer.child_ids.filtered(lambda r: r.type == 'invoice') or customer
+            partner_invoice_id = invoice_id[0].id
+            shipping_id = customer.child_ids.filtered(lambda r: r.type == 'delivery') or customer
+            partner_shipping_id = shipping_id[0].id
+
+        order_vals.update({
+            'partner_id': customer_id,
+            'partner_invoice_id': partner_invoice_id,
+            'partner_shipping_id': partner_shipping_id,
+        })
+        return order_vals
+
 
 class ShopifyCustomer:
     def __init__(self, values, env, shipping=False):
@@ -1525,12 +1568,14 @@ class ShopifyCustomer:
         ############Default Address Ends####################################
 
 
-        def _handle_company(self, env, address):
-            vals={}
-            if address.get('company'):
-                domain=[('name', '=', address.get('company'))]
-                domain += [('company_type', '=', 'company')]
-                company=env['res.partner'].sudo().search(domain, limit=1)
-                address['company_id']=company.id if company else None
-                address['company_name']=address.get('company', '')
-            return vals
+    def _handle_company(self, env, address):
+        vals={}
+        if address.get('company'):
+            domain=[('name', '=', address.get('company'))]
+            domain += [('company_type', '=', 'company')]
+            company=env['res.partner'].sudo().search(domain, limit=1)
+            address['company_id']=company.id if company else None
+            address['company_name']=address.get('company', '')
+        return vals
+
+

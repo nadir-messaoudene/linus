@@ -217,57 +217,70 @@ class SaleOrderShopify(models.Model):
                 refunds_recs.append(refund_id.id)
         return refunds_recs
 
-    # def _get_instance_id(self):
-    #     ICPSudo = self.env['ir.config_parameter'].sudo()
-    #     try:
-    #         marketplace_instance_id = ICPSudo.get_param(
-    #             'syncoria_base_marketplace.marketplace_instance_id')
-    #         marketplace_instance_id = [int(s) for s in re.findall(
-    #             r'\b\d+\b', marketplace_instance_id)]
-    #     except:
-    #         marketplace_instance_id = False
 
-    #     if marketplace_instance_id:
-    #         marketplace_instance_id = self.env['marketplace.instance'].sudo().search(
-    #             [('id', '=', marketplace_instance_id[0])])
-    #     return marketplace_instance_id
     def process_shopify_invoice(self):
+        message = ""
         account_move = self.env['account.move'].sudo()
+        move_id = False
         for rec in self:
             success_tran_ids = rec.shopify_transaction_ids.filtered(lambda l:l.shopify_status == 'success')
             paid_amount = sum([ float(amount) for amount in success_tran_ids.mapped('shopify_amount')])
             if rec.amount_total == paid_amount:
                 move_id = account_move.search([('name', '=', rec.name)])
                 if not move_id:
-                    """Create an Invoice for the Sales Order"""
-                    #   {'lang': 
-                    # 'en_US', 'tz': 'Asia/Dhaka', 
-                    # 'uid': 2, 
-                    # 'allowed_company_ids': [1], 
-                    # 'active_model': 'sale.advance.payment.inv', 
-                    # 'open_invoices': True, 
-                    # 'active_id': 5, 
-                    # 'active_ids': [5],
-                    #  'default_move_type': 'out_invoice', 
-                    # 'default_partner_id': 217,
-                    #  'default_partner_shipping_id': 217, 
-                    # 'default_invoice_payment_term_id': None, 
-                    # 'default_invoice_origin': 'S00022', 
-                    # 'default_user_id': 2} 
-                    wiz = self.env['sale.advance.payment.inv'].with_context(
+                    message += "\nCreating Invoice for Sale Order-{}".format(rec)
+                    wiz = self.env['sale.advance.payment.inv'].sudo().with_context(
                         active_ids=rec.ids, 
-                        open_invoices=True,
-                        # default_move_type='out_invoice',
-                        # default_invoice_payment_term_id=rec.payment_term_id.id,
-                        # default_invoice_origin=rec.name,
-                        # default_user_id=self.env.user.id,
-                        ).create({})
-                    move_vals = wiz.create_invoices()
-                    print("move_vals ===>>>", move_vals)
-                    # move_id = account_move.search([('name', '=', rec.name)])
-                    # if move_id:
-                    #     move_id.action_confirm()
+                        open_invoices=True).create({})
+                    wiz.sudo().create_invoices()
+                    move_id = account_move.search([('name', '=', rec.name)])
 
+                if move_id and move_id.state != 'posted':
+                    move_id.action_confirm()
+                    message += "\nInvoice-{} Posted for Sale Order-{}".format(move_id, rec)
+                try:
+                    move_id._cr.commit()
+                except Exception as e:
+                    _logger.warning("Exception-{}".format(e.args))
+        return move_id, message
+
+    def shopify_invoice_register_payments(self):
+        message = ""
+        account_move = self.env['account.move'].sudo()
+        account_payment = self.env['account.move'].sudo()
+        move_id = False
+        for rec in self:
+            success_tran_ids = rec.shopify_transaction_ids.filtered(lambda l:l.shopify_status == 'success')
+            move_id = account_move.search([('name', '=', rec.name)])
+            for tran_id in success_tran_ids:
+                shopify_instance_id = tran_id.shopify_instance_id or rec.shopify_instance_id
+                if float(tran_id.shopify_amount) > 0 and shopify_instance_id:
+                    wizard_vals = {
+                        'journal_id':shopify_instance_id.marketplace_payment_journal_id.id,
+                        'payment_method_line_id':shopify_instance_id.marketplace_payment_journal_id.id,
+                        'amount': float(tran_id.shopify_amount),
+                        'payment_date': fields.Datetime.now(),
+                    }
+                    wizard_vals['payment_date'] = tran_id.shopify_processed_at.split('T')[0] if tran_id.shopify_processed_at else fields.Datetime.now()
+                    domain = []
+                    for move in move_id:
+                        domain += [('ref', '=', move.name)]
+                    if domain:
+                        pay_id = account_payment.search(domain)
+                        if pay_id:
+                            wizard_vals['communication'] = pay_id.ref.split('-')[0]
+
+                    pmt_wizard = self.env['account.payment.register'].with_context(
+                        active_model='account.move', 
+                        active_ids=rec.ids).create(wizard_vals)
+
+                    pmt_wizard.action_create_payments()
+                    
+                    # try:
+                    #     move_id._cr.commit()
+                    # except Exception as e:
+                    #     _logger.warning("Exception-{}".format(e.args))
+        return move_id, message
 
 
 class SaleOrderLine(models.Model):
