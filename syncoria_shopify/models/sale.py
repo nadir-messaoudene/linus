@@ -89,7 +89,7 @@ class SaleOrderShopify(models.Model):
                 headers = {'X-Shopify-Access-Token':marketplace_instance_id.marketplace_api_password}
                 type_req = 'GET'
                 try:
-                    transactions_list,next_link = self.env['marketplace.connector'].marketplace_api_call(
+                    transactions_list, next_link = self.env['marketplace.connector'].marketplace_api_call(
                         headers=headers, 
                         url=url, 
                         type=type_req,
