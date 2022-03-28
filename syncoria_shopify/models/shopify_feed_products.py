@@ -1251,7 +1251,7 @@ class ShopifyFeedProducts(models.Model):
                 for value in values:
                     PTV = self.env['product.attribute.value']
                     valud_id = PTV.sudo().search(
-                        [('name', '=', value)], limit=1)
+                        [('name', '=', value),("attribute_id","=",attribute_id.id)], limit=1)
                     if not valud_id:
                         valud_id = PTV.sudo().create({
                             'attribute_id': attribute_id.id,

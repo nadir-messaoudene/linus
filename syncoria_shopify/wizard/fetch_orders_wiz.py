@@ -419,20 +419,24 @@ class OrderFetchWizard(models.Model):
                         product_tax_per = 0
                         product_tax_name = ''
                         if line.get('variant_id'):
-                            prod_dom = ['|',
+                            prod_dom = [
+                                # '|',
                                         ('shopify_id', '=', str(
                                             line['variant_id'])),
-                                        ('default_code', '=',
-                                         str(line['sku'])),
+                                ('shopify_instance_id','=',marketplace_instance_id.id)
+                                        # ('default_code', '=',
+                                        #  str(line['sku'])),
                                         ]
                             prod_rec = self.env['product.product'].sudo().search(
                                 prod_dom, limit=1)
                         else:
-                            prod_dom = ['|',
+                            prod_dom = [
+                                # '|',
                                         ('shopify_id', '=', str(
                                             line['product_id'])),
-                                        ('default_code', '=',
-                                         str(line['sku'])),
+                                ('shopify_instance_id', '=', marketplace_instance_id.id)
+                                        # ('default_code', '=',
+                                        #  str(line['sku'])),
                                         ]
                             prod_rec = self.env['product.product'].sudo().search(
                                 prod_dom, limit=1)

@@ -884,7 +884,11 @@ class ProductsFetchWizard(models.Model):
                     params=params
                 )
                 try:
-                    products += fetched_products['products']
+                    if type(fetched_products).__name__== 'list':
+                        products += fetched_products['products']
+                    else :
+                        products=fetched_products['product']
+
                     if next_link:
                         if next_link.get("next"):
                             url = next_link.get("next").get("url")
@@ -896,7 +900,11 @@ class ProductsFetchWizard(models.Model):
                 except Exception as e:
                     _logger.info("Exception occured: %s", e)
                     raise exceptions.UserError(_("Error Occured %s") % e)
-            configurable_products = {"products": products}
+            if type(products).__name__ == 'list':
+                configurable_products = {"products": products}
+            else:
+                configurable_products = fetched_products
+
 
             # Update Product Categories
             # in shopify, each product can have one product type(category), so we are fetching all the product types
@@ -1161,7 +1169,7 @@ class ProductsFetchWizard(models.Model):
             fp_product = self.env['shopify.feed.products'].sudo().search(domain, limit=1)
             if not fp_product:
                 record = self.env['shopify.feed.products'].sudo().create({
-                    'instance_id': self.instance_id.id,
+                    'instance_id': self.instance_id.id if self.instance_id else instance_id.id,
                     'parent': True,
                     'title': product['title'],
                     'shopify_id': product['id'],
