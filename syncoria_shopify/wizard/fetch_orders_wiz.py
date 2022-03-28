@@ -570,6 +570,10 @@ class OrderFetchWizard(models.Model):
                             customer_id) if customer_id else None
                         partner_shipping_id = self._match_or_create_address(
                             customer, i.get('shipping_address'), 'delivery')
+                        ############Update Account Receivable and Account Payable for Child ids
+                        if customer and partner_shipping_id and not partner_shipping_id.property_account_receivable_id:
+                            partner_shipping_id.property_account_receivable_id = customer.property_account_receivable_id.id
+                            partner_shipping_id.property_account_payable_id = customer.property_account_payable_id.id
 
                     order_vals['order_line'] = order_line
                     order_vals = self._get_delivery_line(
@@ -638,6 +642,11 @@ class OrderFetchWizard(models.Model):
                             customer_id) if customer_id else None
                         partner_invoice_id = self._match_or_create_address(
                             customer, i.get('billing_address'), 'invoice')
+
+                        ############Update Account Receivable and Account Payable for Child ids
+                        if customer and partner_invoice_id and not partner_invoice_id.property_account_receivable_id:
+                            partner_invoice_id.property_account_receivable_id = customer.property_account_receivable_id.id
+                            partner_invoice_id.property_account_payable_id = customer.property_account_payable_id.id
 
                     pp = PartnerObj.search([('id', '=', customer_id)])
                     order_vals['partner_shipping_id'] = partner_shipping_id.id if partner_shipping_id != False else pp.id
@@ -1365,6 +1374,8 @@ class OrderFetchWizard(models.Model):
                     'state_id': state_id.id,
                     'city': checkout.get('city', None),
                     'parent_id': partner.id,
+                    'property_account_receivable_id' : partner.property_account_receivable_id.id,
+                    'property_account_payable_id' : partner.property_account_payable_id.id,
                     'type': contact_type
                 })
             return delivery[0]
@@ -1389,6 +1400,9 @@ class OrderFetchWizard(models.Model):
                             add_vals = get_address_vals(self.env, address)
                             add_vals['type'] = 'other'
                             add_vals['parent_id'] = partner_id.id
+                            add_vals['property_account_receivable_id'] = partner_id.property_account_receivable_id.id
+                            add_vals['property_account_payable_id'] = partner_id.property_account_payable_id.id
+
                             res_partner.sudo().create(add_vals)
         elif type(item.get('addresses')) == list:
             for address in item['addresses']:
@@ -1405,6 +1419,8 @@ class OrderFetchWizard(models.Model):
                         add_vals = get_address_vals(self.env, address)
                         add_vals['type']='other'
                         add_vals['parent_id'] = partner_id.id
+                        add_vals['property_account_receivable_id'] = partner_id.property_account_receivable_id.id
+                        add_vals['property_account_payable_id'] = partner_id.property_account_payable_id.id
                         res_partner.sudo().create(add_vals)
 
         return vals
