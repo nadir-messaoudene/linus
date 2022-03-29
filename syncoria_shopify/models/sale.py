@@ -225,18 +225,18 @@ class SaleOrderShopify(models.Model):
         for rec in self:
             success_tran_ids = rec.shopify_transaction_ids.filtered(lambda l:l.shopify_status == 'success')
             paid_amount = sum([ float(amount) for amount in success_tran_ids.mapped('shopify_amount')])
-            if rec.amount_total == paid_amount:
-                move_id = account_move.search([('name', '=', rec.name)])
+            if success_tran_ids:
+                move_id = account_move.search([('invoice_origin', '=', rec.name)])
                 if not move_id:
                     message += "\nCreating Invoice for Sale Order-{}".format(rec)
                     wiz = self.env['sale.advance.payment.inv'].sudo().with_context(
                         active_ids=rec.ids, 
                         open_invoices=True).create({})
                     wiz.sudo().create_invoices()
-                    move_id = account_move.search([('name', '=', rec.name)])
+                    move_id = account_move.search([('invoice_origin', '=', rec.name)])
 
                 if move_id and move_id.state != 'posted':
-                    move_id.action_confirm()
+                    move_id.action_post()
                     message += "\nInvoice-{} Posted for Sale Order-{}".format(move_id, rec)
                 try:
                     move_id._cr.commit()
@@ -251,13 +251,13 @@ class SaleOrderShopify(models.Model):
         move_id = False
         for rec in self:
             success_tran_ids = rec.shopify_transaction_ids.filtered(lambda l:l.shopify_status == 'success')
-            move_id = account_move.search([('name', '=', rec.name)])
+            move_id = account_move.search([('invoice_origin', '=', rec.name)])
             for tran_id in success_tran_ids:
                 shopify_instance_id = tran_id.shopify_instance_id or rec.shopify_instance_id
-                if float(tran_id.shopify_amount) > 0 and shopify_instance_id:
+                if float(tran_id.shopify_amount) > 0 and shopify_instance_id and move_id.payment_state!='in_payment':
                     wizard_vals = {
                         'journal_id':shopify_instance_id.marketplace_payment_journal_id.id,
-                        'payment_method_line_id':shopify_instance_id.marketplace_payment_journal_id.id,
+                        'payment_method_line_id':shopify_instance_id.marketplace_inbound_method_id.id,
                         'amount': float(tran_id.shopify_amount),
                         'payment_date': fields.Datetime.now(),
                     }
@@ -272,9 +272,10 @@ class SaleOrderShopify(models.Model):
 
                     pmt_wizard = self.env['account.payment.register'].with_context(
                         active_model='account.move', 
-                        active_ids=rec.ids).create(wizard_vals)
+                        active_ids=move_id.ids).create(wizard_vals)
 
-                    pmt_wizard.action_create_payments()
+                    payment = pmt_wizard.action_create_payments()
+                    print("===============>",payment)
                     
                     # try:
                     #     move_id._cr.commit()

@@ -499,7 +499,7 @@ class OrderFetchWizard(models.Model):
                         if line and line.get('quantity') > 0:
                             #####################################################################################
                             #TO DO: Compute Price from Pricelist
-                            price_unit =  line.get('price_set', {}).get('shop_money', {}).get('amount')
+                            price_unit =  float(line.get('price_set', {}).get('shop_money', {}).get('amount'))
                             pricelist_currency = marketplace_instance_id.pricelist_id.currency_id.name
                             shop_currency_code = line.get('price_set', {}).get('shop_money',{}).get('currency_code')
                             pre_currency_code = line.get('price_set', {}).get('presentment_money',{}).get('currency_code')
@@ -690,19 +690,19 @@ class OrderFetchWizard(models.Model):
                             if i.get('confirmed'):
                                 order_id.action_confirm()
 
-                            try:
-                                if order_id and order_id.state in ['sale', 'done'] and marketplace_instance_id.auto_create_invoice == True:
-                                    inv = self._create_invoice_shopify(
-                                        order_id, i)
-                                    msg = "Invoice created with Order id: %s, Invoice Name: %s" % (
-                                        order_id.name, inv.name)
-                                    _logger.info(msg) if msg else None
-                                else:
-                                    _logger.info(
-                                        "Unable to create Invoice for order id: %s" % (order_id))
-                            except Exception as e:
-                                _logger.warning(
-                                    "Error for order id: %s- %s" % (order_id, e.args))
+                            # try:
+                            #     if order_id and order_id.state in ['sale', 'done'] and marketplace_instance_id.auto_create_invoice == True:
+                            #         inv = self._create_invoice_shopify(
+                            #             order_id, i)
+                            #         msg = "Invoice created with Order id: %s, Invoice Name: %s" % (
+                            #             order_id.name, inv.name)
+                            #         _logger.info(msg) if msg else None
+                            #     else:
+                            #         _logger.info(
+                            #             "Unable to create Invoice for order id: %s" % (order_id))
+                            # except Exception as e:
+                            #     _logger.warning(
+                            #         "Error for order id: %s- %s" % (order_id, e.args))
 
                 else:
                     current_order_id = OrderObj.search(
@@ -784,8 +784,9 @@ class OrderFetchWizard(models.Model):
         for shopify_order in all_shopify_orders:
             shopify_order.fetch_shopify_payments()
             shopify_order.fetch_shopify_refunds()
-            # shopify_order.process_shopify_invoice()
-            # shopify_order.shopify_invoice_register_payments()
+            if shopify_order and shopify_order.state in ['sale', 'done'] and marketplace_instance_id.auto_create_invoice == True:
+                shopify_order.process_shopify_invoice()
+                shopify_order.shopify_invoice_register_payments()
             shopify_order._cr.commit()
             
         #################################################################
