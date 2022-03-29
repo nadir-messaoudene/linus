@@ -32,7 +32,6 @@ class ShopifyTransactions(models.Model):
         ondelete='restrict',
     )
     shopify_id = fields.Char(string='Shopify Id', readonly=1)
-    shopify_id = fields.Char(string='Id', readonly=1)
     shopify_order_id = fields.Char(string='Order Id', readonly=1)
     shopify_kind = fields.Char(string='Kind', readonly=1)
     shopify_gateway = fields.Char(string='Gateway', readonly=1)
@@ -64,6 +63,7 @@ class ShopifyTransactions(models.Model):
         comodel_name='shopify.payment.receipt',
         ondelete='restrict',
     )
+    shopify_is_process = fields.Boolean(string="Is processed" ,default=False)
 
 
 class ShopifyPaymentDetails(models.Model):

@@ -47,3 +47,6 @@ access_shopify_transactions_man,access_shopify_transactions_man,model_shopify_tr
 access_shopify_refunds_usr,access_shopify_refunds_usr,model_shopify_refunds,base.group_user,1,0,0,0
 access_shopify_refunds_man,access_shopify_refunds_man,model_shopify_refunds,base.group_erp_manager,1,1,1,1
 ,,,,,,
+access_shopify_refunds_transaction_usr,access_shopify_refunds_transaction_usr,model_shopify_refunds_transaction,base.group_user,1,0,0,0
+access_shopify_refunds_transaction_man,access_shopify_refunds_transaction_man,model_shopify_refunds_transaction,base.group_erp_manager,1,1,1,1
+,,,,,,

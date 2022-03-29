@@ -136,6 +136,12 @@ class OrderFetchWizard(models.Model):
 
     date_from = fields.Date('From')
     date_to = fields.Date('To')
+    order_status = fields.Selection([
+            ('any', 'All'),
+            ('open', 'Opened'),
+            ('closed', 'Closed'),
+            ('cancelled', 'Cancelled')
+        ], string="Order Status",required=True,default='any')
 
     def _get_instance_id(self):
         ICPSudo = self.env['ir.config_parameter'].sudo()
@@ -277,7 +283,7 @@ class OrderFetchWizard(models.Model):
 
         # Request Parameters
         type_req = 'GET'
-        params = {"limit": 250}
+        params = {"limit": 250,"status":self.order_status}
         orders = []
         headers = {
             'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password}
@@ -540,7 +546,7 @@ class OrderFetchWizard(models.Model):
                                 for da in line.get("discount_allocations"):
                                     discount += float(da.get('amount'))
                                 disc_per = (float(
-                                    discount)/(float(line.get("price")) * line.get("fulfillable_quantity")) * 100)
+                                    discount)/(float(line.get("price")) * line.get("quantity")) * 100)
                                 ICPSudo = self.env['ir.config_parameter'].sudo(
                                 )
                                 group_dicnt = ICPSudo.get_param(
@@ -690,6 +696,9 @@ class OrderFetchWizard(models.Model):
                             if i.get('confirmed'):
                                 order_id.action_confirm()
 
+                            if i.get("cancel_reason")and i.get('cancelled_at'):
+                                order_id.action_cancel()
+
                             # try:
                             #     if order_id and order_id.state in ['sale', 'done'] and marketplace_instance_id.auto_create_invoice == True:
                             #         inv = self._create_invoice_shopify(
@@ -708,6 +717,9 @@ class OrderFetchWizard(models.Model):
                     current_order_id = OrderObj.search(
                         [('shopify_id', '=', i['id'])], order='id desc', limit=1)
                     current_order_id.write({"shopify_instance_id": marketplace_instance_id.id})
+                    if i.get("cancel_reason") and i.get('cancelled_at'):
+                        current_order_id.action_cancel()
+                    all_shopify_orders += current_order_id
 
                     tags = i.get('tags').split(",")
                     try:
@@ -725,46 +737,47 @@ class OrderFetchWizard(models.Model):
                             current_order_id.tag_ids= tag_ids
                         else:
                             current_order_id.tag_ids.unlink()
+
                     except Exception as e:
                         _logger.warning(e)
 
-                    if i['confirmed'] and current_order_id.state == 'draft':
-                        current_order_id.action_confirm()
+                    # if i['confirmed'] and current_order_id.state == 'draft':
+                    #     current_order_id.action_confirm()
 
-                    if i['confirmed'] != current_order_id.shopify_status:
-                        current_order_id.shopify_status = i['confirmed']
-
-                    if marketplace_instance_id.auto_create_invoice == True:
-                        print("current_order_id===>>>" +
-                              str(current_order_id.name))
-
-                        move_id = AccMove.search(
-                            [('invoice_origin', '=', current_order_id.name)], limit=1)
-                        print("move_id===>>>" + str(move_id))
-                        print("move_id.invoice_origin===>>>" +
-                              str(move_id.invoice_origin))
-
-                        if current_order_id and current_order_id.state in ['sale', 'done']:
-                            try:
-                                if not move_id:
-                                    move_id = self._create_invoice_shopify(
-                                        current_order_id, i)
-                                    msg = "Invoice created with Order id: %s, Invoice Name: %s" % (
-                                        current_order_id.name, move_id.name)
-                                    _logger.info(msg) if msg else None
-                                if move_id and move_id.state == 'draft' and i.get('financial_status') in ['authorized', 'paid']:
-                                    move_id.action_post()
-
-                                payments = self._shopify_process_payments(
-                                    move_id, i)
-                                _logger.info("payments" + str(payments))
-                            except Exception as e:
-                                _logger.warning(
-                                    "Error for order id: %s- %s" % (current_order_id, e.args))
-
-                        else:
-                            _logger.info(
-                                "Unable to create Invoice for order id: %s" % (current_order_id))
+                    # if i['confirmed'] != current_order_id.shopify_status:
+                    #     current_order_id.shopify_status = i['confirmed']
+                    #
+                    # if marketplace_instance_id.auto_create_invoice == True:
+                    #     print("current_order_id===>>>" +
+                    #           str(current_order_id.name))
+                    #
+                    #     move_id = AccMove.search(
+                    #         [('invoice_origin', '=', current_order_id.name)], limit=1)
+                    #     print("move_id===>>>" + str(move_id))
+                    #     print("move_id.invoice_origin===>>>" +
+                    #           str(move_id.invoice_origin))
+                    #
+                    #     if current_order_id and current_order_id.state in ['sale', 'done']:
+                    #         try:
+                    #             if not move_id:
+                    #                 move_id = self._create_invoice_shopify(
+                    #                     current_order_id, i)
+                    #                 msg = "Invoice created with Order id: %s, Invoice Name: %s" % (
+                    #                     current_order_id.name, move_id.name)
+                    #                 _logger.info(msg) if msg else None
+                    #             if move_id and move_id.state == 'draft' and i.get('financial_status') in ['authorized', 'paid']:
+                    #                 move_id.action_post()
+                    #
+                    #             payments = self._shopify_process_payments(
+                    #                 move_id, i)
+                    #             _logger.info("payments" + str(payments))
+                    #         except Exception as e:
+                    #             _logger.warning(
+                    #                 "Error for order id: %s- %s" % (current_order_id, e.args))
+                    #
+                    #     else:
+                    #         _logger.info(
+                    #             "Unable to create Invoice for order id: %s" % (current_order_id))
 
             # self.update_sync_history({
             #     'last_product_sync' : '',
@@ -787,6 +800,8 @@ class OrderFetchWizard(models.Model):
             if shopify_order and shopify_order.state in ['sale', 'done'] and marketplace_instance_id.auto_create_invoice == True:
                 shopify_order.process_shopify_invoice()
                 shopify_order.shopify_invoice_register_payments()
+                shopify_order.process_shopify_credit_note()
+                shopify_order.shopify_credit_note_register_payments()
             shopify_order._cr.commit()
             
         #################################################################

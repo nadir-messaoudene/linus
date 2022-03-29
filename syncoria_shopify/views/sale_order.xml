@@ -13,6 +13,8 @@
                     <button name="fetch_shopify_refunds" string="Fetch Shopify Refunds" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
                     <button name="process_shopify_invoice" string="Process Shopify Invoice" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
                     <button name="shopify_invoice_register_payments" string="invoice_register_payments" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
+                    <button name="process_shopify_credit_note" string="Process Shopify Credit" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
+                    <button name="shopify_credit_note_register_payments" string="Register Credit" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
 
                 </xpath>
                 <xpath expr="//notebook" position="inside">
@@ -23,6 +25,10 @@
                                 <field name="shopify_instance_id" options="{'no_open': True,'no_create': True}"/>
                                 <field name="shopify_id"/>
                                 <field name="shopify_order"/>
+                            </group>
+                            <group>
+                                <field name="shopify_is_invoice" readonly="1"/>
+                                <field name="shopify_is_refund" readonly="1"/>
                             </group>
                         </group>
                     </page>
@@ -55,6 +61,24 @@
                                 <field name="shopify_processed_at"/>
                                 <field name="shopify_restock"/>
                                 <field name="shopify_transaction_id"/>
+                            </tree>
+                        </field>
+                    </page>
+                    <page string="Shopify Refunds Transaction">
+                        <field name="shopify_refund_transaction_ids">
+                            <tree string="Refunds Transaction" create="false" delete="false" edit="false" editable="bottom">
+                               <field name="shopify_refund_id"/>
+                                <field name="shopify_refund_order_id"/>
+                                <field name="shopify_refund_kind"/>
+                                <field name="shopify_refund_gateway"/>
+                                <field name="shopify_refund_status"/>
+                                <field name="shopify_refund_message"/>
+                                <field name="shopify_refund_test"/>
+                                <field name="shopify_refund_authorization"/>
+                                <field name="shopify_refund_location_id"/>
+                                <field name="shopify_refund_source_name"/>
+                                <field name="shopify_refund_amount"/>
+                                <field name="shopify_refund_currency"/>
                             </tree>
                         </field>
                     </page>

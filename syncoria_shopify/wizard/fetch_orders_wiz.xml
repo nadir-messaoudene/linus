@@ -14,6 +14,7 @@
                             </group>
                             <group>
                                 <field name="instance_id" options="{'no_create': True}" required="1"/>
+                                <field name="order_status" options="{'no_create': True}" />
                             </group>
                         </group>
                         <p>The operation may take some time to complete. It depends on the number of records.

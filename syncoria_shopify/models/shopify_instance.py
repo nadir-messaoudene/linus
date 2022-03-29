@@ -74,6 +74,12 @@ class ModelName(models.Model):
         ondelete='restrict',
         required=True,
     )
+    marketplace_refund_journal_id = fields.Many2one(
+        string='Refund Journal',
+        comodel_name='account.journal',
+        ondelete='restrict',
+        required=True,
+    )
     marketplace_inbound_method_id  = fields.Many2one(
         string='Inbound Payment Method',
         comodel_name='account.payment.method',
