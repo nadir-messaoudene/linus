@@ -886,7 +886,9 @@ class ProductsFetchWizard(models.Model):
                 try:
                     if type(fetched_products).__name__== 'list':
                         products += fetched_products['products']
-                    else :
+                    elif type(fetched_products).__name__== 'dict':
+                        products += fetched_products['products']
+                    else:
                         products=fetched_products['product']
 
                     if next_link:
