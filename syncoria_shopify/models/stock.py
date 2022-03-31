@@ -78,7 +78,7 @@ class StockPicking(models.Model):
                 'Content-Type': 'application/json'
             }
             type_req = 'POST'
-            res,next_link = self.shopify_api_call(
+            res = self.shopify_api_call(
                 headers=headers,
                 url=url,
                 type=type_req,
