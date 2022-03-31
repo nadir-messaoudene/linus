@@ -134,14 +134,17 @@ class ProductsFetchWizard(models.Model):
                                 if product.shopify_currency_id:
                                     price = product.shopify_price
                                 variant.update({"price" : product.list_price})
-                                # variant.update({"inventory_quantity" : int(product.qty_available)})
-                            # if marketplace_instance_id.publish_in_website:
-                            #     variant.update({"inventory_quantity" : int(product.qty_available)})
-                            # if marketplace_instance_id.set_image:
-                            #     variant.update({"inventory_quantity" : int(product.qty_available)})
 
-                            if marketplace_instance_id.set_stock and product.qty_available and self.shopify_warehouse:
-                                update_qty = self._shopify_update_qty(warehouse=warehouse_location.partner_id.shopify_warehouse_id,inventory_item_id=product.shopify_inventory_id,quantity=int(product.qty_available),marketplace_instance_id=marketplace_instance_id,host=host)
+                            if self.shopify_warehouse:
+                               update_qty = self._shopify_update_qty(
+                                   warehouse=self.shopify_warehouse.shopify_warehouse_id,
+                                   inventory_item_id=product.shopify_inventory_id, quantity=int(product.with_context({"warehouse":self.shopify_warehouse.id}).qty_available),
+                                   marketplace_instance_id=marketplace_instance_id, host=host)
+                            else:
+                                quants_ids = product.stock_quant_ids.search([("location_id.usage","=","internal"),("product_id","=",product.id)])
+                                for quants in quants_ids:
+                                    if marketplace_instance_id.set_stock and product.qty_available and quants.location_id.warehouse_id.shopify_warehouse_active:
+                                        update_qty = self._shopify_update_qty(warehouse=quants.location_id.warehouse_id.shopify_warehouse_id,inventory_item_id=product.shopify_inventory_id,quantity=int(quants.quantity),marketplace_instance_id=marketplace_instance_id,host=host)
 
                             data = {'variant': variant}
                             product_url = host.marketplace_host + "/admin/api/%s/variants/%s.json" %(api_version, product.shopify_id)
