@@ -18,6 +18,7 @@ class ShopifyControllers(http.Controller):
     def shopify_orders(self, **kwargs):
         _logger.info("shopify_orders")
         _logger.info(request.httprequest.url)
-        _logger.info("kwargs===>>>%s", kwargs)
+        data = request.jsonrequest
+        _logger.info("data===>>>%s", data)
         res = {}
         return res
