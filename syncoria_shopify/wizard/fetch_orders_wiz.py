@@ -283,7 +283,11 @@ class OrderFetchWizard(models.Model):
 
         # Request Parameters
         type_req = 'GET'
-        params = {"limit": 250,"status":self.order_status}
+        params = {"limit": 250}
+        if self.order_status:
+            params.update({"status":self.order_status})
+
+
         orders = []
         headers = {
             'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password}
@@ -297,7 +301,8 @@ class OrderFetchWizard(models.Model):
                 if next_link:
                     if next_link.get("next"):
                         url = next_link.get("next").get("url")
-
+                        if params.get('status'):
+                            del(params['status'])
                     else:
                         break
                 else:
