@@ -19,12 +19,12 @@ class MarketplaceWebhooks(models.Model):
     _order = 'id desc'
     _check_company_auto = True
 
-    name = fields.Char(string='Order Reference', required=True, copy=False,
+    name = fields.Char(string='Name', required=True, copy=False,
                        readonly=True, index=True, default=lambda self: _('New'))
     company_id = fields.Many2one(
         'res.company', 'Company', required=True, index=True, default=lambda self: self.env.company)
     marketplace_instance_id = fields.Many2one(
-        string='Select Instance',
+        string='Instance ID',
         comodel_name='marketplace.instance',
         ondelete='restrict',
     )
@@ -39,14 +39,47 @@ class MarketplaceWebhooks(models.Model):
         default='draft',
     )
 
-    # @api.model
-    # def create(self, vals):
-    #     if 'company_id' in vals:
-    #         self = self.with_company(vals['company_id'])
-    #     if vals.get('name', _('New')) == _('New'):
-    #         seq_date = None
-    #         if 'create_date' in vals:
-    #             seq_date = fields.Datetime.context_timestamp(
-    #                 self, fields.Datetime.to_datetime(vals['create_date']))
-    #         vals['name'] = self.env['ir.sequence'].next_by_code(
-    #             'marketplace.webhooks', sequence_date=seq_date) or _('New')
+
+class MarketplaceWebhooksConfig(models.Model):
+    _name = 'marketplace.webhooks.config'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _description = 'Marketplace Webhooks Config'
+    _order = 'id desc'
+    _check_company_auto = True
+
+    name = fields.Char(string='Name', required=True, copy=False,
+                       readonly=True, index=True, default=lambda self: _('New'))
+    company_id = fields.Many2one(
+        'res.company', 'Company', required=True, index=True, default=lambda self: self.env.company)
+    marketplace_instance_id = fields.Many2one(
+        string='Instance ID',
+        comodel_name='marketplace.instance',
+        ondelete='restrict',
+    )
+    marketplace_instance_type = fields.Selection(
+        related='marketplace_instance_id.marketplace_instance_type',
+        readonly=True,
+        store=True
+    )
+    state = fields.Selection(
+        string='state',
+        selection=[('draft', 'Draft'), ('connected', 'Connected'), ('disconnected', 'Disonnected')],
+        default='draft',
+    )
+
+    @api.model
+    def create(self, vals):
+        company_id = vals.get('company_id', self.default_get(['company_id'])['company_id'])
+        self_comp = self.with_company(company_id)
+        if vals.get('name', 'New') == 'New':
+            vals['name'] = self.env['ir.sequence'].next_by_code('marketplace.webhooks.config') or 'New'
+        res = super(MarketplaceWebhooksConfig, self_comp).create(vals)
+        return res
+
+    def activate_webhooks(self):
+        if hasattr(self, '%s_activate_webhooks' % self.marketplace_instance_type):
+            return getattr(self, '%s_activate_webhooks' % self.marketplace_instance_type)()
+
+    def deactivate_webhooks(self):
+        if hasattr(self, '%s_deactivate_webhooks' % self.marketplace_instance_type):
+            return getattr(self, '%s_deactivate_webhooks' % self.marketplace_instance_type)()

@@ -13,7 +13,7 @@
     </record>
 
 
-    <record id="view_model_form" model="ir.ui.view">
+    <record id="marketplace_webhooks_form" model="ir.ui.view">
       <field name="name">view.marketplace.webhooks.form</field>
       <field name="model">marketplace.webhooks</field>
       <field name="arch" type="xml">
@@ -23,7 +23,6 @@
             <field name="state" invisible="1"/>
             <button string="Create Shopify Webhook" class="btn btn-primary" name="action_create_webhook" type="object" attrs="{'invisible': ['|', ('state','not in',('draft')), ('shopify_id','!=', 0)]  }" />
             <button string="Update Shopify Webhook" class="btn btn-primary" name="action_update_webhook" type="object" attrs="{'invisible': ['|', ('state','not in',('confirm')), ('shopify_id','!=', 0)]  }" />
-
             <field name="state" widget="statusbar" statusbar_visible="draft,connected"/>
           </header>
           <sheet>
@@ -56,6 +55,12 @@
               </page>
             </notebook>
           </sheet>
+          <div class="oe_chatter">
+              <field name="message_follower_ids" widget="mail_followers" groups="base.group_user"/>
+              <field name="activity_ids" widget="mail_activity"/>
+              <field name="message_ids" widget="mail_thread"/>
+          </div>
+
         </form>
 
       </field>

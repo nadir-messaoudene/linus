@@ -22,69 +22,6 @@ class AccountInvoice(models.Model):
     )
 
     
-    # def write(self, values):
-    #     print("AccountInvoice===>>>write===>>>" + str(values))
-    #     result = super(AccountInvoice, self).write(values)
-    #     return result
-    
-    # @api.model
-    # def create(self, values):
-    #     print("AccountInvoice===>>>create===>>>" + str(values))
-    #     result = super(AccountInvoice, self).create(values)
-    #     return result
-    
-    # @api.onchange('partner_id', 'company_id')
-    # def _onchange_partner_id_account_invoice_pricelist(self):
-    #     result = super(AccountInvoice, self)._onchange_partner_id()
-    #     if self.partner_id and self.type in ('out_invoice', 'out_refund') \
-    #             and self.partner_id.property_product_pricelist:
-    #         self.pricelist_id = self.partner_id.property_product_pricelist
-    #     return result
-
-    # @api.model
-    # def _prepare_refund(self, invoice, date_invoice=None, date=None,
-    #                     description=None, journal_id=None):
-    #     values = super(AccountInvoice, self)._prepare_refund(
-    #         invoice, date_invoice=date_invoice, date=date,
-    #         description=description, journal_id=journal_id)
-    #     if invoice.pricelist_id:
-    #         values.update({
-    #             'pricelist_id': invoice.pricelist_id.id,
-    #         })
-    #     return values
-
-
-# class AccountInvoiceLine(models.Model):
-#     _inherit = 'account.move.line'
-
-#     @api.model
-#     def create(self, values):
-#         print("AccountInvoiceLine===>>>create===>>>" + str(values))
-#         result = super(AccountInvoiceLine, self).create(values)
-#         return result
-    
-#     @api.onchange('product_id', 'quantity', 'uom_id')
-#     def _onchange_product_id_account_invoice_pricelist(self):
-#         if not self.invoice_id.pricelist_id or not self.invoice_id.partner_id:
-#             return
-#         product = self.product_id.with_context(
-#             lang=self.invoice_id.partner_id.lang,
-#             partner=self.invoice_id.partner_id.id,
-#             quantity=self.quantity,
-#             date_order=self.invoice_id.date_invoice,
-#             pricelist=self.invoice_id.pricelist_id.id,
-#             uom=self.uom_id.id,
-#             fiscal_position=(
-#                 self.invoice_id.partner_id.property_account_position_id.id)
-#         )
-#         self.price_unit = self.env['account.tax']._fix_tax_included_price(
-#             product.price, product.taxes_id, self.invoice_line_tax_ids)
-
-#     def update_from_pricelist(self):
-
-#         for line in self.filtered(lambda r: r.invoice_id.state == 'draft'):
-#             line._onchange_product_id_account_invoice_pricelist()
-
 
 class AccountTax(models.Model):
     _inherit = 'account.tax'
