@@ -8,7 +8,7 @@
 import pprint
 import re
 from ..shopify.utils import *
-from odoo import models, fields, api, _
+from odoo import models, fields, api, _,exceptions
 import logging
 _logger = logging.getLogger(__name__)
 
@@ -167,7 +167,7 @@ class StockPicking(models.Model):
             }
             type_req = 'POST'
             data = {}
-            res,next_link = self.shopify_api_call(
+            res = self.shopify_api_call(
                 headers=headers,
                 url=url,
                 type=type_req,
