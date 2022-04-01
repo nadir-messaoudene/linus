@@ -20,7 +20,7 @@
             <field name="arch" type="xml">
                 <form string="Shopify Feed Orders" create="true" delete="true" edit="true">
                     <header>
-                        <!-- <button string="Process Order" class="btn btn-primary" name="process_feed_product" type="object" attrs="{  'invisible': [('state','in',('queue'))]  }" />-->
+                        <button string="Process Order" class="btn btn-primary" name="process_feed_order" type="object" attrs="{  'invisible': [('state','in',('queue'))]  }" />
                         <field name="state" widget="statusbar" statusbar_visible="draft,queue,processed,failed"/>
                     </header>
                     <sheet name="Shopify Feed Orders">
