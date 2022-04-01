@@ -354,10 +354,18 @@ class SaleOrderShopify(models.Model):
                             tran_id.shopify_amount) > 0 and shopify_instance_id and move_id.payment_state != 'in_payment':
                         wizard_vals = {
                             'journal_id': shopify_instance_id.marketplace_payment_journal_id.id,
-                            'payment_method_line_id': shopify_instance_id.marketplace_inbound_method_id.id,
+                            # 'payment_method_line_id': shopify_instance_id.marketplace_inbound_method_id.id,
                             'amount': float(tran_id.shopify_amount),
                             'payment_date': fields.Datetime.now(),
                         }
+
+                        payment_method_line_id = shopify_instance_id.marketplace_payment_journal_id.inbound_payment_method_line_ids.filtered(
+                            lambda l:l.payment_method_id.id == shopify_instance_id.marketplace_inbound_method_id.id)
+                        if payment_method_line_id:
+                            wizard_vals['payment_method_line_id'] = payment_method_line_id.id
+
+
+
                         wizard_vals['payment_date'] = tran_id.shopify_processed_at.split('T')[
                             0] if tran_id.shopify_processed_at else fields.Datetime.now()
                         domain = []
@@ -438,12 +446,21 @@ class SaleOrderShopify(models.Model):
                 shopify_instance_id = tran_id.shopify_instance_id or rec.shopify_instance_id
                 if float(
                         tran_id.shopify_refund_amount) > 0 and shopify_instance_id and move_id.payment_state != 'in_payment':
+                    
+                    
                     wizard_vals = {
                         'journal_id': shopify_instance_id.marketplace_refund_journal_id.id,
-                        'payment_method_line_id': shopify_instance_id.marketplace_outbound_method_id.id,
+                        # 'payment_method_line_id': shopify_instance_id.marketplace_outbound_method_id.id,
                         'amount': float(tran_id.shopify_refund_amount),
                         'payment_date': fields.Datetime.now(),
                     }
+
+                    payment_method_line_id = shopify_instance_id.marketplace_refund_journal_id.outbound_payment_method_line_ids.filtered(
+                        lambda l:l.payment_method_id.id == shopify_instance_id.marketplace_outbound_method_id.id)
+                    if payment_method_line_id:
+                        wizard_vals['payment_method_line_id'] = payment_method_line_id.id
+
+                    
                     wizard_vals['payment_date'] = tran_id.shopify_refund_processed_at.split('T')[
                         0] if tran_id.shopify_refund_processed_at else fields.Datetime.now()
                     domain = []

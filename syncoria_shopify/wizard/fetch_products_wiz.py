@@ -884,13 +884,13 @@ class ProductsFetchWizard(models.Model):
                     params=params
                 )
                 try:
-                    if type(fetched_products).__name__== 'list':
+                    if 'products' in fetched_products:
                         products += fetched_products['products']
-                    elif type(fetched_products).__name__== 'dict':
+                    elif 'product' in fetched_products:
                         products = fetched_products['product']
-                    else:
-                        products=fetched_products['product']
-
+                    elif 'errors' in fetched_products:
+                        _logger.warning("Exception occured: %s",fetched_products['errors'])
+                        raise Exception ("Product:"+str(kwargs.get('product_id'))+":"+fetched_products['errors'])
                     if next_link:
                         if next_link.get("next"):
                             url = next_link.get("next").get("url")
