@@ -133,7 +133,7 @@ class ProductsFetchWizard(models.Model):
                                 price = product.list_price
                                 if product.shopify_currency_id:
                                     price = product.shopify_price
-                                variant.update({"price" : product.list_price})
+                                variant.update({"price" : product.lst_price})
 
                             if self.shopify_warehouse:
                                update_qty = self._shopify_update_qty(
