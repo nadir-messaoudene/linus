@@ -456,46 +456,49 @@ class SaleOrderShopify(models.Model):
         for rec in self:
             success_tran_ids = rec.shopify_transaction_ids.filtered(lambda l: l.shopify_status == 'success')
             move_id = account_move.search([('invoice_origin', '=', rec.name), ('move_type', "=", "out_invoice")])
+
+            
             try:
-                for tran_id in success_tran_ids:
-                    shopify_instance_id = tran_id.shopify_instance_id or rec.shopify_instance_id
-                    if float(tran_id.shopify_amount) > 0 and shopify_instance_id and move_id.payment_state != 'in_payment':
-                        #######################################################################################################
-                        shopify_amount = float(tran_id.shopify_amount)
-                        if tran_id.shopify_currency and tran_id.shopify_amount:
-                            if tran_id.shopify_currency != tran_id.shopify_instance_id.pricelist_id.currency_id.name:
-                                shopify_amount = float(tran_id.shopify_amount)*float(tran_id.shopify_exchange_rate)
-                        #######################################################################################################
-                        _logger.info("shopify_amount==>>>{}".format(shopify_amount))
-                        wizard_vals = {
-                            'journal_id': shopify_instance_id.marketplace_payment_journal_id.id,
-                            'amount': shopify_amount,
-                            'payment_date': fields.Datetime.now(),
-                        }
+                if move_id:
+                    for tran_id in success_tran_ids:
+                        shopify_instance_id = tran_id.shopify_instance_id or rec.shopify_instance_id
+                        if float(tran_id.shopify_amount) > 0 and shopify_instance_id and move_id.payment_state != 'in_payment':
+                            #######################################################################################################
+                            shopify_amount = float(tran_id.shopify_amount)
+                            if tran_id.shopify_currency and tran_id.shopify_amount:
+                                if tran_id.shopify_currency != tran_id.shopify_instance_id.pricelist_id.currency_id.name:
+                                    shopify_amount = float(tran_id.shopify_amount)*float(tran_id.shopify_exchange_rate)
+                            #######################################################################################################
+                            _logger.info("shopify_amount==>>>{}".format(shopify_amount))
+                            wizard_vals = {
+                                'journal_id': shopify_instance_id.marketplace_payment_journal_id.id,
+                                'amount': shopify_amount,
+                                'payment_date': fields.Datetime.now(),
+                            }
 
-                        payment_method_line_id = shopify_instance_id.marketplace_payment_journal_id.inbound_payment_method_line_ids.filtered(
-                            lambda l:l.payment_method_id.id == shopify_instance_id.marketplace_inbound_method_id.id)
-                        if payment_method_line_id:
-                            wizard_vals['payment_method_line_id'] = payment_method_line_id.id
+                            payment_method_line_id = shopify_instance_id.marketplace_payment_journal_id.inbound_payment_method_line_ids.filtered(
+                                lambda l:l.payment_method_id.id == shopify_instance_id.marketplace_inbound_method_id.id)
+                            if payment_method_line_id:
+                                wizard_vals['payment_method_line_id'] = payment_method_line_id.id
 
-                        wizard_vals['payment_date'] = tran_id.shopify_processed_at.split('T')[
-                            0] if tran_id.shopify_processed_at else fields.Datetime.now()
-                        domain = []
-                        for move in move_id:
-                            domain += [('ref', '=', move.name)]
-                        if domain:
-                            pay_id = account_payment.search(domain, order='id desc', limit=1)
-                            if pay_id:
-                                wizard_vals['communication'] = pay_id.ref.split('-')[0]
+                            wizard_vals['payment_date'] = tran_id.shopify_processed_at.split('T')[
+                                0] if tran_id.shopify_processed_at else fields.Datetime.now()
+                            domain = []
+                            for move in move_id:
+                                domain += [('ref', '=', move.name)]
+                            if domain:
+                                pay_id = account_payment.search(domain, order='id desc', limit=1)
+                                if pay_id:
+                                    wizard_vals['communication'] = pay_id.ref.split('-')[0]
 
-                        pmt_wizard = self.env['account.payment.register'].with_context(
-                            active_model='account.move',
-                            active_ids=move_id.ids).create(wizard_vals)
+                            pmt_wizard = self.env['account.payment.register'].with_context(
+                                active_model='account.move',
+                                active_ids=move_id.ids).create(wizard_vals)
 
-                        payment = pmt_wizard.action_create_payments()
-                        print("===============>", payment)
-                        if move_id.payment_state in ['paid','in_payment']:
-                            rec.write({"shopify_is_invoice": True})
+                            payment = pmt_wizard.action_create_payments()
+                            print("===============>", payment)
+                            if move_id.payment_state in ['paid','in_payment']:
+                                rec.write({"shopify_is_invoice": True})
 
             except Exception as e:
                 # raise exceptions.UserError(f"{e}")
@@ -552,57 +555,58 @@ class SaleOrderShopify(models.Model):
         account_move = self.env['account.move'].sudo()
         account_payment = self.env['account.move'].sudo()
         move_id = False
-        for rec in self:
-            success_tran_ids = rec.shopify_refund_transaction_ids.filtered(
-                lambda l: l.shopify_refund_status == 'success')
-            move_id = account_move.search([('invoice_origin', '=', rec.name), ('move_type', "=", "out_refund")])
-            for tran_id in success_tran_ids:
-                shopify_instance_id = tran_id.shopify_instance_id or rec.shopify_instance_id
-                if float(
-                        tran_id.shopify_refund_amount) > 0 and shopify_instance_id and move_id.payment_state != 'in_payment':
+        if move_id:
+            for rec in self:
+                success_tran_ids = rec.shopify_refund_transaction_ids.filtered(
+                    lambda l: l.shopify_refund_status == 'success')
+                move_id = account_move.search([('invoice_origin', '=', rec.name), ('move_type', "=", "out_refund")])
+                for tran_id in success_tran_ids:
+                    shopify_instance_id = tran_id.shopify_instance_id or rec.shopify_instance_id
+                    if float(
+                            tran_id.shopify_refund_amount) > 0 and shopify_instance_id and move_id.payment_state != 'in_payment':
 
-                    #######################################################################################################
-                    shopify_refund_amount = float(tran_id.shopify_refund_amount)
-                    if tran_id.shopify_refund_currency and tran_id.shopify_refund_amount:
-                        if tran_id.shopify_refund_currency != tran_id.shopify_instance_id.pricelist_id.currency_id.name:
-                            shopify_refund_amount = float(tran_id.shopify_refund_amount)*float(tran_id.shopify_refund_exchange_rate)
-                    #######################################################################################################
+                        #######################################################################################################
+                        shopify_refund_amount = float(tran_id.shopify_refund_amount)
+                        if tran_id.shopify_refund_currency and tran_id.shopify_refund_amount:
+                            if tran_id.shopify_refund_currency != tran_id.shopify_instance_id.pricelist_id.currency_id.name:
+                                shopify_refund_amount = float(tran_id.shopify_refund_amount)*float(tran_id.shopify_refund_exchange_rate)
+                        #######################################################################################################
 
-                    
-                    wizard_vals = {
-                        'journal_id': shopify_instance_id.marketplace_refund_journal_id.id,
-                        'amount': shopify_refund_amount,
-                        'payment_date': fields.Datetime.now(),
-                    }
+                        
+                        wizard_vals = {
+                            'journal_id': shopify_instance_id.marketplace_refund_journal_id.id,
+                            'amount': shopify_refund_amount,
+                            'payment_date': fields.Datetime.now(),
+                        }
 
-                    payment_method_line_id = shopify_instance_id.marketplace_refund_journal_id.outbound_payment_method_line_ids.filtered(
-                        lambda l:l.payment_method_id.id == shopify_instance_id.marketplace_outbound_method_id.id)
-                    if payment_method_line_id:
-                        wizard_vals['payment_method_line_id'] = payment_method_line_id.id
+                        payment_method_line_id = shopify_instance_id.marketplace_refund_journal_id.outbound_payment_method_line_ids.filtered(
+                            lambda l:l.payment_method_id.id == shopify_instance_id.marketplace_outbound_method_id.id)
+                        if payment_method_line_id:
+                            wizard_vals['payment_method_line_id'] = payment_method_line_id.id
 
-                    wizard_vals['payment_date'] = tran_id.shopify_refund_processed_at.split('T')[
-                        0] if tran_id.shopify_refund_processed_at else fields.Datetime.now()
-                    domain = []
-                    for move in move_id:
-                        domain += [('ref', '=', move.name)]
-                    # if domain:
-                    #     pay_id = account_payment.search(domain)
-                    #     if pay_id:
-                    #         wizard_vals['communication'] = pay_id.ref.split('-')[0]
+                        wizard_vals['payment_date'] = tran_id.shopify_refund_processed_at.split('T')[
+                            0] if tran_id.shopify_refund_processed_at else fields.Datetime.now()
+                        domain = []
+                        for move in move_id:
+                            domain += [('ref', '=', move.name)]
+                        # if domain:
+                        #     pay_id = account_payment.search(domain)
+                        #     if pay_id:
+                        #         wizard_vals['communication'] = pay_id.ref.split('-')[0]
 
-                    pmt_wizard = self.env['account.payment.register'].with_context(
-                        active_model='account.move',
-                        active_ids=move_id.ids).create(wizard_vals)
+                        pmt_wizard = self.env['account.payment.register'].with_context(
+                            active_model='account.move',
+                            active_ids=move_id.ids).create(wizard_vals)
 
-                    payment = pmt_wizard.action_create_payments()
-                    print("===============>", payment)
-                    if move_id.payment_state in ['paid', 'in_payment']:
-                        rec.write({"shopify_is_refund": True})
+                        payment = pmt_wizard.action_create_payments()
+                        print("===============>", payment)
+                        if move_id.payment_state in ['paid', 'in_payment']:
+                            rec.write({"shopify_is_refund": True})
 
-                    # try:
-                    #     move_id._cr.commit()
-                    # except Exception as e:
-                    #     _logger.warning("Exception-{}".format(e.args))
+                        # try:
+                        #     move_id._cr.commit()
+                        # except Exception as e:
+                        #     _logger.warning("Exception-{}".format(e.args))
         return move_id, message
 
 

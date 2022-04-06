@@ -72,6 +72,17 @@
             <field name="view_mode">tree,form</field>
         </record>
 
+        <record id="action_process_feed_orders" model="ir.actions.server">
+            <field name="name">Process Feed Orders</field>
+            <field name="model_id" ref="syncoria_shopify.model_shopify_feed_orders" />
+            <field name="binding_model_id" ref="syncoria_shopify.model_shopify_feed_orders" />
+            <field name="binding_view_types">list</field>
+            <field name="state">code</field>
+            <field name="code">
+                if records:
+                    action = records.process_feed_order()
+            </field>
+        </record>
 
         <menuitem 
             action="action_shopify_feed_orders"
