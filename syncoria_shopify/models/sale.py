@@ -498,7 +498,9 @@ class SaleOrderShopify(models.Model):
                             rec.write({"shopify_is_invoice": True})
 
             except Exception as e:
-                raise exceptions.UserError(f"{e}")
+                # raise exceptions.UserError(f"{e}")
+                _logger.warning("Exception-{}-{}".format(rec.id,e.args))
+
 
                 # try:
                 #     move_id._cr.commit()

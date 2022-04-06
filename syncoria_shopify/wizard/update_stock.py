@@ -139,7 +139,6 @@ class ProductsFetchWizard(models.Model):
     def shopify_update_stock_item(self,kwargs):
         _logger.info("******shopify_update_stock_item")
         warehouse_location = self.shopify_warehouse
-        marketplace_instance_id = kwargs.get('marketplace_instance_id')
         Connector = self.env['marketplace.connector']
         UpdateQtyWiz = self.env['stock.change.product.qty']
         default_location = None
@@ -150,37 +149,36 @@ class ProductsFetchWizard(models.Model):
             default_location = warehouse.lot_stock_id
         active_ids = self._context.get('active_ids')
         active_model = self._context.get('active_model')
-        api_version = marketplace_instance_id.marketplace_api_version
+
 
         cr = self._cr
         if self.fetch_type == 'to_odoo':
-            url = f"/admin/api/{api_version}/inventory_levels.json"
-            url = marketplace_instance_id.marketplace_host +  url
-            
-            headers = {'X-Shopify-Access-Token':marketplace_instance_id.marketplace_api_password}
+
             type_req = 'GET'
             
             products = self._shopify_get_product_list(active_ids)
 
             for item in products:
-                # location_id = item.location_id
-                # if not location_id and default_location:
-                #     location_id = default_location
-                # elif not location_id:
-                #     continue
-                # if item.default_code:
-                    # product_url = url.replace("{api_version}", api_version)
-                    # product_url = product_url.replace("{product_id}", item.shopify_id)
-                params = {"inventory_item_ids":item.shopify_inventory_id}
-                _logger.info("product_url-->", url)
-                stock_item,next_link = Connector.shopify_api_call(
-                        headers=headers,
-                        url=url,
-                        type=type_req,
-                        marketplace_instance_id=marketplace_instance_id,
-                        params=params
-                )
                 try:
+                    # ==================== Marketplace Credentials =================
+                    marketplace_instance_id = item.shopify_instance_id
+                    api_version = marketplace_instance_id.marketplace_api_version
+                    url = f"/admin/api/{api_version}/inventory_levels.json"
+                    url = marketplace_instance_id.marketplace_host +  url
+
+                    headers = {'X-Shopify-Access-Token':marketplace_instance_id.marketplace_api_password}
+                    # ===================================================================
+
+                    params = {"inventory_item_ids":item.shopify_inventory_id}
+                    _logger.info("product_url-->", url)
+                    stock_item,next_link = Connector.shopify_api_call(
+                            headers=headers,
+                            url=url,
+                            type=type_req,
+                            marketplace_instance_id=marketplace_instance_id,
+                            params=params
+                    )
+
                     if stock_item.get('inventory_levels'):
                         inventory_stocks = stock_item.get('inventory_levels')
                         for stocks_info in inventory_stocks:
@@ -191,34 +189,6 @@ class ProductsFetchWizard(models.Model):
                 except Exception as e:
                     _logger.warning("Exception-%s",e.args)
 
-
-
-                # try:
-                #     if stock_item.get('products'):
-                #         variants = stock_item.get('variants') or stock_item.get('variant')
-                #         variants = [variants] if type(variants) == dict else variants
-                #
-                #         _logger.info("variants ===>>>%s",variants)
-                #
-                #         for variant in variants:
-                #             if str(variant['id']) == item.shopify_id:
-                #                 product_stock = variant['inventory_quantity']
-                #                 _logger.info("product_stock ===>>>%s",product_stock)
-                #                 # updating qty on hand
-                #                 # inventory_wizard = UpdateQtyWiz.create({
-                #                 #     'product_id': item.id,
-                #                 #     'product_tmpl_id': item.product_tmpl_id.id,
-                #                 #     'new_quantity': product_stock,
-                #                 # })
-                #                 # inventory_wizard.change_product_qty()
-                #                 # updating unit price if changed
-                #                 # if variant['price'] != item.list_price:
-                #                 #     cr.execute("update product_template set list_price=%s "
-                #                 #             "where id=%s",
-                #                 #             (variant['price'], item.product_tmpl_id.id))
-                #                 _logger.info("Successfully Updated %s", item.default_code)
-                # except Exception as e:
-                #     _logger.warning("Exception-%s",e.args)
             return {
                 'type': 'ir.actions.client',
                 'tag': 'reload'
@@ -226,14 +196,18 @@ class ProductsFetchWizard(models.Model):
         elif self.fetch_type == 'from_odoo':
             """TO DO: 'from_odoo'"""
             products = self._shopify_get_product_list(active_ids)
-            headers = {
-                'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password,
-                'Content-Type' : 'application/json'
-            }
-            type_req = 'POST'
+
             for product in products:
-                product_template = product.product_tmpl_id
                 try:
+                    marketplace_instance_id = product.shopify_instance_id
+                    api_version = marketplace_instance_id.marketplace_api_version
+                    headers = {
+                        'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password,
+                        'Content-Type': 'application/json'
+                    }
+
+                    product_template = product.product_tmpl_id
+
                     if product.type == 'product' and product.shopify_id and product_template.attribute_line_ids:
                         variant = {"id":product.shopify_id}
                         type_req = 'PUT'
@@ -368,13 +342,15 @@ class ProductsFetchWizard(models.Model):
         if self._context.get('active_model') == 'product.product':
             products = self.env['product.product'].search([
                 ('marketplace_type', '=', 'shopify'),
-                ('id', 'in', active_ids)
+                ('id', 'in', active_ids),
+                ('shopify_id', 'not in', ['', False])
             ])
             # product_templ_id =
         if self._context.get('active_model') == 'product.template':
             # Cannot find products
             products = self.env['product.product'].search([
                 ('marketplace_type', '=', 'shopify'),
-                ('product_tmpl_id', 'in', active_ids)
+                ('product_tmpl_id', 'in', active_ids),
+                ('shopify_id','not in',['',False])
             ])
         return products
