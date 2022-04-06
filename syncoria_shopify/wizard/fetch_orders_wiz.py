@@ -191,9 +191,6 @@ class OrderFetchWizard(models.Model):
                 res_partner = self.env['res.partner'].sudo()
                 partner_id = res_partner.search(
                     [('email', '=', item.get('email'))], limit=1)
-                if item.get('email') == 'tom@thinkerp.ca':
-                    """"""  
-                    print("") 
 
                 _logger.warning("\Partner with Email===>>>%s exists" %
                                 (item.get('email')))
