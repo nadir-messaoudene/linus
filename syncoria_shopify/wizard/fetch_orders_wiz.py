@@ -534,7 +534,6 @@ class OrderFetchWizard(models.Model):
                         url = next_link.get("next").get("url")
                         if params.get('status'):
                             del(params['status'])
-
                     else:
                         break
                 else:

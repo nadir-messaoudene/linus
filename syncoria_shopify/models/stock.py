@@ -8,7 +8,7 @@
 import pprint
 import re
 from ..shopify.utils import *
-from odoo import models, fields, api, _
+from odoo import models, fields, api, _,exceptions
 import logging
 _logger = logging.getLogger(__name__)
 
