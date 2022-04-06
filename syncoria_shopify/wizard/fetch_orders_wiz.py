@@ -265,9 +265,11 @@ class OrderFetchWizard(models.Model):
                 partner_id = res_partner.search(domain, limit=1)
 
                 customer_vals = self.shopify_customer(customer, self.env, shipping=False)
+
                 if not partner_id and customer.get('email'):
                     domain = [('email', '=' , customer.get('email'))]
                     partner_id = res_partner.search(domain, limit=1)
+
                 if partner_id and customer_vals:
                     partner_id.write(customer_vals)
                 else:
@@ -375,7 +377,6 @@ class OrderFetchWizard(models.Model):
 
 
     def get_partner_invoice_id(self, sp_order_dict, partner_id):
-        res_partner = self.env['res.partner'].sudo()
         partner_invoice_id = partner_id
         if sp_order_dict.get('billing_address'):
             billing_address = sp_order_dict.get('billing_address', {})
@@ -419,6 +420,9 @@ class OrderFetchWizard(models.Model):
                 partner_invoice_id.property_account_receivable_id = partner_id.property_account_receivable_id.id
             if partner_id and partner_invoice_id and not partner_invoice_id.property_account_payable_id:
                 partner_invoice_id.property_account_payable_id = partner_id.property_account_payable_id.id
+
+            if partner_invoice_id:
+                partner_invoice_id[0]
         try:
             self._cr.commit()
         except Exception as e:
@@ -469,6 +473,9 @@ class OrderFetchWizard(models.Model):
                 partner_shipping_id.property_account_receivable_id = partner_id.property_account_receivable_id.id
             if partner_id and partner_shipping_id and not partner_shipping_id.property_account_payable_id:
                 partner_shipping_id.property_account_payable_id = partner_id.property_account_payable_id.id
+
+            if partner_shipping_id:
+                partner_shipping_id[0]
         try:
             self._cr.commit()
         except Exception as e:
@@ -785,6 +792,7 @@ class OrderFetchWizard(models.Model):
                         partner_shipping_id = False
                         shipping = False
 
+                        ####################################################################################################
                         # if i.get('shipping_address'):
                         #     full_name = i['shipping_address'].get(
                         #         'first_name') or "" + ' ' + i['shipping_address'].get('last_name') or ""
@@ -798,6 +806,7 @@ class OrderFetchWizard(models.Model):
                         #     if customer and partner_shipping_id and not partner_shipping_id.property_account_receivable_id:
                         #         partner_shipping_id.property_account_receivable_id = customer.property_account_receivable_id.id
                         #         partner_shipping_id.property_account_payable_id = customer.property_account_payable_id.id
+                        ####################################################################################################
 
                         order_vals['order_line'] = order_line
                         order_vals = self._get_delivery_line(
@@ -851,6 +860,7 @@ class OrderFetchWizard(models.Model):
                         PartnerObj = self.env['res.partner'].sudo()
                         shipping = False
 
+                        ####################################################################################################
                         # if i.get('billing_address'):
                         #     full_name = i.get('billing_address').get('name')
                         #     partner_invoice_id = PartnerObj.search(
@@ -864,17 +874,19 @@ class OrderFetchWizard(models.Model):
                         #     if customer and partner_invoice_id and not partner_invoice_id.property_account_receivable_id:
                         #         partner_invoice_id.property_account_receivable_id = customer.property_account_receivable_id.id
                         #         partner_invoice_id.property_account_payable_id = customer.property_account_payable_id.id
+                        ####################################################################################################
 
-                        pp = PartnerObj.search([('id', '=', customer_id)])
-                        order_vals['partner_shipping_id'] = partner_shipping_id.id if partner_shipping_id != False else pp.id
-                        order_vals['partner_invoice_id'] = partner_invoice_id.id if partner_invoice_id != False else pp.id
+                        # pp = PartnerObj.search([('id', '=', customer_id)])
+                        # if pp:
+                        #     partner_shipping_id =  pp.child_ids.filtered(lambda l:l.type == 'delivery')
+                        #     partner_invoice_id =  pp.child_ids.filtered(lambda l:l.type == 'delivery')
+                        #     order_vals['partner_shipping_id'] = pp.child_ids.filtered(lambda l:l.type == 'delivery').id or pp.id
+                        #     order_vals['partner_invoice_id'] = pp.child_ids.filtered(lambda l:l.type == 'invoice').id or pp.id
 
-                        if not order_vals['partner_invoice_id']:
-                            order_vals['partner_invoice_id'] = order_vals['partner_id']
-                        if not order_vals['partner_shipping_id']:
-                            order_vals['partner_shipping_id'] = order_vals['partner_id']
-
-
+                        # if not order_vals['partner_invoice_id']:
+                        #     order_vals['partner_invoice_id'] = order_vals['partner_id']
+                        # if not order_vals['partner_shipping_id']:
+                        #     order_vals['partner_shipping_id'] = order_vals['partner_id']
 
                         # order_vals = self.process_discount_codes(i, order_vals)
                         # pprint.pformat(order_vals)
