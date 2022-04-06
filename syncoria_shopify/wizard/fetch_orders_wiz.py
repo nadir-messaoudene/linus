@@ -287,7 +287,6 @@ class OrderFetchWizard(models.Model):
 
     def shopify_customer(self, values, env, shipping=False):
         customer={}
-        customer['child_ids'] = []
         customer['name']=(values.get(
             'first_name') or "") + " " + (values.get('last_name') or "")
         customer['display_name']=customer['name']
@@ -792,21 +791,7 @@ class OrderFetchWizard(models.Model):
                         partner_shipping_id = False
                         shipping = False
 
-                        ####################################################################################################
-                        # if i.get('shipping_address'):
-                        #     full_name = i['shipping_address'].get(
-                        #         'first_name') or "" + ' ' + i['shipping_address'].get('last_name') or ""
-                        #     partner_shipping_id = self.env['res.partner'].sudo().search(
-                        #         [('name', '=', full_name), ('type', '=', 'delivery')], limit=1)
-                        #     customer = self.env['res.partner'].sudo().browse(
-                        #         customer_id) if customer_id else None
-                        #     partner_shipping_id = self._match_or_create_address(
-                        #         customer, i.get('shipping_address'), 'delivery')
-                        #     ############Update Account Receivable and Account Payable for Child ids
-                        #     if customer and partner_shipping_id and not partner_shipping_id.property_account_receivable_id:
-                        #         partner_shipping_id.property_account_receivable_id = customer.property_account_receivable_id.id
-                        #         partner_shipping_id.property_account_payable_id = customer.property_account_payable_id.id
-                        ####################################################################################################
+
 
                         order_vals['order_line'] = order_line
                         order_vals = self._get_delivery_line(
@@ -860,21 +845,7 @@ class OrderFetchWizard(models.Model):
                         PartnerObj = self.env['res.partner'].sudo()
                         shipping = False
 
-                        ####################################################################################################
-                        # if i.get('billing_address'):
-                        #     full_name = i.get('billing_address').get('name')
-                        #     partner_invoice_id = PartnerObj.search(
-                        #         [('name', '=', full_name), ('type', '=', 'invoice')], limit=1)
-                        #     customer = self.env['res.partner'].sudo().browse(
-                        #         customer_id) if customer_id else None
-                        #     partner_invoice_id = self._match_or_create_address(
-                        #         customer, i.get('billing_address'), 'invoice')
 
-                        #     ############Update Account Receivable and Account Payable for Child ids
-                        #     if customer and partner_invoice_id and not partner_invoice_id.property_account_receivable_id:
-                        #         partner_invoice_id.property_account_receivable_id = customer.property_account_receivable_id.id
-                        #         partner_invoice_id.property_account_payable_id = customer.property_account_payable_id.id
-                        ####################################################################################################
 
                         # pp = PartnerObj.search([('id', '=', customer_id)])
                         # if pp:
@@ -918,19 +889,7 @@ class OrderFetchWizard(models.Model):
                                 if i.get("cancel_reason")and i.get('cancelled_at'):
                                     order_id.action_cancel()
 
-                                # try:
-                                #     if order_id and order_id.state in ['sale', 'done'] and marketplace_instance_id.auto_create_invoice == True:
-                                #         inv = self._create_invoice_shopify(
-                                #             order_id, i)
-                                #         msg = "Invoice created with Order id: %s, Invoice Name: %s" % (
-                                #             order_id.name, inv.name)
-                                #         _logger.info(msg) if msg else None
-                                #     else:
-                                #         _logger.info(
-                                #             "Unable to create Invoice for order id: %s" % (order_id))
-                                # except Exception as e:
-                                #     _logger.warning(
-                                #         "Error for order id: %s- %s" % (order_id, e.args))
+                               
 
                 else:
                     current_order_id = OrderObj.search(
@@ -960,49 +919,7 @@ class OrderFetchWizard(models.Model):
                     except Exception as e:
                         _logger.warning(e)
 
-                    # if i['confirmed'] and current_order_id.state == 'draft':
-                    #     current_order_id.action_confirm()
-
-                    # if i['confirmed'] != current_order_id.shopify_status:
-                    #     current_order_id.shopify_status = i['confirmed']
-                    #
-                    # if marketplace_instance_id.auto_create_invoice == True:
-                    #     print("current_order_id===>>>" +
-                    #           str(current_order_id.name))
-                    #
-                    #     move_id = AccMove.search(
-                    #         [('invoice_origin', '=', current_order_id.name)], limit=1)
-                    #     print("move_id===>>>" + str(move_id))
-                    #     print("move_id.invoice_origin===>>>" +
-                    #           str(move_id.invoice_origin))
-                    #
-                    #     if current_order_id and current_order_id.state in ['sale', 'done']:
-                    #         try:
-                    #             if not move_id:
-                    #                 move_id = self._create_invoice_shopify(
-                    #                     current_order_id, i)
-                    #                 msg = "Invoice created with Order id: %s, Invoice Name: %s" % (
-                    #                     current_order_id.name, move_id.name)
-                    #                 _logger.info(msg) if msg else None
-                    #             if move_id and move_id.state == 'draft' and i.get('financial_status') in ['authorized', 'paid']:
-                    #                 move_id.action_post()
-                    #
-                    #             payments = self._shopify_process_payments(
-                    #                 move_id, i)
-                    #             _logger.info("payments" + str(payments))
-                    #         except Exception as e:
-                    #             _logger.warning(
-                    #                 "Error for order id: %s- %s" % (current_order_id, e.args))
-                    #
-                    #     else:
-                    #         _logger.info(
-                    #             "Unable to create Invoice for order id: %s" % (current_order_id))
-
-            # self.update_sync_history({
-            #     'last_product_sync' : '',
-            #     'last_product_sync_id' : sp_product_list[-1].get('id') if len(sp_product_list) > 0 else '',
-            #     'product_sync_no': update_products_no,
-            # })
+                
 
 
         except Exception as e:
@@ -1143,37 +1060,15 @@ class OrderFetchWizard(models.Model):
             order_vals['order_line'].append((0, 0, temp))
         return order_vals
 
+    #######################################################################
     def _create_invoice_shopify(self, order_id, sp_order):
-
         wiz = self.env['sale.advance.payment.inv'].with_context(
             active_ids=order_id.ids, open_invoices=True).create({})
         move_vals = wiz.create_invoices()
-        # ------------------------------------------------------------
-        # values = {
-        #     'advance_payment_method': 'delivered',
-        #     'deduct_down_payments': True,
-        #     'product_id': False,
-        #     'currency_id': order_id.currency_id.id,
-        #     'fixed_amount': 0,
-        #     'amount': 0,
-        #     'deposit_account_id': False,
-        #     'deposit_taxes_id': [[6, False, []]],
-        # }
-        # sale_pay = self.env['sale.advance.payment.inv'].sudo()
-        # sale_pay_id = sale_pay.create(values)
-
-        # print("sale_pay_id ===>>>", sale_pay_id)
-        # move_id = sale_pay_id.create_invoices()
-        # print("move_id ===>>>", move_id)
-
-        # wiz = self.env['sale.advance.payment.inv'].with_context(active_ids=order_id.ids, open_invoices=True).create({})
-        # move_id = wiz.create_invoices()
-        # print("move_id ===>>>", move_id)
-        # ------------------------------------------------------------
         move_id = order_id._create_invoices()
         move_id.update({'marketplace_type': 'shopify', })
-        # payments = self._shopify_process_payments(move_id, sp_order)
         return move_id
+    #######################################################################
 
     def _get_inv_vals(self, order_id, sp_order):
         inv_vals = {}
@@ -1229,50 +1124,6 @@ class OrderFetchWizard(models.Model):
 
     def _shopify_process_payments(self, move_id, sp_order):
         payments = False
-        # ---------------------------------------------------------------
-        # action_data = sheet.action_register_payment()
-        # wizard =  Form(self.env['account.payment.register'].with_context(action_data['context'])).save()
-        # wizard.action_create_payments()
-        # mkplc_id = self._get_instance_id()
-        # domain = [('code','=','manual'),('payment_type','=','inbound')]
-        # payment_method_id = self.env['account.payment.method'].sudo().search(domain, limit=1)
-        # reg_vals = {
-        #     'amount': move_id.amount_total,
-        #     'available_payment_method_ids': False,
-        #     'can_edit_wizard': True,
-        #     'can_group_payments': False,
-        #     'communication': move_id.name,
-        #     # 'company_currency_id': move_id.name,
-        #     'company_id':move_id.company_id.id,
-        #     'country_code':move_id.company_id.country_id.code,
-        #     'currency_id':move_id.currency_id.id,
-        #     'group_payment':False,
-        #     'journal_id':mkplc_id.marketplace_payment_journal_id.id,
-        #     'line_ids':False,
-        #     'partner_bank_id':False,
-        #     # 'partner_id':move_id.partner_id.id,
-        #     'payment_method_id':payment_method_id.id,
-        #     'payment_difference_handling':'open',
-        #     # 'writeoff_account_id':False,
-        #     'writeoff_label':'Write-Off',
-        #     'partner_type':'customer',
-        #     'payment_date':fields.Datetime.now(),
-        #     'payment_type':'inbound',
-        #     'source_amount':move_id.amount_total,
-        #     'source_currency_id':move_id.currency_id.id,
-        # }
-
-        # pay_reg_id = self.env['account.payment.register'].with_context({
-        #     'active_model': 'account.move',
-        #     'active_ids': move_id.ids,
-        # }).create(reg_vals)
-
-        # print("pay_reg_id===>>>" + str(pay_reg_id))
-        # pay_reg_id.action_create_payments()
-        # print("pay_reg_id===>>>" + str(pay_reg_id))
-
-        # ---------------------------------------------------------------
-        # ----------------------------------------------------------------
         mkplc_id = self._get_instance_id()
         AccPay = self.env['account.payment'].sudo()
         print("move_id.payment_id===>>>" + str(move_id.payment_id))
