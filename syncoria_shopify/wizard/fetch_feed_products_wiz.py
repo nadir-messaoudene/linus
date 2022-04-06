@@ -98,9 +98,18 @@ class FeedProductsFetchWizard(models.Model):
         _logger.info("Number of Products: {}".format(len(configurable_products.get('products'))))
 
         feed_products = self.env['shopify.feed.products']
+        child_products = self.env['shopify.feed.products']
         if configurable_products.get('products'):
             for product in configurable_products.get('products'):
                 feed_products += self.create_feed_parent_product(product)
+
+                for variant in product.get('variants'):
+                    child_products += self.create_feed_variant_product(variant)
+
+        _logger.info("Parent Product Created: {}".format(len(feed_products)))
+        _logger.info("Child Product Created: {}".format(len(child_products)))
+
+                
 
 
     def create_feed_parent_product(self, product):
@@ -109,8 +118,7 @@ class FeedProductsFetchWizard(models.Model):
         # domain += [("product_wiz_id","=",self.id)]
         feed_product = shopify_feed_product.search(domain,limit=1)
         try:
-            if not feed_product:
-                record = shopify_feed_product.sudo().create({
+            feed_product_vals = {
                     'instance_id': self.instance_id.id,
                     'parent': True,
                     'title': product['title'],
@@ -118,34 +126,49 @@ class FeedProductsFetchWizard(models.Model):
                     'inventory_id': product.get('inventory_item_id'),
                     'product_data': json.dumps(product),
                     # 'product_wiz_id' : self.id
-                })
+                }
+                
+            if not feed_product:
+                record = shopify_feed_product.sudo().create(feed_product_vals)
                 _logger.info("Shopify Feed Parent Product Created-{}".format(record))
                 self._cr.commit()
             else:
+                feed_product.write(feed_product_vals)
                 _logger.info("Shopify Feed already exists-{}".format(record))
+
 
         except Exception as e:
             _logger.warning("Exception-{}".format(e.args))
         return feed_product
     
     
-    # def create_feed_variant_product(self, product):
-    #     try:
-    #         feed_product_tmpl = self.env['shopify.feed.products']
-    #         existing_product = feed_product_tmpl.search([("shopify_id", "=", product['id'])], limit=1)
-    #         if not existing_product:
-    #             variant = self.env['shopify.feed.products'].sudo().create({
-    #                 'instance_id': self.instance_id.id,
-    #                 'parent': False,
-    #                 'title': product['title'],
-    #                 'shopify_id': product['id'],
-    #                 'inventory_id': product.get('inventory_item_id'),
-    #                 'product_data': str(product),
-    #                 'product_wiz_id' : self.id
-    #             })
-    #             _logger.info("Shopify Feed Varaint Product Created-{}".format(variant))
-    #             variant._cr.commit()
-    #     except Exception as e:
-    #         _logger.warning("Exception-{}".format(e.args))
+    def create_feed_variant_product(self, product):
+        shopify_feed_product = self.env['shopify.feed.products']
+        existing_product = self.env['shopify.feed.products']
+        try:
+            existing_product = shopify_feed_product.search([("shopify_id", "=", product['id'])], limit=1)
+            child_product_vals = {
+                    'instance_id': self.instance_id.id,
+                    'parent': False,
+                    'title': product['title'],
+                    'shopify_id': product['id'],
+                    'inventory_id': product.get('inventory_item_id'),
+                    'product_data': str(product),
+                    'product_wiz_id' : self.id,
+                    'barcode': product.get('barcode'),
+                    'default_code': product.get('sku'),
+                }
+
+            if not existing_product:
+                variant = self.env['shopify.feed.products'].sudo().create(child_product_vals)
+                _logger.info("Shopify Feed Varaint Product Created-{}".format(variant))
+                variant._cr.commit()
+            else:
+                existing_product.write(child_product_vals)
+                _logger.info("Shopify Feed already exists-{}".format(existing_product))
+
+        except Exception as e:
+            _logger.warning("Exception-{}".format(e.args))
+        return existing_product
 
 

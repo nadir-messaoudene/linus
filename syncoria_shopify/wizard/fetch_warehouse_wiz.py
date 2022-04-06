@@ -93,7 +93,7 @@ class WarehouseFetchWizard(models.TransientModel):
                     "shopify_loc_active" : location.get("active"),
                     "shopify_loc_localized_country_name" : location.get("localized_country_name"),
                     "shopify_loc_localized_province_name" : location.get("localized_province_name"),
-
+                    "shopify_instance_id" : marketplace_instance_id.id,
                 }
 
                 exists_warehouse = shopify_warehouse.search([("shopify_invent_id", "=", location.get("id"))])

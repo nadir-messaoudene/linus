@@ -118,7 +118,7 @@ class CustomerFetchWizard(models.Model):
                             tag_ids = []
                             for tag in tags:
                                 tag_id = self.env['res.partner.category'].search([
-                                    ("name", "=", tags),
+                                    ("name", "=", tag),
                                     ("parent_id", "=", self.env.ref("syncoria_shopify.shopify_tag").id)
                                 ], limit=1)
                                 if not tag_id and tag != "":

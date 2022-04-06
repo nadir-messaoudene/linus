@@ -109,7 +109,8 @@ class SaleOrderShopify(models.Model):
                         message += '\nLength of Transaction List-{}'.format(len(transactions_list.get('transactions')))
                         tran_recs = rec.process_shopify_transactions(transactions_list['transactions'])
                         message += '\nTransaction Record Created-{}'.format(len(tran_recs))
-                    rec.message_post(body=_(message))
+                    if tran_recs:
+                        rec.message_post(body=_(message))
                 except Exception as e:
                     _logger.warning("Exception-%s" % (e.args))
 
@@ -131,6 +132,19 @@ class SaleOrderShopify(models.Model):
                 receipt_vals_list = []
                 payment_details_vals_list = []
 
+
+                try:
+                    exchange_rate = "1.0000"
+                    if transaction.get('currency'):
+                        if transaction.get('currency') == self.pricelist_id.currency_id.name:
+                            exchange_rate = "1.0000"
+                            vals['shopify_exchange_rate'] = exchange_rate
+                        else:
+                            _logger.info("Transaction Currency do not match with Sale Order Pricelist Currency")
+                except Exception as e:
+                    _logger.warning("Exception-{}".format(e.args))
+
+
                 if transaction.get('receipt'):
                     if type(transaction.get('receipt')) == dict:
                         receipt = transaction.get('receipt')
@@ -141,6 +155,21 @@ class SaleOrderShopify(models.Model):
                                 if key in receipt_fields:
                                     receipt_vals[key] = value
                             receipt_vals_list += [receipt_vals]
+                            ########################################################################################################
+                            try:
+                                #Populate Exchange Rate:
+                                if receipt.get('charges',{}).get('data',{}) and transaction.get('amount') and receipt.get('amount'):
+                                    if float(transaction.get('amount')) == float(receipt.get('amount')/100):
+                                        data = receipt.get('charges',{}).get('data',{})
+                                        for data_item in data:
+                                            if float(transaction.get('amount')) == float(data_item.get('amount')/100):
+                                                if data_item.get('balance_transaction',{}).get('exchange_rate'):
+                                                    vals['shopify_exchange_rate'] = data_item.get('balance_transaction',{}).get('exchange_rate')
+                                                    print("exchange_rate===>>>{}".format(exchange_rate))
+                                
+                            except Exception as e:
+                                _logger.warning("Exception-{}".format(e.args))
+                            #######################################################################################################
 
                     if type(transaction.get('receipt')) == list:
                         for receipt in transaction.get('receipt'):
@@ -151,6 +180,23 @@ class SaleOrderShopify(models.Model):
                                     if key in receipt_fields:
                                         receipt_vals[key] = value
                                 receipt_vals_list += [receipt_vals]
+
+                                ########################################################################################################
+                                try:
+                                    #Populate Exchange Rate:
+                                    if receipt.get('charges',{}).get('data',{}) and transaction.get('amount') and receipt.get('amount'):
+                                        if float(transaction.get('amount')) == float(receipt.get('amount')/100):
+                                            data = receipt.get('charges',{}).get('data',{})
+                                            for data_item in data:
+                                                if float(transaction.get('amount')) == float(data_item.get('amount')/100):
+                                                    if data_item.get('balance_transaction',{}).get('exchange_rate'):
+                                                        vals['shopify_exchange_rate'] = data_item.get('balance_transaction',{}).get('exchange_rate')
+                                                        print("exchange_rate===>>>{}".format(exchange_rate))
+                                    
+                                except Exception as e:
+                                    _logger.warning("Exception-{}".format(e.args))
+                                #######################################################################################################
+
 
                 if transaction.get('payment_details'):
                     if type(transaction.get('payment_details')) == dict:
@@ -223,7 +269,10 @@ class SaleOrderShopify(models.Model):
             sp_refunds = self.env['shopify.refunds'].sudo()
             refund_id = sp_refunds.search([('shopify_id', '=', refund['id'])])
             if not refund_id:
-                vals = {'sale_id': self.id}
+                vals = {
+                    'sale_id': self.id,
+                    'shopify_instance_id': self.shopify_instance_id.id,
+                }
                 refund = {k: v for k, v in refund.items() if v is not False and v is not None}
                 for key, value in refund.items():
                     if 'shopify_' + str(key) in list(sp_refunds._fields) and key not in ['receipt', 'payment_details']:
@@ -252,6 +301,19 @@ class SaleOrderShopify(models.Model):
                     receipt_vals_list = []
                     payment_details_vals_list = []
 
+                    try:
+                        exchange_rate = "1.0000"
+                        if transaction.get('currency'):
+                            if transaction.get('currency') == self.pricelist_id.currency_id.name:
+                                exchange_rate = "1.0000"
+                                vals['shopify_refund_exchange_rate'] = exchange_rate
+                            else:
+                                _logger.info("Transaction Currency do not match with Sale Order Pricelist Currency")
+                    except Exception as e:
+                        _logger.warning("Exception-{}".format(e.args))
+
+
+
                     if transaction.get('receipt'):
                         if type(transaction.get('receipt')) == dict:
                             receipt = transaction.get('receipt')
@@ -262,6 +324,23 @@ class SaleOrderShopify(models.Model):
                                     if key in receipt_fields:
                                         receipt_vals[key] = value
                                 receipt_vals_list += [receipt_vals]
+                                ########################################################################################################
+                                try:
+                                    #Populate Exchange Rate:
+                                    if receipt.get('charges',{}).get('data',{}) and transaction.get('amount') and receipt.get('amount'):
+                                        if float(transaction.get('amount')) == float(receipt.get('amount')/100):
+                                            data = receipt.get('charges',{}).get('data',{})
+                                            for data_item in data:
+                                                if float(transaction.get('amount')) == float(data_item.get('amount')/100):
+                                                    if data_item.get('balance_transaction',{}).get('exchange_rate'):
+                                                        vals['shopify_refund_exchange_rate'] = data_item.get('balance_transaction',{}).get('exchange_rate')
+                                                        print("exchange_rate===>>>{}".format(exchange_rate))
+                                    
+                                except Exception as e:
+                                    _logger.warning("Exception-{}".format(e.args))
+                                #######################################################################################################
+
+
 
                         if type(transaction.get('receipt')) == list:
                             for receipt in transaction.get('receipt'):
@@ -272,6 +351,24 @@ class SaleOrderShopify(models.Model):
                                         if key in receipt_fields:
                                             receipt_vals[key] = value
                                     receipt_vals_list += [receipt_vals]
+                                    
+                                    ########################################################################################################
+                                    try:
+                                        #Populate Exchange Rate:
+                                        if receipt.get('charges',{}).get('data',{}) and transaction.get('amount') and receipt.get('amount'):
+                                            if float(transaction.get('amount')) == float(receipt.get('amount')/100):
+                                                data = receipt.get('charges',{}).get('data',{})
+                                                for data_item in data:
+                                                    if float(transaction.get('amount')) == float(data_item.get('amount')/100):
+                                                        if data_item.get('balance_transaction',{}).get('exchange_rate'):
+                                                            vals['shopify_refund_exchange_rate'] = data_item.get('balance_transaction',{}).get('exchange_rate')
+                                                            print("exchange_rate===>>>{}".format(exchange_rate))
+                                        
+                                    except Exception as e:
+                                        _logger.warning("Exception-{}".format(e.args))
+                                    #######################################################################################################
+
+
 
                     if transaction.get('payment_details'):
                         if type(transaction.get('payment_details')) == dict:
@@ -331,6 +428,18 @@ class SaleOrderShopify(models.Model):
                         [('invoice_origin', '=', rec.name), ('move_type', "=", "out_invoice")])
 
                 if move_id and move_id.state != 'posted':
+                    ################################################################################################
+                    #Update Analytic Accounts for Shopify
+                    try:
+                        if not move_id.shopify_instance_id:
+                            move_id.write({'shopify_instance_id' : rec.shopify_instance_id.id})
+                        if move_id.shopify_instance_id:
+                            for line in move_id.invoice_line_ids:
+                                line.analytic_account_id =  move_id.shopify_instance_id.analytic_account_id.id
+                    except Exception as e:
+                        _logger.warning("Update Analytic Accounts Exception-{}".format(e.args))
+                    ################################################################################################
+
                     move_id.action_post()
                     message += "\nInvoice-{} Posted for Sale Order-{}".format(move_id, rec)
                 try:
@@ -350,21 +459,32 @@ class SaleOrderShopify(models.Model):
             try:
                 for tran_id in success_tran_ids:
                     shopify_instance_id = tran_id.shopify_instance_id or rec.shopify_instance_id
-                    if float(
-                            tran_id.shopify_amount) > 0 and shopify_instance_id and move_id.payment_state != 'in_payment':
+                    if float(tran_id.shopify_amount) > 0 and shopify_instance_id and move_id.payment_state != 'in_payment':
+                        #######################################################################################################
+                        shopify_amount = float(tran_id.shopify_amount)
+                        if tran_id.shopify_currency and tran_id.shopify_amount:
+                            if tran_id.shopify_currency != tran_id.shopify_instance_id.pricelist_id.currency_id.name:
+                                shopify_amount = float(tran_id.shopify_amount)*float(tran_id.shopify_exchange_rate)
+                        #######################################################################################################
+                        _logger.info("shopify_amount==>>>{}".format(shopify_amount))
                         wizard_vals = {
                             'journal_id': shopify_instance_id.marketplace_payment_journal_id.id,
-                            'payment_method_line_id': shopify_instance_id.marketplace_inbound_method_id.id,
-                            'amount': float(tran_id.shopify_amount),
+                            'amount': shopify_amount,
                             'payment_date': fields.Datetime.now(),
                         }
+
+                        payment_method_line_id = shopify_instance_id.marketplace_payment_journal_id.inbound_payment_method_line_ids.filtered(
+                            lambda l:l.payment_method_id.id == shopify_instance_id.marketplace_inbound_method_id.id)
+                        if payment_method_line_id:
+                            wizard_vals['payment_method_line_id'] = payment_method_line_id.id
+
                         wizard_vals['payment_date'] = tran_id.shopify_processed_at.split('T')[
                             0] if tran_id.shopify_processed_at else fields.Datetime.now()
                         domain = []
                         for move in move_id:
                             domain += [('ref', '=', move.name)]
                         if domain:
-                            pay_id = account_payment.search(domain)
+                            pay_id = account_payment.search(domain, order='id desc', limit=1)
                             if pay_id:
                                 wizard_vals['communication'] = pay_id.ref.split('-')[0]
 
@@ -438,12 +558,26 @@ class SaleOrderShopify(models.Model):
                 shopify_instance_id = tran_id.shopify_instance_id or rec.shopify_instance_id
                 if float(
                         tran_id.shopify_refund_amount) > 0 and shopify_instance_id and move_id.payment_state != 'in_payment':
+
+                    #######################################################################################################
+                    shopify_refund_amount = float(tran_id.shopify_refund_amount)
+                    if tran_id.shopify_refund_currency and tran_id.shopify_refund_amount:
+                        if tran_id.shopify_refund_currency != tran_id.shopify_instance_id.pricelist_id.currency_id.name:
+                            shopify_refund_amount = float(tran_id.shopify_refund_amount)*float(tran_id.shopify_refund_exchange_rate)
+                    #######################################################################################################
+
+                    
                     wizard_vals = {
                         'journal_id': shopify_instance_id.marketplace_refund_journal_id.id,
-                        'payment_method_line_id': shopify_instance_id.marketplace_outbound_method_id.id,
-                        'amount': float(tran_id.shopify_refund_amount),
+                        'amount': shopify_refund_amount,
                         'payment_date': fields.Datetime.now(),
                     }
+
+                    payment_method_line_id = shopify_instance_id.marketplace_refund_journal_id.outbound_payment_method_line_ids.filtered(
+                        lambda l:l.payment_method_id.id == shopify_instance_id.marketplace_outbound_method_id.id)
+                    if payment_method_line_id:
+                        wizard_vals['payment_method_line_id'] = payment_method_line_id.id
+
                     wizard_vals['payment_date'] = tran_id.shopify_refund_processed_at.split('T')[
                         0] if tran_id.shopify_refund_processed_at else fields.Datetime.now()
                     domain = []

@@ -10,6 +10,9 @@
                     <field name="name" />
                     <field name="instance_id" />
                     <field name="shopify_id" />
+                    <field name="customer_name" />
+                    <field name="email" />
+                    <field name="state" />
                 </tree>
             </field>
         </record>

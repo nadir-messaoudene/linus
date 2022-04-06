@@ -43,6 +43,7 @@ class ShopifyFeedProducts(models.Model):
 
     state = fields.Selection(
         string='state',
+        tracking=True,
         selection=[('draft', 'draft'), ('queue', 'Queue'),
                    ('processed', 'Processed'), ('failed', 'Failed')]
     )
@@ -62,6 +63,13 @@ class ShopifyFeedProducts(models.Model):
         comodel_name='feed.products.fetch.wizard',
         ondelete='restrict',
     )
+    barcode = fields.Char(
+        string='Barcode',
+    )
+    default_code = fields.Char(
+        string='Default Code(SKU)',
+    )
+    
     
 
     @api.onchange('product_tmpl_id')
@@ -1221,6 +1229,8 @@ class ShopifyFeedProducts(models.Model):
                     'title': product['title'],
                     'shopify_id': product['id'],
                     'inventory_id': product.get('inventory_item_id'),
+                    'barcode': product.get('barcode'),
+                    'default_code': product.get('sku'),
                     'product_data': str(product),
                 })
                 record._cr.commit()

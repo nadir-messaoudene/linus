@@ -69,6 +69,20 @@
             <field name="active">False</field>
         </record>
 
+        <record id="ir_cron_update_product_quantity" model="ir.cron">
+            <field name="name">Shopify: Update Product Quantity</field>
+            <field name="model_id" ref="syncoria_base_marketplace.model_update_stock_wizard"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="nextcall" eval="(DateTime.now().replace(hour=2, minute=0) + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')" />
+            <field name="doall" eval="True"/>
+            <field name="code">model.action_update_stock_item()</field>
+            <field name="state">code</field>
+            <field name="active">False</field>
+        </record>
+
+
 
     </data>
 </odoo>

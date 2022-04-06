@@ -36,6 +36,7 @@ class ShopifyFeedCustomers(models.Model):
     )
     state = fields.Selection(
         string='state',
+        tracking=True,
         selection=[('draft', 'draft'), ('queue', 'Queue'),
                    ('processed', 'Processed'), ('failed', 'Failed')]
     )
@@ -44,3 +45,11 @@ class ShopifyFeedCustomers(models.Model):
         comodel_name='feed.customers.fetch.wizard',
         ondelete='restrict',
     )
+    customer_name = fields.Char(
+        string='Customer Name',
+    )
+    email = fields.Char(
+        string='Email',
+    )
+    
+    

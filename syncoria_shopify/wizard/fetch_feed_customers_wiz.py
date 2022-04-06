@@ -65,9 +65,28 @@ class FeedOrderFetchWizard(models.Model):
         
         headers = {'X-Shopify-Access-Token':marketplace_instance_id.marketplace_api_password}
         type_req = 'GET'
-        customer_list = self.env['marketplace.connector'].marketplace_api_call(headers=headers, url=url, type=type_req,marketplace_instance_id=marketplace_instance_id)
+        params = {"limit":250}
+
+        items=[]
+        while True:
+            customer_list, next_link = self.env['marketplace.connector'].marketplace_api_call(
+                headers=headers, 
+                url=url, 
+                type=type_req,
+                marketplace_instance_id=marketplace_instance_id,
+                params=params)
+            items += customer_list['customers']
+            if next_link:
+                if next_link.get("next"):
+                    url = next_link.get("next").get("url")
+
+                else:
+                    break
+            else:
+                break
+
         try:
-            for customer in customer_list['customers']:
+            for customer in items:
                 self.create_feed_customer(customer)
 
         except Exception as e:
@@ -89,7 +108,9 @@ class FeedOrderFetchWizard(models.Model):
                     'instance_id': self.instance_id.id,
                     'shopify_id': customer_data['id'],
                     'customer_data': json.dumps(customer_data),
-                    'state': 'draft'
+                    'state': 'draft',
+                    'customer_name': customer_data.get('first_name') + ' ' + customer_data.get('last_name'),
+                    'email': customer_data.get('email'),
                 })
                 feed_customer_id._cr.commit()
                 _logger.info(

@@ -262,6 +262,40 @@ def get_marketplace(record):
     return marketplace_instance_id
 
 
+# def shopify_api_call(**kwargs):
+#     """
+#     We will be running the api calls from here
+#     :param kwargs: dictionary with all the necessary parameters,
+#     such as url, header, data,request type, etc
+#     :return: response obtained for the api call
+#     """
+#     if kwargs.get('kwargs'):
+#         kwargs = kwargs.get('kwargs')
+#     if not kwargs:
+#         # no arguments passed
+#         return
+
+#     type = kwargs.get('type') or 'GET'
+#     complete_url = 'https://' + kwargs.get('url')
+#     _logger.info("%s", complete_url)
+#     headers = kwargs.get('headers')
+
+#     data = json.dumps(kwargs.get('data')) if kwargs.get('data') else None
+#     _logger.info("Request DATA==>>>" + pprint.pformat(data))
+
+#     try:
+#         res = requests.request(type, complete_url, headers=headers, data=data)
+#         if res.status_code in [200, 201]:
+#             _logger.warning(_("Error:" + str(res.text)))
+#         items = json.loads(res.text) if res.status_code in [200, 201] else {
+#             'errors': res.text if res.text != '' else 'Error: Empty response from Shopify\nResponse Code: %s' % (
+#                 res.status_code)}
+#         _logger.info("items==>>>" + pprint.pformat(items))
+#         return items
+#     except Exception as e:
+#         _logger.info("Exception occured %s", e)
+#         raise exceptions.UserError(_("Error Occured 5 %s") % e)
+
 def shopify_api_call(**kwargs):
     """
     We will be running the api calls from here
@@ -283,15 +317,20 @@ def shopify_api_call(**kwargs):
     data = json.dumps(kwargs.get('data')) if kwargs.get('data') else None
     _logger.info("Request DATA==>>>" + pprint.pformat(data))
 
+    params = {}
+    if kwargs.get('params'):
+        params = kwargs.get('params')
+
     try:
-        res = requests.request(type, complete_url, headers=headers, data=data)
+        res = requests.request(type, complete_url, headers=headers, data=data,params=params)
+        next_link = res.links if hasattr(res, 'links') else None
         if res.status_code in [200, 201]:
             _logger.warning(_("Error:" + str(res.text)))
         items = json.loads(res.text) if res.status_code in [200, 201] else {
             'errors': res.text if res.text != '' else 'Error: Empty response from Shopify\nResponse Code: %s' % (
                 res.status_code)}
         _logger.info("items==>>>" + pprint.pformat(items))
-        return items
+        return items,next_link
     except Exception as e:
         _logger.info("Exception occured %s", e)
         raise exceptions.UserError(_("Error Occured 5 %s") % e)

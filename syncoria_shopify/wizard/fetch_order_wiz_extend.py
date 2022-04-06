@@ -37,12 +37,13 @@ class OrderFetchWizardExtend(models.Model):
     def create_feed_orders(self, order_data):
         feed_order_id = False
         try:
+            marketplace_instance_id = self.instance_id or self._get_instance_id() 
             domain = [('shopify_id', '=', order_data['id'])]
             feed_order_id = self.env['shopify.feed.orders'].sudo().search(domain, limit=1)
             if not feed_order_id:
                 feed_order_id = self.env['shopify.feed.orders'].sudo().create({
                     'name': self.env['ir.sequence'].next_by_code('shopify.feed.orders'),
-                    'instance_id': self.instance_id.id,
+                    'instance_id': marketplace_instance_id.id,
                     'shopify_id': order_data['id'],
                     'order_data': json.dumps(order_data),
                     'state': 'draft'

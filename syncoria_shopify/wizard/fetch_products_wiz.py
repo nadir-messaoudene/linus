@@ -119,10 +119,21 @@ class ProductsFetchWizard(models.Model):
 
         _logger.info("START===>>>")
         ####################################################################################
-        feed_products = self.env['shopify.feed.products']
+        shopify_feed_products = self.env['shopify.feed.products']
         for product in config_products:
-            # 1. Create a Feed Product
-            feed_products += self.env['shopify.feed.products'].create()
+            try:
+                feed_product_vals = {
+                        'instance_id': instance_id.id,
+                        'parent': True,
+                        'title': product['title'],
+                        'shopify_id': product['id'],
+                        'inventory_id': product.get('inventory_item_id'),
+                        'product_data': json.dumps(product),
+                    }
+                feed_products += shopify_feed_products.create(feed_product_vals)
+            except Exception as e:
+                _logger.warning("Feed Product Creation Exception-{}".format(e.args))
+
 
         # Process Feed Products
         # for feed_product  in feed_products:
@@ -886,7 +897,9 @@ class ProductsFetchWizard(models.Model):
                 try:
                     if type(fetched_products).__name__== 'list':
                         products += fetched_products['products']
-                    else :
+                    elif type(fetched_products).__name__== 'dict':
+                        products = fetched_products.get('products') or fetched_products.get('product')
+                    else:
                         products=fetched_products['product']
 
                     if next_link:
@@ -1181,6 +1194,9 @@ class ProductsFetchWizard(models.Model):
                 _logger.info("Shopify Feed Parent Product Created-{}".format(record))
                 return record
             else:
+                fp_product.write({
+                    'product_data': json.dumps(product),
+                })
                 return fp_product
         except Exception as e:
             _logger.warning("Exception-{}".format(e.args))

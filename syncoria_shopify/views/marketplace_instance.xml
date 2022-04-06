@@ -117,7 +117,7 @@
                     <field name="payment_term_id" />
                     <field name="marketplace_journal_id" />
                     <field name="marketplace_payment_journal_id" />
-                    <field name="marketplace_refund_journal_id" />
+                    <field name="marketplace_refund_journal_id" required="1"/>
                     <field name="marketplace_inbound_method_id" />
                     <field name="marketplace_outbound_method_id" />
                     <field name="debit_account_id" />
@@ -153,6 +153,7 @@
                       <field name="ao_update_user_id" class="oe_inline" attrs="{'required': [('ao_update','=',True)]  }"/>
                     </div>
                     <field name="auto_create_invoice"/>
+                    <field name="analytic_account_id" attrs="{'required': [('auto_create_invoice','=',True)]  }"/>
                     <field name="order_tracking_ref"/>
                     <field name="order_prefix"/>
                     <field name="compute_pricelist_price" />

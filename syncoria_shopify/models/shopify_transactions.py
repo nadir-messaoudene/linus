@@ -64,6 +64,8 @@ class ShopifyTransactions(models.Model):
         ondelete='restrict',
     )
     shopify_is_process = fields.Boolean(string="Is processed" ,default=False)
+    shopify_exchange_rate = fields.Char(string='Exchange Rate', readonly=1)
+    
 
 
 class ShopifyPaymentDetails(models.Model):

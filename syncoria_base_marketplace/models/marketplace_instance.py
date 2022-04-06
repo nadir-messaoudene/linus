@@ -26,6 +26,7 @@ class MarketplaceInstance(models.Model):
         ondelete='restrict',
         required=True
     )
+    
 
     @api.onchange('company_id')
     def _onchange_company_id(self):
@@ -215,6 +216,12 @@ class MarketplaceInstance(models.Model):
         string='Auto Create Invoice?',
         default=True,
     )
+    analytic_account_id = fields.Many2one(
+        string='Analytic Account',
+        comodel_name='account.analytic.account',
+        ondelete='restrict',
+    )
+    
 
     # Stock Information
     stock_auto_export = fields.Boolean(

@@ -65,6 +65,8 @@ class ShopifyRefunds(models.Model):
     shopify_currency_exchange_adjustment = fields.Char(string='Currency Exchange Adjustment', readonly=1)
     shopify_amount = fields.Char(string='Amount', readonly=1)
     shopify_currency = fields.Char(string='Currency', readonly=1)
+    
+
 
 class ShopifyRefundsTransaction(models.Model):
     _name = 'shopify.refunds.transaction'
@@ -119,3 +121,5 @@ class ShopifyRefundsTransaction(models.Model):
         ondelete='restrict',
     )
     shopify_refund_is_process = fields.Boolean(string="Is processed", default=False)
+    shopify_refund_exchange_rate = fields.Char(string='Exchange Rate', readonly=1)
+    shopify_refund_currency = fields.Char(string='Currency', readonly=1)
