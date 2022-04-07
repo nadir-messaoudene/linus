@@ -504,17 +504,31 @@ class OrderFetchWizard(models.Model):
         url = marketplace_instance_id.marketplace_host + \
             '/admin/api/%s/orders.json' % version
 
+
+        tz_offset = '-00:00'
+        if self.env.user and self.env.user.tz_offset:
+            tz_offset = self.env.user.tz_offset
+
         if self.date_from and not self.date_to:
             url += '?created_at_min=%s' % self.date_from.strftime(
-                "%Y-%m-%dT00:00:00-04:00")
+                "%Y-%m-%dT00:00:00" + tz_offset)
         if not self.date_from and self.date_to:
             url += '?created_at_max=%s' % self.date_to.strftime(
-                "%Y-%m-%dT00:00:00-04:00")
+                "%Y-%m-%dT23:59:59" + tz_offset)
         if self.date_from and self.date_to:
             url += '?created_at_min=%s' % self.date_from.strftime(
-                "%Y-%m-%dT00:00:00-04:00")
+                "%Y-%m-%dT00:00:00" + tz_offset)
             url += '&created_at_max=%s' % self.date_to.strftime(
-                "%Y-%m-%dT00:00:00-04:00")
+                "%Y-%m-%dT23:59:59" + tz_offset)
+        if not self.date_from and not self.date_to:
+            url += '?created_at_min=%s' % fields.Datetime.now().strftime(
+                "%Y-%m-%dT00:00:00" + tz_offset)
+            url += '&created_at_max=%s' % fields.Datetime.now().strftime(
+                "%Y-%m-%dT23:59:59"  + tz_offset)
+
+        _logger.info("url===>>>>{}".format(url))
+        # Example: https://linus-sandbox.myshopify.com/admin/api/2022-01/orders.json?created_at_min=2022-04-05T00:00:00%2B0600&created_at_max=2022-04-05T23:59:59%2B0600
+
 
         # Request Parameters
         type_req = 'GET'
@@ -527,7 +541,8 @@ class OrderFetchWizard(models.Model):
             'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password}
         while True:
             fetched_orders, next_link = self.env['marketplace.connector'].shopify_api_call(headers=headers,
-                                                                                           url=url, type=type_req,
+                                                                                           url=url, 
+                                                                                           type=type_req,
                                                                                            marketplace_instance_id=marketplace_instance_id,
                                                                                            params=params)
             try:
@@ -593,9 +608,13 @@ class OrderFetchWizard(models.Model):
             fields_list = [i[0] for i in res if res] or []
             partner_vals = PartnerObj.default_get(fields_list)
 
+            feed_order_list =[]
             for i in sp_orders:
                 feed_order_id = self.create_feed_orders(i)
-                print("feed_order_id ===>>>{}".format(feed_order_id))
+                if feed_order_id:
+                    print("feed_order_id ===>>>{}".format(feed_order_id))
+                    feed_order_list += feed_order_id.ids
+                    
                 ################################################################################
                 #Process Feed Order
                 # feed_order_id.process_feed_order()
