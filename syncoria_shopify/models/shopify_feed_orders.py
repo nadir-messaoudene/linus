@@ -34,21 +34,36 @@ class ShopifyFeedOrders(models.Model):
     shopify_id = fields.Char(string='Shopify Id', readonly=1)
     order_data = fields.Text(readonly=1)
     state = fields.Selection(
-        string='state',
-        selection=[('draft', 'draft'), 
+        string='State',
+        tracking=True,
+        selection=[('draft', 'Draft'), 
                     ('queue', 'Queue'),
                    ('processed', 'Processed'), 
                    ('failed', 'Failed')]
+        
     )
     order_wiz_id = fields.Many2one(
         string='Order Wiz',
         comodel_name='feed.orders.fetch.wizard',
         ondelete='restrict',
     )
+    
+    shopify_webhook_call = fields.Boolean(string='Webhook Call', readonly=1)
+    shopify_app_id = fields.Char(string='App Id', readonly=1)
+    shopify_confirmed = fields.Char(string='Confirmed', readonly=1)
+    shopify_contact_email = fields.Char(string='Contact Email', readonly=1)
+    shopify_currency = fields.Char(string='Currency', readonly=1)
+    shopify_customer_name = fields.Char(string='Customer Name', readonly=1)
+    shopify_customer_id = fields.Char(string='Customer ID', readonly=1)
+    shopify_gateway = fields.Char(string='Gateway', readonly=1)
+    shopify_order_number = fields.Char(string='Order Nnumber', readonly=1)
+    shopify_financial_status = fields.Char(string='Financial Status', readonly=1)
+    shopify_fulfillment_status = fields.Char(string='Fulfillment Status', readonly=1)
+    shopify_line_items = fields.Char(string='Line Items', readonly=1)
+    shopify_user_id = fields.Char(string='User ID', readonly=1)
 
     def shopify_customer(self, values, env, shipping=False):
         customer={}
-        customer['child_ids'] = []
         customer['name']=(values.get(
             'first_name') or "") + " " + (values.get('last_name') or "")
         customer['display_name']=customer['name']
@@ -99,15 +114,15 @@ class ShopifyFeedOrders(models.Model):
             if default_address.get('company'):
                 company=env['res.partner'].sudo().search(
                     [('name', '=', default_address.get('company'))], limit=1)
-                default_address['company_id']=company.id if company else None
-                default_address['company_name']=default_address.get(
+                customer['company_id']=company.id if company else None
+                customer['company_name']=default_address.get(
                     'company') or ""
 
-            default_address['street']=default_address.get(
+            customer['street']=default_address.get(
                 'address1') or ""
-            default_address['street2']=default_address.get(
+            customer['street2']=default_address.get(
                 'address2') or ""
-            default_address['city']=default_address.get('city') or ""
+            customer['city']=default_address.get('city') or ""
 
             search_domain=[]
             if default_address.get('country_code'):
@@ -118,7 +133,7 @@ class ShopifyFeedOrders(models.Model):
                 search_domain += [('name', '=',
                                 default_address.get('country'))]
             country=env['res.country'].sudo().search(search_domain, limit=1)
-            default_address['country_id']=country.id if country else None
+            customer['country_id']=country.id if country else None
             state_domain=[('country_id', '=', country.id)] if country else []
             if default_address.get('province_code'):
                 state_domain += [('code', '=',
@@ -131,11 +146,10 @@ class ShopifyFeedOrders(models.Model):
             state=env['res.country.state'].sudo().search(
                 state_domain, limit=1)
 
-            default_address['state_id']=state.id if state else None
-            default_address['zip']=default_address.get('zip') or ""
+            customer['state_id']=state.id if state else None
+            customer['zip']=default_address.get('zip') or ""
 
-            if default_address:
-                customer.update(default_address)
+        return customer
 
     def get_partner_invoice_id(self, sp_order_dict, partner_id):
         res_partner = self.env['res.partner'].sudo()
@@ -182,37 +196,44 @@ class ShopifyFeedOrders(models.Model):
                 partner_invoice_id.property_account_receivable_id = partner_id.property_account_receivable_id.id
             if partner_id and partner_invoice_id and not partner_invoice_id.property_account_payable_id:
                 partner_invoice_id.property_account_payable_id = partner_id.property_account_payable_id.id
+
+            if partner_invoice_id:
+                partner_invoice_id[0]
+        try:
+            self._cr.commit()
+        except Exception as e:
+            _logger.warning("Exception-{}".format(e.args))
         return partner_invoice_id
 
     def get_partner_shipping_id(self, sp_order_dict, partner_id):
         partner_shipping_id = partner_id
-        if sp_order_dict.get('billing_address'):
-            billing_address = sp_order_dict.get('billing_address', {})
+        if sp_order_dict.get('shipping_address'):
+            shipping_address = sp_order_dict.get('shipping_address', {})
 
-            partner_shipping_id = partner_id.child_ids.filtered(lambda l:l.type == 'invoice')
+            partner_shipping_id = partner_id.child_ids.filtered(lambda l:l.type == 'delivery')
             if partner_shipping_id:
-                country_domain = [('name', '=', billing_address.get(
-                    'country'))] if billing_address.get('country') else []
-                country_domain += [('name', '=', billing_address.get('province'))
-                                    ] if billing_address.get('province') else country_domain
+                country_domain = [('name', '=', shipping_address.get(
+                    'country'))] if shipping_address.get('country') else []
+                country_domain += [('name', '=', shipping_address.get('province'))
+                                    ] if shipping_address.get('province') else country_domain
                 country_id = self.env['res.country'].sudo().search(
                     country_domain, limit=1)
 
                 state_domain = [('country_id', '=', country_id.id)
                                 ] if country_id else []
-                state_domain += [('name', '=', billing_address.get('province'))
-                                ] if billing_address.get('province') else state_domain
+                state_domain += [('name', '=', shipping_address.get('province'))
+                                ] if shipping_address.get('province') else state_domain
                 state_id = self.env['res.country.state'].sudo().search(
                     state_domain, limit=1)
 
                 partner_shipping_id.write({
-                    'name': billing_address.get('name', None),
-                    'street': billing_address.get('address1'),
-                    'street2': billing_address.get('address2'),
-                    'zip': billing_address.get('zip'),
+                    'name': shipping_address.get('name', None),
+                    'street': shipping_address.get('address1'),
+                    'street2': shipping_address.get('address2'),
+                    'zip': shipping_address.get('zip'),
                     'country_id': country_id.id,
                     'state_id': state_id.id,
-                    'city': billing_address.get('city'),
+                    'city': shipping_address.get('city'),
                     'parent_id': partner_id.id,
                     'property_account_receivable_id' : partner_id.property_account_receivable_id.id,
                     'property_account_payable_id' : partner_id.property_account_payable_id.id,
@@ -222,12 +243,16 @@ class ShopifyFeedOrders(models.Model):
                 
             if not partner_shipping_id:
                 partner_shipping_id = self._match_or_create_address(
-                    partner_id, sp_order_dict.get('billing_address'), 'invoice')
+                    partner_id, sp_order_dict.get('shipping_address'), 'delivery')
 
             if partner_id and partner_shipping_id and not partner_shipping_id.property_account_receivable_id:
                 partner_shipping_id.property_account_receivable_id = partner_id.property_account_receivable_id.id
             if partner_id and partner_shipping_id and not partner_shipping_id.property_account_payable_id:
                 partner_shipping_id.property_account_payable_id = partner_id.property_account_payable_id.id
+        try:
+            self._cr.commit()
+        except Exception as e:
+            _logger.warning("Exception-{}".format(e.args))
         return partner_shipping_id
 
     def get_customer_id(self, sp_order_dict):
@@ -240,8 +265,9 @@ class ShopifyFeedOrders(models.Model):
             customer = sp_order_dict.get('customer')
             shopify_id = customer.get('id')
             if shopify_id:
-                domain = [('marketplace_instance_id', '=' , self.instance_id)]
-                domain += [('marketplace_instance_id', '=' , shopify_id)]
+                domain = [('shopify_instance_id', '=' , self.instance_id.id)]
+                domain += [('shopify_id', '=' , shopify_id)]
+                domain += [('marketplace_type', '=' , 'shopify')]
                 partner_id = res_partner.search(domain, limit=1)
 
                 if not partner_id:
@@ -252,12 +278,19 @@ class ShopifyFeedOrders(models.Model):
                     partner_invoice_id = self.get_partner_invoice_id(sp_order_dict, partner_id)
                     partner_shipping_id = self.get_partner_shipping_id(sp_order_dict, partner_id)
 
-
+            try:
+                self._cr.commit()
+            except Exception as e:
+                _logger.warning("Exception-{}".format(e.args))
         return partner_id, partner_invoice_id, partner_shipping_id
 
     def process_feed_order(self):
         """Convert Shopify Feed Order to Odoo Order"""
-        _logger.info("process_feed_order====>>>>{}".format(self))
+        msg_body = ''
+        log_msg = """Shopify Process Feed Order started for {}""".format(self)
+        msg_body += '\n' + log_msg
+        
+        _logger.info(log_msg)
         
         PartnerObj = self.env['res.partner'].sudo()
         OrderObj = self.env['sale.order'].sudo()
@@ -268,10 +301,14 @@ class ShopifyFeedOrders(models.Model):
                 marketplace_instance_id = self.instance_id
                 i = json.loads(rec.order_data)
 
-                if i['confirmed'] == True:
+                order_exists = OrderObj.search(
+                        [('shopify_id', '=', i['id'])], order='id desc', limit=1)
+
+                if not order_exists and i['confirmed'] == True:
                     # Process Only Shopify Confirmed Orders
                     # check the customer associated with the order, if the customer is new,
                     # then create a new customer, otherwise select existing record
+                    msg_body += "\nShopify Order ID: {}, Customer Name: {}".format(i.get('id'), i.get('name'))
                     partner_id, partner_invoice_id, partner_shipping_id = self.get_customer_id(sp_order_dict=i)
                     customer_id = partner_id.id
                     print("partner_id ===>>>>{}".format(partner_id))
@@ -326,6 +363,7 @@ class ShopifyFeedOrders(models.Model):
                                         ]
                             prod_rec = self.env['product.product'].sudo().search(
                                 prod_dom, limit=1)
+                        
                         if not prod_rec and marketplace_instance_id.auto_create_product:
                             _logger.info("# Need to create a new product")
                             sp_product_list = self.env['products.fetch.wizard'].shopify_fetch_products_to_odoo({
@@ -373,6 +411,12 @@ class ShopifyFeedOrders(models.Model):
                                             if not VariantObj.sudo().search([('shopify_id', '=', str(variants['id']))]):
                                                 prod_rec = self.env['product.product'].sudo().create(
                                                     prod_vals)
+
+
+                        if not prod_rec:
+                            prod_rec_variant_id = line.get('variant_id') or line.get('product_id') or ''
+                            log_msg = """Product not found for Shopify ID-{}, Name: {}""".format(prod_rec_variant_id, line.get('name'))
+                            msg_body += '\n' + log_msg
 
                         product_missing == True if not prod_rec else product_missing
                         temp = {}
@@ -507,13 +551,31 @@ class ShopifyFeedOrders(models.Model):
                                 product_missing = True
 
                         print("Product Missing", product_missing)
+                        if product_missing:
+                            log_msg = """Product is missing for Feed Order-{}""".format(self)
+                            msg_body += '\n' + log_msg
+                            log_msg = """Odoo Order cannot be created for Feed Order-{}""".format(self)
+                            _logger.info(log_msg)
+                            self.write({'state':'failed'})
+
                         if not order_vals['partner_id']:
-                            _logger.info("Unable to Create Order %s. Reason: Partner ID Missing" % (
-                                order_vals['shopify_id']))
+                            log_msg = "Unable to Create Order %s. Reason: Partner ID Missing" % (
+                                order_vals['shopify_id'])
+                            msg_body += '\n' + log_msg
+                            _logger.info(log_msg)
+                            self.write({'state':'failed'})
+
+                            
                         if not product_missing and order_vals['partner_id']:
+                            
                             order_id = self.env['sale.order'].sudo().create(order_vals)
-                            _logger.info("Order Created: %s" % (order_id))
-                            all_shopify_orders += order_id
+                            log_msg = "Sale Order Created-{} for Feed Order-{}".format(order_id, self)
+                            msg_body += '\n' + log_msg
+                            _logger.info(log_msg)
+
+                            if order_id:
+                                self.write({'state':'processed'})
+                                all_shopify_orders += order_id
 
 
                             if i.get('confirmed'):
@@ -551,8 +613,17 @@ class ShopifyFeedOrders(models.Model):
                     except Exception as e:
                         _logger.warning(e)
 
+                    log_msg = """Shopify Order exists for Feed Order {}, Sale Order-{}""".format(self, order_exists)
+                    msg_body += '\n' + log_msg
+                    _logger.info(log_msg)
+                    self.write({'state':'processed'})
+
+
+                log_msg = """Shopify Process Feed Order finished for {}""".format(self)
+                msg_body += '\n' + log_msg
+                _logger.info(log_msg)
+                rec.message_post(body=msg_body)
                
-            all_shopify_orders += order_id
         except Exception as e:
             msg = "Exception occured in process feed order{}".format(e.args)
             _logger.warning(_(msg))
@@ -571,7 +642,6 @@ class ShopifyFeedOrders(models.Model):
                 shopify_order.shopify_credit_note_register_payments()
             shopify_order._cr.commit()
             
-        #################################################################
 
 
 
@@ -675,15 +745,6 @@ class ShopifyFeedOrders(models.Model):
             order_vals['order_line'].append((0, 0, temp))
         return order_vals
 
-    def _create_invoice_shopify(self, order_id, sp_order):
-        wiz = self.env['sale.advance.payment.inv'].with_context(
-            active_ids=order_id.ids, open_invoices=True).create({})
-        move_vals = wiz.create_invoices()
-        move_id = order_id._create_invoices()
-        move_id.update({'marketplace_type': 'shopify', })
-        return move_id
-
-   
 
     def _shopify_get_ship(self, ship_line, ma_ins_id):
         ship_value = {}

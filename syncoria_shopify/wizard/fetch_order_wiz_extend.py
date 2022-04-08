@@ -37,15 +37,30 @@ class OrderFetchWizardExtend(models.Model):
     def create_feed_orders(self, order_data):
         feed_order_id = False
         try:
+            marketplace_instance_id = self.instance_id or self._get_instance_id() 
             domain = [('shopify_id', '=', order_data['id'])]
             feed_order_id = self.env['shopify.feed.orders'].sudo().search(domain, limit=1)
             if not feed_order_id:
+                customer_name = order_data.get('customer',{}).get('first_name','') + ' ' + order_data.get('customer',{}).get('last_name','')
                 feed_order_id = self.env['shopify.feed.orders'].sudo().create({
-                    'name': self.env['ir.sequence'].next_by_code('shopify.feed.orders'),
-                    'instance_id': self.instance_id.id,
+                    'name': self.env['ir.sequence'].sudo().next_by_code('shopify.feed.orders'),
+                    'instance_id': marketplace_instance_id.id,
                     'shopify_id': order_data['id'],
                     'order_data': json.dumps(order_data),
-                    'state': 'draft'
+                    'state': 'draft',
+                    'shopify_webhook_call' : False,
+                    'shopify_app_id' : order_data.get('app_id'),
+                    'shopify_confirmed' : order_data.get('confirmed'),
+                    'shopify_contact_email' : order_data.get('contact_email'),
+                    'shopify_currency' : order_data.get('currency'),
+                    'shopify_customer_name' : customer_name,
+                    'shopify_customer_id' : order_data.get('customer',{}).get('id',''),
+                    'shopify_gateway' : order_data.get('gateway'),
+                    'shopify_order_number' : order_data.get('order_number'),
+                    'shopify_financial_status' : order_data.get('financial_status'),
+                    'shopify_fulfillment_status' : order_data.get('fulfillment_status'),
+                    'shopify_line_items' : len(order_data.get('line_items')),
+                    'shopify_user_id' : order_data.get('user_id'),
                 })
                 feed_order_id._cr.commit()
                 _logger.info(

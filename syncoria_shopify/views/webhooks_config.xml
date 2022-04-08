@@ -29,6 +29,10 @@
               <header>
                 <field name="state" invisible="1"/>
                 <field name="state" widget="statusbar" statusbar_visible="draft,connected,disconnected"/>
+                <button string="Activate Webhooks" class="btn btn-primary" name="shopify_activate_webhooks" type="object" attrs="{'invisible':[('marketplace_instance_type','!=','shopify')] }"/>
+                <!-- <button string="Update Shopify Webhook" class="btn btn-primary" name="action_update_webhook" type="object" attrs="{'invisible': ['|', ('state','not in',('confirm')), ('shopify_id','!=', 0)]  }" /> -->
+
+                
               </header>
               <sheet>
                 <div class="oe_title">
@@ -47,17 +51,17 @@
                   <page string="Order Webhooks" attrs="{'invisible':[('marketplace_instance_type','!=','shopify')] }">
                     <group>
                       <group>
-                        <field name="shopify_order_transactions_create"/>
-                        <field name="shopify_orders_cancelled"/>
+                        <!-- <field name="shopify_order_transactions_create"/> -->
+                        <!-- <field name="shopify_orders_cancelled"/> -->
                         <field name="shopify_orders_create"/>
-                        <field name="shopify_orders_delete"/>
-                        <field name="shopify_orders_edited"/>
+                        <!-- <field name="shopify_orders_delete"/> -->
+                        <!-- <field name="shopify_orders_edited"/> -->
                       </group>
                       <group>
-                        <field name="shopify_orders_fulfilled"/>
-                        <field name="shopify_orders_paid"/>
-                        <field name="shopify_orders_partially_fulfilled"/>
-                        <field name="shopify_orders_updated"/>
+                        <!-- <field name="shopify_orders_fulfilled"/> -->
+                        <!-- <field name="shopify_orders_paid"/> -->
+                        <!-- <field name="shopify_orders_partially_fulfilled"/> -->
+                        <!-- <field name="shopify_orders_updated"/> -->
                       </group>
                     </group>
                   </page>

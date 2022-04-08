@@ -4,7 +4,6 @@
 #    __manifest__.py file at the root folder of this module.                  #
 ###############################################################################
 
-
 import logging
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
@@ -102,8 +101,8 @@ class MarketplaceWebhooks(models.Model):
             'format': self.shopify_format,
         }
         webhook.update({'fields': self.shopify_fields or []})
-        webhook.update({'id': self.shopify_id}
-                       ) if r_type == 'update' else webhook.update({})
+        if r_type == 'update':
+            webhook.update({'id': self.shopify_id})
         data = {'webhook': webhook}
         return data
 
@@ -225,6 +224,7 @@ class MarketplaceWebhooksConfig(models.Model):
             domain = [('shopify_topic', '=', topic)]
             domain += [('marketplace_instance_id', '=', self.marketplace_instance_id.id)]
             topic_id = marketplace_webhooks.search(domain)
+            _logger.info("topic_id ===>>>>{}".format(topic_id))
 
             if not topic_id:
                 topic_id = marketplace_webhooks.create({
@@ -238,6 +238,7 @@ class MarketplaceWebhooksConfig(models.Model):
                     'shopify_topic' : topic,
                     'shopify_format' : 'json'
                 })
+                _logger.info("Webhook Created with Topic-{}".format(topic))
 
 
             if topic_id.state == 'connected':
@@ -249,6 +250,25 @@ class MarketplaceWebhooksConfig(models.Model):
 
     def shopify_deactivate_webhooks(self):
         print("shopify_deactivate_webhooks")
+        if self.shopify_id:
+            mkplc_id = self.marketplace_instance_id
+            type_req = 'DELETE'
+            version = mkplc_id.marketplace_api_version or '2021-04'
+            url = 'https://' + mkplc_id.marketplace_host if 'https://' not in mkplc_id.marketplace_host or 'http://' not in mkplc_id.marketplace_host else mkplc_id.marketplace_host
+            url += '/admin/api/{}/webhooks/{}.json'.format(version,self.shopify_id)
+            headers = {
+                'X-Shopify-Access-Token': mkplc_id.marketplace_api_password
+            }
+            response = requests.request(headers=headers,
+                                        url=url,
+                                        method=type_req)
+
+            _logger.info("url===>>>%s", url)
+            _logger.info("headers===>>>%s", headers)
+            _logger.info("response===>>>%s", response)
+            _logger.info("response===>>>%s", response.text)
+            if response.status_code == 200:
+                _logger.info("Webhook Successfully Deleted")
         self.state = 'disconnected'
 
 

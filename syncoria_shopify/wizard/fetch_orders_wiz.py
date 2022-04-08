@@ -269,17 +269,30 @@ class OrderFetchWizard(models.Model):
         url = marketplace_instance_id.marketplace_host + \
             '/admin/api/%s/orders.json' % version
 
+        tz_offset = '-00:00'
+        if self.env.user and self.env.user.tz_offset:
+            tz_offset = self.env.user.tz_offset
+
         if self.date_from and not self.date_to:
             url += '?created_at_min=%s' % self.date_from.strftime(
-                "%Y-%m-%dT00:00:00-04:00")
+                "%Y-%m-%dT00:00:00" + tz_offset)
         if not self.date_from and self.date_to:
             url += '?created_at_max=%s' % self.date_to.strftime(
-                "%Y-%m-%dT00:00:00-04:00")
+                "%Y-%m-%dT23:59:59" + tz_offset)
         if self.date_from and self.date_to:
             url += '?created_at_min=%s' % self.date_from.strftime(
-                "%Y-%m-%dT00:00:00-04:00")
+                "%Y-%m-%dT00:00:00" + tz_offset)
             url += '&created_at_max=%s' % self.date_to.strftime(
-                "%Y-%m-%dT00:00:00-04:00")
+                "%Y-%m-%dT23:59:59" + tz_offset)
+        if not self.date_from and not self.date_to:
+            url += '?created_at_min=%s' % fields.Datetime.now().strftime(
+                "%Y-%m-%dT00:00:00" + tz_offset)
+            url += '&created_at_max=%s' % fields.Datetime.now().strftime(
+                "%Y-%m-%dT23:59:59"  + tz_offset)
+
+        _logger.info("url===>>>>{}".format(url))
+        # Example: https://linus-sandbox.myshopify.com/admin/api/2022-01/orders.json?created_at_min=2022-04-05T00:00:00%2B0600&created_at_max=2022-04-05T23:59:59%2B0600
+
 
         # Request Parameters
         type_req = 'GET'

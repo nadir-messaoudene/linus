@@ -20,7 +20,7 @@
             <field name="arch" type="xml">
                 <form string="Shopify Feed Orders" create="true" delete="true" edit="true">
                     <header>
-                        <button string="Process Order" class="btn btn-primary" name="process_feed_order" type="object" attrs="{  'invisible': [('state','in',('queue'))]  }" />
+                        <button string="Process Feed Order" class="btn btn-primary" name="process_feed_order" type="object" attrs="{  'invisible': [('state','in',('queue'))]  }" />
                         <field name="state" widget="statusbar" statusbar_visible="draft,queue,processed,failed"/>
                     </header>
                     <sheet name="Shopify Feed Orders">
@@ -37,6 +37,23 @@
                             </group>
                             <group>
                                 <field name="order_wiz_id" invisible="1"/>
+                                <field name="shopify_webhook_call" />
+                            </group>
+                            <group>
+                                <field name="shopify_app_id" />
+                                <field name="shopify_confirmed" />
+                                <field name="shopify_contact_email" />
+                                <field name="shopify_currency" />
+                                <field name="shopify_customer_name" />
+                                <field name="shopify_customer_id" />
+                            </group>
+                            <group>
+                                <field name="shopify_gateway" />
+                                <field name="shopify_order_number" />
+                                <field name="shopify_financial_status" />
+                                <field name="shopify_fulfillment_status" />
+                                <field name="shopify_line_items" />
+                                <field name="shopify_user_id" />
                             </group>
                         </group>
                         <group>
