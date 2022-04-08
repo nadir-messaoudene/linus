@@ -1,88 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-  <data>
+    <data>
 
-    <record model="ir.ui.view" id="marketplace_webhooks_config_list">
-      <field name="name">Webhooks Config List</field>
-      <field name="model">marketplace.webhooks.config</field>
-      <field name="arch" type="xml">
-        <tree>
-          <field name="name"/>
-          <field name="marketplace_instance_id"/>
-        </tree>
-      </field>
-    </record>
-
-
-    <record id="marketplace_webhooks_config_form" model="ir.ui.view">
-      <field name="name">view.marketplace.webhooks.config.form</field>
-      <field name="model">marketplace.webhooks.config</field>
-      <field name="arch" type="xml">
-
-
-        <form string="Webhook" create="true" delete="true" edit="true">
-          <header>
-            <field name="state" invisible="1"/>
-            <button string="Connect Webhooks" class="btn btn-primary" name="activate_webhooks" type="object" attrs="{'invisible': [('state','not in',('draft','disconnected'))]  }" />
-            <button string="Disconnect Webhooks" class="btn btn-primary" name="deactivate_webhooks" type="object" attrs="{'invisible': [('state','not in',('disconnected'))]  }" />
-
-            <field name="state" widget="statusbar" statusbar_visible="draft,connected,disconnected"/>
-          </header>
-          <sheet>
-            <div class="oe_title">
-              <label for="name" class="oe_edit_only" />
-              <h1>
-                <field name="name" placeholder="Describe the Webhooks" />
-              </h1>
-            </div>
-            <group>
-              <group>
-                <field name="marketplace_instance_id"/>
-                <field name="marketplace_instance_type"/>
-              </group>
-            </group>
-            <notebook>
-              <page string="Order Webhooks" attrs="{'invisible':[('marketplace_instance_type','!=','shopify')] }">
+      <record id="view_shopify_webhooks_config_tree" model="ir.ui.view">
+          <field name="name">view.marketplace.webhooks.config.tree</field>
+          <field name="model">marketplace.webhooks.config</field>
+          <field name="type">tree</field>
+          <field name="mode">primary</field>
+          <field name="priority" eval="16" />
+          <field name="active" eval="True" />
+          <field name="arch" type="xml">
+              <tree string="Marketplace Webhooks Config" create="true" delete="true" edit="true">
+                  <field name="name"/>
+                  <field name="marketplace_instance_id"/>
+              </tree>
+          </field>
+      </record>
+    
+    <record id="view_shopify_webhooks_config_form" model="ir.ui.view">
+        <field name="name">view.marketplace.webhooks.config.form</field>
+        <field name="model">marketplace.webhooks.config</field>
+        <field name="type">form</field>
+        <field name="mode">primary</field>
+        <field name="priority" eval="16" />
+        <field name="active" eval="True" />
+        <field name="arch" type="xml">
+            <form string="Marketplace Webhooks Config Form" create="true" delete="true" edit="true">
+              <header>
+                <field name="state" invisible="1"/>
+                <field name="state" widget="statusbar" statusbar_visible="draft,connected,disconnected"/>
+              </header>
+              <sheet>
+                <div class="oe_title">
+                  <label for="name" class="oe_edit_only" />
+                  <h1>
+                    <field name="name" placeholder="Describe the Webhooks Config" />
+                  </h1>
+                </div>
                 <group>
                   <group>
-                     <field name="shopify_order_transactions_create"/>
-                    <field name="shopify_orders_cancelled"/>
-                    <field name="shopify_orders_create"/>
-                    <field name="shopify_orders_delete"/>
-                    <field name="shopify_orders_edited"/>
-                  </group>
-                  <group>
-                  <field name="shopify_orders_fulfilled"/>
-                  <field name="shopify_orders_paid"/>
-                  <field name="shopify_orders_partially_fulfilled"/>
-                  <field name="shopify_orders_updated"/>
+                    <field name="marketplace_instance_id"/>
+                    <field name="marketplace_instance_type"/>
                   </group>
                 </group>
-              </page>
-            </notebook>
-          </sheet>
-        </form>
-        <div class="oe_chatter">
-            <field name="message_follower_ids" widget="mail_followers" groups="base.group_user"/>
-            <field name="activity_ids" widget="mail_activity"/>
-            <field name="message_ids" widget="mail_thread"/>
-        </div>
-
-      </field>
+                <notebook>
+                  <page string="Order Webhooks" attrs="{'invisible':[('marketplace_instance_type','!=','shopify')] }">
+                    <group>
+                      <group>
+                        <field name="shopify_order_transactions_create"/>
+                        <field name="shopify_orders_cancelled"/>
+                        <field name="shopify_orders_create"/>
+                        <field name="shopify_orders_delete"/>
+                        <field name="shopify_orders_edited"/>
+                      </group>
+                      <group>
+                        <field name="shopify_orders_fulfilled"/>
+                        <field name="shopify_orders_paid"/>
+                        <field name="shopify_orders_partially_fulfilled"/>
+                        <field name="shopify_orders_updated"/>
+                      </group>
+                    </group>
+                  </page>
+                </notebook>
+              </sheet>
+            </form>
+            <div class="oe_chatter">
+              <field name="message_follower_ids" widget="mail_followers" groups="base.group_user"/>
+              <field name="activity_ids" widget="mail_activity"/>
+              <field name="message_ids" widget="mail_thread"/>
+            </div>
+        </field>
     </record>
-
-
-
-    <record model="ir.actions.act_window" id="shopify_webhooks_config_action_window">
-      <field name="name">Webhooks Window</field>
-      <field name="res_model">marketplace.webhooks.config</field>
-      <field name="view_mode">tree,form</field>
+    
+    <record id="view_marketplace_webhooks_config_search" model="ir.ui.view">
+        <field name="name">view.marketplace.webhooks.config.search</field>
+        <field name="model">marketplace.webhooks.config</field>
+        <field name="type">search</field>
+        <field name="mode">primary</field>
+        <field name="priority" eval="16" />
+        <field name="active" eval="True" />
+        <field name="arch" type="xml">
+            <search string="Wehhooks Config Search">
+                <field name="name" />
+            </search>
+        </field>
     </record>
+    
+    <record id="shopify_webhooks_config_action_window" model="ir.actions.act_window">
+        <field name="name">Marketplace Webhooks Config</field>
+        <field name="res_model">marketplace.webhooks.config</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    
+      <menuitem 
+        name="Webhooks Config" 
+        id="shopify_webhooks_config" 
+        parent="shopify_configuration" 
+        action="shopify_webhooks_config_action_window"/>
 
-    <menuitem 
-      name="Webhooks Config" 
-      id="shopify_webhooks_config" 
-      parent="shopify_configuration" 
-      action="shopify_webhooks_config_action_window"/>
+        
 
-  </data>
+    </data>
 </odoo>
