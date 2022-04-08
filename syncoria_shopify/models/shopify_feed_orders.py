@@ -36,7 +36,7 @@ class ShopifyFeedOrders(models.Model):
     state = fields.Selection(
         string='State',
         tracking=True,
-        selection=[('draft', 'draft'), 
+        selection=[('draft', 'Draft'), 
                     ('queue', 'Queue'),
                    ('processed', 'Processed'), 
                    ('failed', 'Failed')]
@@ -47,10 +47,23 @@ class ShopifyFeedOrders(models.Model):
         comodel_name='feed.orders.fetch.wizard',
         ondelete='restrict',
     )
+    
+    shopify_webhook_call = fields.Boolean(string='Webhook Call', readonly=1)
+    shopify_app_id = fields.Char(string='App Id', readonly=1)
+    shopify_confirmed = fields.Char(string='Confirmed', readonly=1)
+    shopify_contact_email = fields.Char(string='Contact Email', readonly=1)
+    shopify_currency = fields.Char(string='Currency', readonly=1)
+    shopify_customer_name = fields.Char(string='Customer Name', readonly=1)
+    shopify_customer_id = fields.Char(string='Customer ID', readonly=1)
+    shopify_gateway = fields.Char(string='Gateway', readonly=1)
+    shopify_order_number = fields.Char(string='Order Nnumber', readonly=1)
+    shopify_financial_status = fields.Char(string='Financial Status', readonly=1)
+    shopify_fulfillment_status = fields.Char(string='Fulfillment Status', readonly=1)
+    shopify_line_items = fields.Char(string='Line Items', readonly=1)
+    shopify_user_id = fields.Char(string='User ID', readonly=1)
 
     def shopify_customer(self, values, env, shipping=False):
         customer={}
-        customer['child_ids'] = []
         customer['name']=(values.get(
             'first_name') or "") + " " + (values.get('last_name') or "")
         customer['display_name']=customer['name']
@@ -183,6 +196,9 @@ class ShopifyFeedOrders(models.Model):
                 partner_invoice_id.property_account_receivable_id = partner_id.property_account_receivable_id.id
             if partner_id and partner_invoice_id and not partner_invoice_id.property_account_payable_id:
                 partner_invoice_id.property_account_payable_id = partner_id.property_account_payable_id.id
+
+            if partner_invoice_id:
+                partner_invoice_id[0]
         try:
             self._cr.commit()
         except Exception as e:
@@ -729,13 +745,6 @@ class ShopifyFeedOrders(models.Model):
             order_vals['order_line'].append((0, 0, temp))
         return order_vals
 
-    def _create_invoice_shopify(self, order_id, sp_order):
-        wiz = self.env['sale.advance.payment.inv'].with_context(
-            active_ids=order_id.ids, open_invoices=True).create({})
-        move_vals = wiz.create_invoices()
-        move_id = order_id._create_invoices()
-        move_id.update({'marketplace_type': 'shopify', })
-        return move_id
 
     def _shopify_get_ship(self, ship_line, ma_ins_id):
         ship_value = {}

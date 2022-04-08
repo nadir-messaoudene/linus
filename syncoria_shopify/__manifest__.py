@@ -42,6 +42,7 @@
         'views/shopify_refunds.xml',
         ################################################
         'views/webhooks.xml',
+        # 'views/webhooks_config.xml',
         # Data
         'data/ir_cron_data.xml',
         'data/update_history.xml',

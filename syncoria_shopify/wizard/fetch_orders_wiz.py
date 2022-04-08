@@ -504,7 +504,6 @@ class OrderFetchWizard(models.Model):
         url = marketplace_instance_id.marketplace_host + \
             '/admin/api/%s/orders.json' % version
 
-
         tz_offset = '-00:00'
         if self.env.user and self.env.user.tz_offset:
             tz_offset = self.env.user.tz_offset
