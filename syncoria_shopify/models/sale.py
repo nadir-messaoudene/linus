@@ -154,8 +154,17 @@ class SaleOrderShopify(models.Model):
                             for key, value in receipt.items():
                                 if key in receipt_fields:
                                     receipt_vals[key] = value
-                            receipt_vals_list += [receipt_vals]
+                            
+
                             ########################################################################################################
+                            #Need Testing
+                            ########################################################################################################
+                            # metadata_vals_list = self.process_receipt_metadata(receipt=receipt, tran_type='sale')
+                            # if metadata_vals_list:
+                            #     receipt_vals['shopify_receipt_metadata_ids'] = metadata_vals_list
+                            ########################################################################################################
+                            ########################################################################################################
+                            receipt_vals_list += [receipt_vals]
                             try:
                                 #Populate Exchange Rate:
                                 if receipt.get('charges',{}).get('data',{}) and transaction.get('amount') and receipt.get('amount'):
@@ -179,9 +188,16 @@ class SaleOrderShopify(models.Model):
                                 for key, value in receipt.items():
                                     if key in receipt_fields:
                                         receipt_vals[key] = value
-                                receipt_vals_list += [receipt_vals]
-
+                                
                                 ########################################################################################################
+                                #Need Testing
+                                ########################################################################################################
+                                # metadata_vals_list = self.process_receipt_metadata(receipt=receipt, tran_type='sale')
+                                # if metadata_vals_list:
+                                #     receipt_vals['shopify_receipt_metadata_ids'] = metadata_vals_list
+                                ########################################################################################################
+                                ########################################################################################################
+                                receipt_vals_list += [receipt_vals]
                                 try:
                                     #Populate Exchange Rate:
                                     if receipt.get('charges',{}).get('data',{}) and transaction.get('amount') and receipt.get('amount'):
@@ -236,6 +252,37 @@ class SaleOrderShopify(models.Model):
 
                 tran_recs.append(tran_id.id)
         return tran_recs
+
+    def process_receipt_metadata(self, receipt, tran_type):
+        vals_list = []
+        print("tran_type===>>>", tran_type)
+        if receipt.get('charges',{}).get('data',{}):
+            data = receipt.get('charges',{}).get('data',{})
+            for data_item in data:
+                vals = data_item.get('metadata')
+                if vals:
+                    vals.update({
+                        'name' : self.env['ir.sequence'].next_by_code('shopify.payment.receipt.metadata'),
+                        'shopify_instance_id' : self.shopify_instance_id.id, 
+                        'company_id' : self.company_id.id, 
+                        'sale_id' : self.id, 
+                        'transaction_type' : tran_type
+                    })
+                    if data_item.get('currency'):
+                        currency = data_item.get('currency').upper()
+                        print("currency===>>>", currency)
+                        currency_id = self.env['res.currency'].sudo().search([('name', '=', currency)], limit=1)
+                        print("currency_id===>>>", currency_id)
+                        if currency_id:
+                            vals['currency_id'] = currency_id.id
+
+                    print("vals===>>>", vals)
+
+
+                    vals_list += [(0,0, vals)]
+
+        return vals_list
+
 
     def fetch_shopify_refunds(self):
         _logger.info("fetch_shopify_refunds")
@@ -323,6 +370,15 @@ class SaleOrderShopify(models.Model):
                                 for key, value in receipt.items():
                                     if key in receipt_fields:
                                         receipt_vals[key] = value
+
+                                ########################################################################################################
+                                #Need Testing
+                                ########################################################################################################
+                                # metadata_vals_list = self.process_receipt_metadata(receipt=receipt, tran_type='sale')
+                                # if metadata_vals_list:
+                                #     receipt_vals['shopify_receipt_metadata_ids'] = metadata_vals_list
+                                ########################################################################################################
+                                ########################################################################################################
                                 receipt_vals_list += [receipt_vals]
                                 ########################################################################################################
                                 try:
@@ -350,6 +406,16 @@ class SaleOrderShopify(models.Model):
                                     for key, value in receipt.items():
                                         if key in receipt_fields:
                                             receipt_vals[key] = value
+
+                                    ########################################################################################################
+                                    #Need Testing
+                                    ########################################################################################################
+                                    # metadata_vals_list = self.process_receipt_metadata(receipt=receipt, tran_type='sale')
+                                    # if metadata_vals_list:
+                                    #     receipt_vals['shopify_receipt_metadata_ids'] = metadata_vals_list
+                                    ########################################################################################################
+                                    ########################################################################################################
+
                                     receipt_vals_list += [receipt_vals]
                                     
                                     ########################################################################################################

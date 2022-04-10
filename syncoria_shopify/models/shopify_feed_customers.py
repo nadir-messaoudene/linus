@@ -51,5 +51,9 @@ class ShopifyFeedCustomers(models.Model):
     email = fields.Char(
         string='Email',
     )
+
+    def process_feed_customer(self):
+        print("process_feed_customer")
+        
     
     

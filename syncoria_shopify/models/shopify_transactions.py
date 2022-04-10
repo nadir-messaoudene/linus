@@ -112,4 +112,41 @@ class ShopifyPaymentReceipt(models.Model):
     testcase = fields.Char(string='CC Bin', readonly=1)
     authorization = fields.Char(string='AVS Result Code', readonly=1)
     paid_amount = fields.Char(readonly=1)
+
+
+class ShopifyPaymentReceiptMetadata(models.Model):
+    _name = 'shopify.payment.receipt.metadata'
+    _description = 'Shopify Payment Receipt Metadata'
+
+    name = fields.Char(
+        string='Name',
+        required=True,
+        copy=False,
+        default=lambda self: self.env['ir.sequence'].next_by_code('shopify.payment.receipt.metadata'),
+        readonly=1)
+    shopify_instance_id = fields.Many2one(
+        string='Marketplace Instance',
+        comodel_name='marketplace.instance',
+        ondelete='restrict',
+        readonly=1)
+    
+    transaction_type = fields.Selection(
+        selection=[('sale', 'Sale'), ('refund', 'Refund')],
+        default='sale',
+        readonly=1)
+    #Metadata Fields: Start
+    email = fields.Char(readonly=1)
+    manual_entry = fields.Char(readonly=1)
+    order_id = fields.Char(readonly=1)
+    order_transaction_id = fields.Char(readonly=True, )
+    payments_charge_id = fields.Char(readonly=True, )
+    shop_id = fields.Char(readonly=True, )
+    shop_name = fields.Char(readonly=1)
+    transaction_fee_tax_amount = fields.Monetary()
+    transaction_fee_total_amount = fields.Monetary()
+    #Metadata Fields: End
+    company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
+    currency_id = fields.Many2one('res.currency', string='Currency', readonly=True, )
+    sale_id = fields.Many2one('sale.order', string='Sale Order', readonly=True, )
+    receipt_id = fields.Many2one('shopify.payment.receipt', string='Receipt ID', readonly=True, )
     

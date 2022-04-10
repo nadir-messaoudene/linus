@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+    
+        <record id="action_process_feed_products" model="ir.actions.server">
+            <field name="name">Process Feed Products</field>
+            <field name="model_id" ref="syncoria_shopify.model_shopify_feed_products"/>
+            <field name="binding_model_id" ref="syncoria_shopify.model_shopify_feed_products"/>
+            <field name="binding_view_types">list</field>
+            <field name="state">code</field>
+            <field name="code">
+                if records:
+                    action = records.process_feed_product()
+            </field>
+        </record>
+
+        <record id="action_process_feed_orders" model="ir.actions.server">
+            <field name="name">Process Feed Orders</field>
+            <field name="model_id" ref="syncoria_shopify.model_shopify_feed_orders"/>
+            <field name="binding_model_id" ref="syncoria_shopify.model_shopify_feed_orders"/>
+            <field name="binding_view_types">list</field>
+            <field name="state">code</field>
+            <field name="code">
+                if records:
+                    action = records.process_feed_order()
+            </field>
+        </record>
+
+        <record id="action_process_feed_customers" model="ir.actions.server">
+            <field name="name">Process Feed Customers</field>
+            <field name="model_id" ref="syncoria_shopify.model_shopify_feed_customers"/>
+            <field name="binding_model_id" ref="syncoria_shopify.model_shopify_feed_customers"/>
+            <field name="binding_view_types">list</field>
+            <field name="state">code</field>
+            <field name="code">
+                if records:
+                    action = records.process_feed_customer()
+            </field>
+        </record>
+
+    </data>
+
+</odoo>
