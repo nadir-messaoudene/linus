@@ -271,6 +271,7 @@ class ShopifyFeedProducts(models.Model):
                         'template_suffix')
                     template['shopify_variants'] = str(
                         len(product.get('variants')))
+                    template['shopify_vendor']= product.get("vendor")
 
                     # -------------------------------------Invoice Policy------------------------------------------------
                     marketplace_instance_id = self.instance_id
@@ -303,7 +304,7 @@ class ShopifyFeedProducts(models.Model):
                     if product_tmpl_id:
                         pro_tmpl = self.env['product.template'].browse(
                             product_tmpl_id.id)
-                        pro_tmpl.write({"shopify_instance_id":instance_id.id})
+                        pro_tmpl.write({"shopify_instance_id":instance_id.id,"shopify_vendor":product.get("vendor")})
                         product_tmpl_id = [product_tmpl_id.id]
 
                     else:
