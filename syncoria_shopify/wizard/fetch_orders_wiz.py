@@ -334,12 +334,12 @@ class OrderFetchWizard(models.Model):
         state=False
 
         if default_address:
-            if default_address.get('company'):
-                company=env['res.partner'].sudo().search(
-                    [('name', '=', default_address.get('company'))], limit=1)
-                customer['company_id']=company.id if company else None
-                customer['company_name']=default_address.get(
-                    'company') or ""
+            # if default_address.get('company'):
+            #     company=env['res.partner'].sudo().search(
+            #         [('name', '=', default_address.get('company'))], limit=1)
+            #     customer['company_id']=company.id if company else None
+            #     customer['company_name']=default_address.get(
+            #         'company') or ""
 
             customer['street']=default_address.get(
                 'address1') or ""
@@ -1611,12 +1611,12 @@ class ShopifyCustomer:
 
         if default_address:
             # self._handle_company(default_address)
-            if default_address.get('company'):
-                company=env['res.partner'].sudo().search(
-                    [('name', '=', default_address.get('company'))], limit=1)
-                self._partner_vals['company_id']=company.id if company else None
-                self._partner_vals['company_name']=default_address.get(
-                    'company') or ""
+            # if default_address.get('company'):
+            #     company=env['res.partner'].sudo().search(
+            #         [('name', '=', default_address.get('company'),('company_type','=','company'))], limit=1)
+            #     self._partner_vals['company_id']=company.id if company else None
+            #     self._partner_vals['company_name']=default_address.get(
+            #         'company') or ""
 
             self._partner_vals['street']=default_address.get(
                 'address1') or ""

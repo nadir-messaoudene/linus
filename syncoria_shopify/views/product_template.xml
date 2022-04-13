@@ -29,7 +29,7 @@
                             <group>
                                 <field name="shopify_id"/>
                                 <field name="marketplace_type"/>
-                                <field name="shopify_instance_id" options="{'no_open': True,'no_create': True}"/>
+                                <field name="shopify_instance_id" options="{'no_open': True,'no_create': True}" attrs="{ 'required' : [('marketplace_type','==','shopify')] }"/>
                                 <field name="shopify_inventory_id"/>
                                 <field name="shopify_categ_ids"/>
                                 <field name="shopify_type" readonly="True"/>
@@ -120,7 +120,7 @@
                                 <field name="shopify_id"/>
                                 <field name="shopify_inventory_id"/>
                                 <field name="marketplace_type"/>
-                                <field name="shopify_instance_id" options="{'no_open': True,'no_create': True}"/>
+                                <field name="shopify_instance_id" options="{'no_open': True,'no_create': True}" attrs="{ 'required' : [('marketplace_type','==','shopify')] }"/>
                                 <field name="shopify_categ_ids" readonly="True"/>
                             </group>
                             <group>
@@ -184,7 +184,7 @@
                 <xpath expr="//group[@name='weight']" position="after">
                     <group string="Shopify">
                         <field name="marketplace_type"/>
-                        <field name="shopify_instance_id" options="{'no_open': True,'no_create': True}"/>
+                        <field name="shopify_instance_id" options="{'no_open': True,'no_create': True}" attrs="{ 'required' : [('marketplace_type','==','shopify')] }"/>
                         <field name="shopify_id" readonly="True"/>
                         <field name="shopify_inventory_id" readonly="True"/>
                         <field name="shopify_image_id" readonly="True"/>
