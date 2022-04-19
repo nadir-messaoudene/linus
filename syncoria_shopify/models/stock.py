@@ -65,8 +65,9 @@ class StockPicking(models.Model):
             self.picking_type_id.code))
 
         sale_order = self.env['sale.order'].sudo()
-        marketplace_instance_id = get_marketplace(self)
+        # marketplace_instance_id = get_marketplace(self)
         sp_order_id = sale_order.search([('name', '=', self.origin)], limit=1)
+        marketplace_instance_id = sp_order_id.shopify_instance_id
         if sp_order_id and sp_order_id.marketplace_type == 'shopify':
             data = self.get_fullfillment_data(sp_order_id)
             _logger.info("data===>>>{}".format(data))

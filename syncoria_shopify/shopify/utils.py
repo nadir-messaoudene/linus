@@ -79,6 +79,7 @@ def get_protmpl_vals(record, values):
         "body_html": body_html,
         "vendor": record.shopify_vendor or "",
         "product_type": record.categ_id.name or "",
+        "status": record.shopify_product_status
     })
 
     if 'product.template' in str(record):
@@ -388,7 +389,11 @@ def update_product_images(record, product_data, req_type):
 
 
 def shopify_pt_request(record, data, req_type):
-    marketplace_instance_id = get_marketplace(record)
+    if record.shopify_instance_id:
+        marketplace_instance_id = record.shopify_instance_id
+    else:
+        marketplace_instance_id = get_marketplace(record)
+
     version = marketplace_instance_id.marketplace_api_version or '2021-01'
     url = marketplace_instance_id.marketplace_host
 
@@ -492,6 +497,7 @@ def shopify_pt_request(record, data, req_type):
                             'shopify_id': var['id'],
                             'marketplace_type': 'shopify',
                             'shopify_inventory_id': var.get("inventory_item_id"),
+                            'shopify_instance_id': marketplace_instance_id.id
                         })
                         _logger.info("var_id-->%s", var_id)
                         # Update Product Images
