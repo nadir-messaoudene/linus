@@ -11,7 +11,8 @@ class ReplenishmentReport(models.AbstractModel):
 
     @api.model
     def get_warehouses(self):
-        return self.env['stock.location'].search_read(fields=['id', 'name', 'complete_name'])
+        return self.env['stock.location'].search_read([('usage', 'in', ['view', 'internal'])], fields=['id', 'name', 'complete_name'])
+        # (fields=['id', 'name', 'complete_name'])
 
     def _get_report_data(self, product_template_ids=False, product_variant_ids=False):
         assert product_template_ids or product_variant_ids
