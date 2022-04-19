@@ -67,6 +67,7 @@ class FeedOrderFetchWizard(models.Model):
 
 
     def shopify_fetch_feed_orders(self, kwargs=None):
+        _logger.info("shopify_fetch_feed_orders===>>>>{}".format(self))
         """Fetch Feed Orders"""
         OrderObj = self.env['shopify.feed.orders'].sudo()
         cr = self._cr
@@ -98,7 +99,6 @@ class FeedOrderFetchWizard(models.Model):
 
         _logger.info("url===>>>>{}".format(url))
         # Example: https://linus-sandbox.myshopify.com/admin/api/2022-01/orders.json?created_at_min=2022-04-05T00:00:00%2B0600&created_at_max=2022-04-05T23:59:59%2B0600
-
 
 
         # Request Parameters

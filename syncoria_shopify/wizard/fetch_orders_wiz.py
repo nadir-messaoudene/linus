@@ -265,11 +265,9 @@ class OrderFetchWizard(models.Model):
                 partner_id = res_partner.search(domain, limit=1)
 
                 customer_vals = self.shopify_customer(customer, self.env, shipping=False)
-
                 if not partner_id and customer.get('email'):
                     domain = [('email', '=' , customer.get('email'))]
                     partner_id = res_partner.search(domain, limit=1)
-
                 if partner_id and customer_vals:
                     partner_id.write(customer_vals)
                 else:
@@ -334,12 +332,12 @@ class OrderFetchWizard(models.Model):
         state=False
 
         if default_address:
-            # if default_address.get('company'):
-            #     company=env['res.partner'].sudo().search(
-            #         [('name', '=', default_address.get('company'))], limit=1)
-            #     customer['company_id']=company.id if company else None
-            #     customer['company_name']=default_address.get(
-            #         'company') or ""
+            if default_address.get('company'):
+                company=env['res.partner'].sudo().search(
+                    [('name', '=', default_address.get('company'))], limit=1)
+                customer['company_id']=company.id if company else None
+                customer['company_name']=default_address.get(
+                    'company') or ""
 
             customer['street']=default_address.get(
                 'address1') or ""
@@ -376,6 +374,7 @@ class OrderFetchWizard(models.Model):
 
 
     def get_partner_invoice_id(self, sp_order_dict, partner_id):
+        res_partner = self.env['res.partner'].sudo()
         partner_invoice_id = partner_id
         if sp_order_dict.get('billing_address'):
             billing_address = sp_order_dict.get('billing_address', {})
@@ -419,9 +418,6 @@ class OrderFetchWizard(models.Model):
                 partner_invoice_id.property_account_receivable_id = partner_id.property_account_receivable_id.id
             if partner_id and partner_invoice_id and not partner_invoice_id.property_account_payable_id:
                 partner_invoice_id.property_account_payable_id = partner_id.property_account_payable_id.id
-
-            if partner_invoice_id:
-                partner_invoice_id[0]
         try:
             self._cr.commit()
         except Exception as e:
@@ -472,9 +468,6 @@ class OrderFetchWizard(models.Model):
                 partner_shipping_id.property_account_receivable_id = partner_id.property_account_receivable_id.id
             if partner_id and partner_shipping_id and not partner_shipping_id.property_account_payable_id:
                 partner_shipping_id.property_account_payable_id = partner_id.property_account_payable_id.id
-
-            if partner_shipping_id:
-                partner_shipping_id[0]
         try:
             self._cr.commit()
         except Exception as e:
@@ -499,11 +492,11 @@ class OrderFetchWizard(models.Model):
         else:
             marketplace_instance_id = kwargs.get("marketplace_instance_id")
 
-        version = '2021-04'
         version = marketplace_instance_id.marketplace_api_version or '2021-04'
         url = marketplace_instance_id.marketplace_host + \
             '/admin/api/%s/orders.json' % version
 
+        
         tz_offset = '-00:00'
         if self.env.user and self.env.user.tz_offset:
             tz_offset = self.env.user.tz_offset
@@ -532,16 +525,15 @@ class OrderFetchWizard(models.Model):
         # Request Parameters
         type_req = 'GET'
         params = {"limit": 250}
-        if self.order_status:
-            params.update({"status":self.order_status})
+        # if self.order_status:
+        params.update({"status":self.order_status})
 
         orders = []
         headers = {
             'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password}
         while True:
             fetched_orders, next_link = self.env['marketplace.connector'].shopify_api_call(headers=headers,
-                                                                                           url=url, 
-                                                                                           type=type_req,
+                                                                                           url=url, type=type_req,
                                                                                            marketplace_instance_id=marketplace_instance_id,
                                                                                            params=params)
             try:
@@ -551,6 +543,7 @@ class OrderFetchWizard(models.Model):
                         url = next_link.get("next").get("url")
                         if params.get('status'):
                             del(params['status'])
+
                     else:
                         break
                 else:
@@ -566,399 +559,45 @@ class OrderFetchWizard(models.Model):
                          "\nOrder #:--->" + str(len(order_list.get('orders'))))
 
         try:
+            log_msg = ''
+            error_msg = ''
             sp_orders = order_list['orders']
-            cr.execute("select shopify_id from sale_order "
-                       "where shopify_id is not null")
-            orders = cr.fetchall()
-            order_ids = [i[0] for i in orders] if orders else []
 
-            cr.execute("select shopify_id from res_partner "
-                       "where shopify_id is not null")
-            partners = cr.fetchall()
-            partner_ids = [i[0] for i in partners] if partners else []
-
-            # need to fetch the complete required fields list
-            # and their values
-            cr.execute("select id from ir_model "
-                       "where model='sale.order'")
-            order_model = cr.fetchone()
-            if not order_model:
-                return
-
-            cr.execute("select name from ir_model_fields "
-                       "where model_id=%s and required=True "
-                       " and store=True",
-                       (order_model[0],))
-            res = cr.fetchall()
-            fields_list = [i[0] for i in res if res] or []
-            order_vals = OrderObj.default_get(fields_list)
-
-            cr.execute("select id from ir_model "
-                       "where model='res.partner'")
-            partner_model = cr.fetchone()
-
-            if not partner_model:
-                return
-            cr.execute("select name from ir_model_fields "
-                       "where model_id=%s and required=True"
-                       " and store=True",
-                       (partner_model[0],))
-            res = cr.fetchall()
-            fields_list = [i[0] for i in res if res] or []
-            partner_vals = PartnerObj.default_get(fields_list)
-
-            feed_order_list =[]
+            feed_order_list = []
             for i in sp_orders:
-                feed_order_id = self.create_feed_orders(i)
-                if feed_order_id:
-                    print("feed_order_id ===>>>{}".format(feed_order_id))
-                    feed_order_list += feed_order_id.ids
-                    
-                ################################################################################
-                #Process Feed Order
-                # feed_order_id.process_feed_order()
-                ################################################################################
+                feed_order_id, feed_log_msg, feed_error_msg = self.create_feed_orders(i)
+                feed_order_list += feed_order_id.ids
+                log_msg += feed_log_msg
+                error_msg += feed_error_msg
 
-                if str(i['id']) not in order_ids and i['confirmed'] == True:
-                    # Process Only Shopify Confirmed Orders
-                    # check the customer associated with the order, if the customer is new,
-                    # then create a new customer, otherwise select existing record
-                    # customer_id = self.shopify_find_customer_id(
-                    #     i,
-                    #     partner_ids,
-                    #     partner_vals,
-                    #     main=False)
-                    # # Values from configurations
-                    if not i.get('customer'):
-                        _logger.warning("No Customer Provided")
-                    partner_id, partner_invoice_id, partner_shipping_id = self.get_customer_id(sp_order_dict=i)
-                    if partner_id:
-                        customer_id = partner_id.id
-                        print("partner_id===>>>{}".format(partner_id))
-                        print("partner_invoice_id===>>>{}".format(partner_invoice_id))
-                        print("partner_shipping_id===>>>{}".format(partner_shipping_id))
-                        print("customer_id===>>>," + str(customer_id))
-                        
-                        
-                        product_missing = False
-                        order_vals = self.get_sale_order_vals(marketplace_instance_id, customer_id, i)
-
-                        # Ordervals based on marketplace configuration
-                        # Tax Search
-                        for tax in i['tax_lines']:
-                            search_domain = [('name', 'like', tax['title']),
-                                            ('amount', '=', tax['rate'] * 100),
-                                            ('type_tax_use', '=', 'sale'),
-                                            ('marketplace_type', '=', 'shopify'),
-                                            ]
-                            Tax = self.env['account.tax']
-                            tax_ob = Tax.search(search_domain, limit=1)
-                            if not tax_ob:
-                                Tax.sudo().create({
-                                    'name': tax['title'],
-                                    'amount': tax['rate'] * 100,
-                                    'type_tax_use': 'sale',
-                                    'marketplace_type': 'shopify',
-                                    'shopify': True
-                                })
-
-                        order_line = []
-                        prod_rec = []
-
-                        for line in i['line_items']:
-                            product_tax_per = 0
-                            product_tax_name = ''
-                            if line.get('variant_id'):
-                                prod_dom = [
-                                    # '|',
-                                            ('shopify_id', '=', str(
-                                                line['variant_id'])),
-                                    ('shopify_instance_id','=',marketplace_instance_id.id)
-                                            # ('default_code', '=',
-                                            #  str(line['sku'])),
-                                            ]
-                                prod_rec = self.env['product.product'].sudo().search(
-                                    prod_dom, limit=1)
-                            else:
-                                prod_dom = [
-                                    # '|',
-                                            ('shopify_id', '=', str(
-                                                line['product_id'])),
-                                    ('shopify_instance_id', '=', marketplace_instance_id.id)
-                                            # ('default_code', '=',
-                                            #  str(line['sku'])),
-                                            ]
-                                prod_rec = self.env['product.product'].sudo().search(
-                                    prod_dom, limit=1)
-                            if not prod_rec and marketplace_instance_id.auto_create_product:
-                                _logger.info("# Need to create a new product")
-                                sp_product_list = self.env['products.fetch.wizard'].shopify_fetch_products_to_odoo({
-                                    'product_id': line.get('product_id'),
-                                    'marketplace_instance_id': marketplace_instance_id,
-                                    'fetch_o_product': 'true',
-                                })
-                                prod_rec = self.env['product.product'].sudo().search(
-                                    prod_dom, limit=1)
-                                if not prod_rec:
-                                    new_domain = [
-                                        '|', ('active', '=', True), ('active', '=', False), ('shopify_id', '=', line['product_id'])]
-                                    prod_tmpl = self.env['product.template'].sudo().search(
-                                        new_domain, limit=1)
-
-                                    if prod_tmpl:
-                                        if 'product.template' in str(prod_tmpl):
-                                            new_domain_new = [
-                                                ('product_tmpl_id', '=', prod_tmpl.id)]
-                                            prod_rec = self.env['product.product'].sudo().search(
-                                                new_domain_new, limit=1)
-                                            if not prod_rec:
-                                                """Create a new Product"""
-                                                variants = sp_product_list[0]['variants'][0]
-                                                categ_id = None
-                                                if sp_product_list[0]['product_type']:
-                                                    categ_id = self.env['product.category'].sudo().search(
-                                                        [('name', '=', sp_product_list[0]['product_type'])], limit=1)
-                                                uom_id = self.env['uom.uom'].sudo().search([
-                                                    ('name', '=', variants['weight_unit'])], limit=1)
-                                                prod_vals = {
-                                                    'categ_id': prod_tmpl.categ_id.id,
-                                                    'name': sp_product_list[0]['body_html'],
-                                                    'product_tmpl_id': prod_tmpl.id,
-                                                    # 'sale_line_warn' : '',
-                                                    # 'tracking' : True,
-                                                    'type': 'product',
-                                                    'uom_id': uom_id.id,
-                                                    'uom_name': uom_id.name,
-                                                    'uom_po_id': uom_id.id,
-                                                    'marketplace_type': 'shopify',
-                                                    'shopify_id': variants['id'],
-                                                    'weight': variants['weight'],
-                                                    'default_code': variants['sku']
-                                                }
-                                                VariantObj = self.env['product.product']
-                                                if not VariantObj.sudo().search([('shopify_id', '=', str(variants['id']))]):
-                                                    prod_rec = self.env['product.product'].sudo().create(
-                                                        prod_vals)
-
-                            product_missing == True if not prod_rec else product_missing
-                            temp = {}
-                            product_tax = []
-                            product_tax = self._shopify_get_taxnames(
-                                line['tax_lines'])
-                            _logger.info("prod_rec===>>>>>" + str(prod_rec))
-                            if line and line.get('quantity') > 0:
-                                #####################################################################################
-                                #TO DO: Compute Price from Pricelist
-                                price_unit =  float(line.get('price_set', {}).get('shop_money', {}).get('amount'))
-                                pricelist_currency = marketplace_instance_id.pricelist_id.currency_id.name
-                                shop_currency_code = line.get('price_set', {}).get('shop_money',{}).get('currency_code')
-                                pre_currency_code = line.get('price_set', {}).get('presentment_money',{}).get('currency_code')
-                                if pricelist_currency and shop_currency_code:
-                                    _logger.info("\npricelist_currency-{}\nshop_currency_code-{}\npre_currency_code-{}".format(pricelist_currency, shop_currency_code, pre_currency_code))
-                                    if pricelist_currency == shop_currency_code:
-                                        _logger.info("Shop and Pricelist Currency Matches")
-                                    else:
-                                        _logger.info("Shop and Pricelist Currency Not Matching")
-                                        price_unit = self.compute_price_unit(prod_rec, price_unit)
-                                
-                                
-                                _logger.info("price_unit-{}".format(price_unit))
-                                #####################################################################################
-                                temp = {
-                                    'product_id': prod_rec.id,
-                                    'product_uom_qty': line['quantity'],
-                                    'price_unit': price_unit,
-                                    'tax_id': [(6, 0, product_tax)],
-                                    'name': str(prod_rec.name),
-                                }
-
-                                if marketplace_instance_id.user_id:
-                                    temp['salesman_id'] = marketplace_instance_id.user_id.id
-
-                                temp['marketplace_type'] = 'shopify'
-                                temp['shopify_id'] = line.get('id')
-                                discount = 0
-                                # if line.get("total_discounts") and float(line.get("total_discounts")) != 0:
-                                #     discount = line.get("total_discounts")
-                                #     disc_per = (float(discount)/float(line.get("price"))) * 100
-                                #     ICPSudo = self.env['ir.config_parameter'].sudo()
-                                #     group_dicnt = ICPSudo.get_param(
-                                #         'sale.group_discount_per_so_line')
-                                #     # if group_dicnt == True:
-                                #     temp['discount'] = disc_per
-                                if line.get("discount_allocations") and float(line.get('total_discount')) == 0:
-                                    for da in line.get("discount_allocations"):
-                                        discount += float(da.get('amount'))
-                                    disc_per = (float(
-                                        discount)/(float(line.get("price")) * line.get("quantity")) * 100)
-                                    ICPSudo = self.env['ir.config_parameter'].sudo(
-                                    )
-                                    group_dicnt = ICPSudo.get_param(
-                                        'sale.group_discount_per_so_line')
-                                    # if group_dicnt == True:
-                                    temp['discount'] = disc_per
-
-                                ##################################
-                                ###AD LINE ITEM ID
-                                ##################################
-                                order_line.append((0, 0, temp))
-
-                            order_vals['order_line'] = order_line
-
-                        # Set Shipping Address
-                        partner_shipping_id = False
-                        shipping = False
+                process_log_msg, process_error_msg = feed_order_id.process_feed_order()
+                log_msg += process_log_msg
+                error_msg += process_error_msg
 
 
-
-                        order_vals['order_line'] = order_line
-                        order_vals = self._get_delivery_line(
-                            i, order_vals, marketplace_instance_id)
-                        # Other Values
-
-                        order_vals['shopify_status'] = i.get('status', '')
-                        order_vals['shopify_order_date'] = i.get('created_at').split(
-                            "T")[0] + " " + i.get('created_at').split("T")[1][:8]
-                        order_vals['shopify_carrier_service'] = i.get('')
-                        order_vals['shopify_has_delivery'] = i.get('')
-                        order_vals['shopify_browser_ip'] = i.get('browser_ip')
-                        order_vals['shopify_buyer_accepts_marketing'] = i.get(
-                            'buyer_accepts_marketing')
-                        order_vals['shopify_cancel_reason'] = i.get(
-                            'cancel_reason')
-                        order_vals['shopify_cancel_reason'] = i.get('cancelled_at')
-                        order_vals['shopify_cart_token'] = i.get('cart_token')
-                        order_vals['shopify_checkout_token'] = i.get(
-                            'checkout_token')
-
-                        currency = self.env['res.currency'].search(
-                            [('name', '=', i.get('currency'))])
-                        if currency:
-                            order_vals['shopify_currency'] = currency.id
-                        order_vals['shopify_financial_status'] = i.get(
-                            'financial_status')
-                        order_vals['shopify_fulfillment_status'] = i.get(
-                            'fulfillment_status')
-
-                        tags = i.get('tags').split(",")
-                        try:
-                            tag_ids = []
-                            for tag in tags:
-                                tag_id = self.env['crm.tag'].search(
-                                    [('name', '=', tag)])
-                                if not tag_id and tag != "":
-                                    tag_id=self.env['crm.tag'].create({"name":tag,"color":1})
-                                if tag_id:
-                                    tag_ids.append((4,tag_id.id))
-                            order_vals['tag_ids'] = tag_ids
-                        except Exception as e:
-                            _logger.warning(e)
-
-                        if 'message_follower_ids' in order_vals:
-                            order_vals.pop('message_follower_ids')
-                        order_vals['name'] = self.env['ir.sequence'].next_by_code('sale.order')
-
-                        # Set Billing Address
-                        partner_invoice_id = False
-                        PartnerObj = self.env['res.partner'].sudo()
-                        shipping = False
-
-
-
-                        # pp = PartnerObj.search([('id', '=', customer_id)])
-                        # if pp:
-                        #     partner_shipping_id =  pp.child_ids.filtered(lambda l:l.type == 'delivery')
-                        #     partner_invoice_id =  pp.child_ids.filtered(lambda l:l.type == 'delivery')
-                        #     order_vals['partner_shipping_id'] = pp.child_ids.filtered(lambda l:l.type == 'delivery').id or pp.id
-                        #     order_vals['partner_invoice_id'] = pp.child_ids.filtered(lambda l:l.type == 'invoice').id or pp.id
-
-                        # if not order_vals['partner_invoice_id']:
-                        #     order_vals['partner_invoice_id'] = order_vals['partner_id']
-                        # if not order_vals['partner_shipping_id']:
-                        #     order_vals['partner_shipping_id'] = order_vals['partner_id']
-
-                        # order_vals = self.process_discount_codes(i, order_vals)
-                        # pprint.pformat(order_vals)
-                        order_id = False
-
-                        if order_vals.get('order_line'):
-                            _logger.warning("Order Creation Failed for Shopify Order Id: %s" % (
-                                i['id'])) if product_missing else None
-
-                            for line in order_vals['order_line']:
-                                if not line[2].get('analytic_tag_ids'):
-                                    line[2]['analytic_tag_ids'] = [[6, False, []]]
-                                if not line[2].get('product_id'):
-                                    product_missing = True
-
-                            print("Product Missing", product_missing)
-                            if not order_vals['partner_id']:
-                                _logger.info("Unable to Create Order %s. Reason: Partner ID Missing" % (
-                                    order_vals['shopify_id']))
-                            if not product_missing and order_vals['partner_id']:
-                                order_id = OrderObj.create(order_vals)
-                                _logger.info("Order Created: %s" % (order_id))
-                                all_shopify_orders += order_id
-
-
-                                if i.get('confirmed'):
-                                    order_id.action_confirm()
-
-                                if i.get("cancel_reason")and i.get('cancelled_at'):
-                                    order_id.action_cancel()
-
-                               
-
-                else:
-                    current_order_id = OrderObj.search(
-                        [('shopify_id', '=', i['id'])], order='id desc', limit=1)
-                    current_order_id.write({"shopify_instance_id": marketplace_instance_id.id})
-                    if i.get("cancel_reason") and i.get('cancelled_at'):
-                        current_order_id.action_cancel()
-                    all_shopify_orders += current_order_id
-
-                    tags = i.get('tags').split(",")
-                    try:
-                        tag_ids = []
-                        for tag in tags:
-                            tag_id = self.env['crm.tag'].search(
-                                [('name', '=', tag)],limit=1)
-                            if not tag_id and tag != "":
-                                tag_id = self.env['crm.tag'].create({"name": tag, "color": 1})
-                                # current_order_id.write({"tag_ids":[(0,0, {"name": tag, "color": 1}))
-                            if tag_id:
-                                tag_ids.append(tag_id.id)
-
-                        if tag_ids:
-                            current_order_id.tag_ids= tag_ids
-                        else:
-                            current_order_id.tag_ids.unlink()
-
-                    except Exception as e:
-                        _logger.warning(e)
-
-                
+            try:
+                print("log_msg ===>>>{}".format(log_msg))
+                print("error_msg ===>>>{}".format(error_msg))
+                if feed_order_list and self.instance_id:
+                    log_id = self.env['marketplace.logging'].sudo().create({
+                        'name' : self.env['ir.sequence'].next_by_code('marketplace.logging'),
+                        'create_uid' : self.env.user.id,
+                        'marketplace_type' : self.instance_id.marketplace_instance_type,
+                        'shopify_instance_id' : self.instance_id.id,
+                        'level' : 'info',
+                        'summary' : log_msg.replace('<br>','').replace('</br>','\n'),
+                        'error' : error_msg.replace('<br>','').replace('</br>','\n'),
+                    })
+                    log_id._cr.commit()
+                    print("log_id ===>>>{}".format(log_id))
+            except Exception as e:
+                print("Exception-{}".format(e.args))
 
 
         except Exception as e:
-            _logger.info("Exception occured %s", e)
+            _logger.warning("Exception occured %s", e)
             raise exceptions.UserError(_("Error Occured:\n %s") % e)
 
-
-        ################################################################
-        ###########Fetch the Payments and Refund for the Orders#########
-        ################################################################
-        for shopify_order in all_shopify_orders:
-            shopify_order.fetch_shopify_payments()
-            shopify_order.fetch_shopify_refunds()
-            if shopify_order and shopify_order.state in ['sale', 'done'] and marketplace_instance_id.auto_create_invoice == True:
-                shopify_order.process_shopify_invoice()
-                shopify_order.shopify_invoice_register_payments()
-                shopify_order.process_shopify_credit_note()
-                shopify_order.shopify_credit_note_register_payments()
-            shopify_order._cr.commit()
-            
-        #################################################################
 
 
         if 'call_button' in str(request.httprequest):
@@ -1078,15 +717,6 @@ class OrderFetchWizard(models.Model):
             order_vals['order_line'].append((0, 0, temp))
         return order_vals
 
-    #######################################################################
-    def _create_invoice_shopify(self, order_id, sp_order):
-        wiz = self.env['sale.advance.payment.inv'].with_context(
-            active_ids=order_id.ids, open_invoices=True).create({})
-        move_vals = wiz.create_invoices()
-        move_id = order_id._create_invoices()
-        move_id.update({'marketplace_type': 'shopify', })
-        return move_id
-    #######################################################################
 
     def _get_inv_vals(self, order_id, sp_order):
         inv_vals = {}
@@ -1140,93 +770,93 @@ class OrderFetchWizard(models.Model):
 
         self.env['account.move'].sudo().create(inv_vals)
 
-    def _shopify_process_payments(self, move_id, sp_order):
-        payments = False
-        mkplc_id = self._get_instance_id()
-        AccPay = self.env['account.payment'].sudo()
-        print("move_id.payment_id===>>>" + str(move_id.payment_id))
-        payments = {}
-        if sp_order.get('payment_details') and move_id.amount_residual > 0:
-            payment_vals_list = self._shopify_payment_vals(move_id, sp_order)
-            _logger.info("" + pprint.pformat(payment_vals_list))
-            pay_domain = [('ref', '=', move_id.name)]
-            pay_domain += [('amount', '=', move_id.amount_residual)]
-            payment = AccPay.search(pay_domain, limit=1)
-            if not payment:
-                payment = AccPay.create(payment_vals_list)
-                _logger.info("Payment Created- %s" % (payment))
+    # def _shopify_process_payments(self, move_id, sp_order):
+    #     payments = False
+    #     mkplc_id = self._get_instance_id()
+    #     AccPay = self.env['account.payment'].sudo()
+    #     print("move_id.payment_id===>>>" + str(move_id.payment_id))
+    #     payments = {}
+    #     if sp_order.get('payment_details') and move_id.amount_residual > 0:
+    #         payment_vals_list = self._shopify_payment_vals(move_id, sp_order)
+    #         _logger.info("" + pprint.pformat(payment_vals_list))
+    #         pay_domain = [('ref', '=', move_id.name)]
+    #         pay_domain += [('amount', '=', move_id.amount_residual)]
+    #         payment = AccPay.search(pay_domain, limit=1)
+    #         if not payment:
+    #             payment = AccPay.create(payment_vals_list)
+    #             _logger.info("Payment Created- %s" % (payment))
 
-            if sp_order.get('financial_status') in ['authorized', 'paid']:
-                if not payment.line_ids:
-                    if payment.payment_type == 'inbound':
-                        payment.write({
-                            'line_ids': [(0, 0, {
-                                'name': 'Customer Payment %s %s-%s' % (payment.amount, payment.currency_id.symbol, payment.date),
-                                'account_id': mkplc_id.debit_account_id.id,
-                                'debit': payment.amount,
-                                'credit': 0,
-                                'quantity': 1,
-                                'date_maturity': payment.date,
-                                'move_id': payment.move_id.id,
-                            }),
+    #         if sp_order.get('financial_status') in ['authorized', 'paid']:
+    #             if not payment.line_ids:
+    #                 if payment.payment_type == 'inbound':
+    #                     payment.write({
+    #                         'line_ids': [(0, 0, {
+    #                             'name': 'Customer Payment %s %s-%s' % (payment.amount, payment.currency_id.symbol, payment.date),
+    #                             'account_id': mkplc_id.debit_account_id.id,
+    #                             'debit': payment.amount,
+    #                             'credit': 0,
+    #                             'quantity': 1,
+    #                             'date_maturity': payment.date,
+    #                             'move_id': payment.move_id.id,
+    #                         }),
 
-                            (0, 0, {
-                                'name': 'Customer Payment %s %s-%s' % (payment.amount, payment.currency_id.symbol, payment.date),
-                                'account_id': mkplc_id.credit_account_id.id,
-                                'debit': 0,
-                                'credit': payment.amount,
-                                'quantity': 1,
-                                'date_maturity': payment.date,
-                                'move_id': payment.move_id.id,
-                            })
+    #                         (0, 0, {
+    #                             'name': 'Customer Payment %s %s-%s' % (payment.amount, payment.currency_id.symbol, payment.date),
+    #                             'account_id': mkplc_id.credit_account_id.id,
+    #                             'debit': 0,
+    #                             'credit': payment.amount,
+    #                             'quantity': 1,
+    #                             'date_maturity': payment.date,
+    #                             'move_id': payment.move_id.id,
+    #                         })
 
-                            ]
-                        })
-                payment.action_post() if payment.state == 'draft' else None
-                # Error for order id: sale.order(34,)- ('You need to add a line before posting.',)
-                if payment.state == 'posted':
-                    move_id.sudo().write({
-                        'payment_id': payment.id,
-                        'payment_state': 'paid',
-                    })
-                    payment.write({'is_reconciled': True})
+    #                         ]
+    #                     })
+    #             payment.action_post() if payment.state == 'draft' else None
+    #             # Error for order id: sale.order(34,)- ('You need to add a line before posting.',)
+    #             if payment.state == 'posted':
+    #                 move_id.sudo().write({
+    #                     'payment_id': payment.id,
+    #                     'payment_state': 'paid',
+    #                 })
+    #                 payment.write({'is_reconciled': True})
 
-        print("move_id.payment_id===>>>" + str(move_id.payment_id))
-        print("move_id.payment_id.is_reconciled===>>>" +
-              str(move_id.payment_id.is_reconciled))
-        if move_id.payment_id:
-            if move_id.payment_id.amount == move_id.amount_total and move_id.payment_id.state == 'posted':
-                if move_id.payment_state != 'paid':
-                    move_id.write({
-                        'payment_state': 'paid',
-                        'amount_residual': 0,
-                        'payment_reference':  move_id.payment_id.name
-                    })
-                move_id.payment_id.sudo().write({
-                    'is_reconciled': True,
-                    # 'move_id':move_id.id
-                })  # Please define a payment method on your payment.
+    #     print("move_id.payment_id===>>>" + str(move_id.payment_id))
+    #     print("move_id.payment_id.is_reconciled===>>>" +
+    #           str(move_id.payment_id.is_reconciled))
+    #     if move_id.payment_id:
+    #         if move_id.payment_id.amount == move_id.amount_total and move_id.payment_id.state == 'posted':
+    #             if move_id.payment_state != 'paid':
+    #                 move_id.write({
+    #                     'payment_state': 'paid',
+    #                     'amount_residual': 0,
+    #                     'payment_reference':  move_id.payment_id.name
+    #                 })
+    #             move_id.payment_id.sudo().write({
+    #                 'is_reconciled': True,
+    #                 # 'move_id':move_id.id
+    #             })  # Please define a payment method on your payment.
 
-        if sp_order.get('refunds'):
-            """Create a Invoice Credit Note"""
-            move_reversal = self.env['account.move.reversal'].with_context(active_model="account.move", active_ids=move_id.ids).create({
-                'date': fields.Datetime.now(),
-                'reason': 'no reason',
-                'refund_method': 'refund',
-            })
-            reversal = move_reversal.reverse_moves()
-            reverse_move = self.env['account.move'].browse(reversal['res_id'])
-            _logger.info("Reversal Move--->", reverse_move)
+    #     if sp_order.get('refunds'):
+    #         """Create a Invoice Credit Note"""
+    #         move_reversal = self.env['account.move.reversal'].with_context(active_model="account.move", active_ids=move_id.ids).create({
+    #             'date': fields.Datetime.now(),
+    #             'reason': 'no reason',
+    #             'refund_method': 'refund',
+    #         })
+    #         reversal = move_reversal.reverse_moves()
+    #         reverse_move = self.env['account.move'].browse(reversal['res_id'])
+    #         _logger.info("Reversal Move--->", reverse_move)
 
-            for refund in sp_order.get('refunds'):
-                for refund_trx in refund.get('transactions'):
-                    """Create Payment Refunds"""
-                    refund_tx = self._shopify_refund_vals(refund_trx)
-                    refunds_vals_list = self._shopify_payment_vals(
-                        reverse_move, refund_trx)
-                    refund_trxs = self.env['account.payment'].create(
-                        payment_vals_list)
-        return payments
+    #         for refund in sp_order.get('refunds'):
+    #             for refund_trx in refund.get('transactions'):
+    #                 """Create Payment Refunds"""
+    #                 refund_tx = self._shopify_refund_vals(refund_trx)
+    #                 refunds_vals_list = self._shopify_payment_vals(
+    #                     reverse_move, refund_trx)
+    #                 refund_trxs = self.env['account.payment'].create(
+    #                     payment_vals_list)
+    #     return payments
 
     def _shopify_payment_vals(self, move_id, sp_order):
         instance_id = self._get_instance_id()
@@ -1258,14 +888,6 @@ class OrderFetchWizard(models.Model):
             # 'move_id': move_id.id,# You cannot edit the journal of an account move if it has been posted once.
 
         }
-        # vals.update({
-        #     'line_ids': line_ids
-        # })
-        # vals.update({
-        #     'move_type': 'out_invoice',
-        #     # 'payment_reference': 'inbound',
-        #     # 'payment_transaction_id': 'inbound',
-        # })
         for key, value in sp_order.get('payment_details').items():
             vals.update({'shopify_' + str(key) + "": str(value)})
         vals.update({
@@ -1611,12 +1233,12 @@ class ShopifyCustomer:
 
         if default_address:
             # self._handle_company(default_address)
-            # if default_address.get('company'):
-            #     company=env['res.partner'].sudo().search(
-            #         [('name', '=', default_address.get('company'),('company_type','=','company'))], limit=1)
-            #     self._partner_vals['company_id']=company.id if company else None
-            #     self._partner_vals['company_name']=default_address.get(
-            #         'company') or ""
+            if default_address.get('company'):
+                company=env['res.partner'].sudo().search(
+                    [('name', '=', default_address.get('company'))], limit=1)
+                self._partner_vals['company_id']=company.id if company else None
+                self._partner_vals['company_name']=default_address.get(
+                    'company') or ""
 
             self._partner_vals['street']=default_address.get(
                 'address1') or ""

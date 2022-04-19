@@ -895,7 +895,7 @@ class ProductsFetchWizard(models.Model):
                     params=params
                 )
                 try:
-                    if 'products' in fetched_products:
+                    if type(fetched_products).__name__== 'list':
                         products += fetched_products['products']
                     elif type(fetched_products).__name__== 'dict':
                         products = fetched_products.get('products') or fetched_products.get('product')
@@ -925,133 +925,24 @@ class ProductsFetchWizard(models.Model):
             # and creating those in odoo. For the products updated from shopify,
             # we will be showing all the shopify categories in a separate field
             try:
+                if configurable_products.get('errors'):
+                    errors = configurable_products.get('errors')
+                    _logger.warning("Exception occured: {}".format(errors))
+                    raise exceptions.UserError(_("Error Occured {}".format(errors)))
                 if configurable_products.get('products'):
                     product_list = configurable_products.get('products')
                 else:
                     product_list = [configurable_products.get('product')] if type(configurable_products.get('products')) != list else configurable_products.get('products')
 
                 all_feed_products_rec = [self.create_feed_parent_product(product,marketplace_instance_id) for product in product_list]
-                # for product in configurable_products:
-                #     all_feed_products_rec += self.create_feed_parent_product(product,
-                #                                                              marketplace_instance_id)
-
-                # Processing all feed products
                 for process_product in all_feed_products_rec:
                     process_product.process_feed_product()
                     process_product.write({"state":'processed'})
 
             except Exception as e:
-                _logger.info("Exception occured: %s", e)
+                _logger.warning("Exception occured: {}".format(e.args))
                 raise exceptions.UserError(_("Error Occured %s") % e)
 
-        # len_products = 0
-        # try:
-        #     attributes = {}
-        #     attributes['items'] = []
-        #
-        #     simple_products = {}
-        #     simple_products['items'] = []
-        #
-        #     tmpl_vals = self.find_default_vals('product.template')
-        #     simple_products_list = []
-        #
-        #     if configurable_products.get('products'):
-        #         sp_product_list = configurable_products.get('products')
-        #     else:
-        #         sp_product_list = [configurable_products.get('product')] if type(configurable_products.get('products')) != list else configurable_products.get('products')
-        #
-        #
-        #     if configurable_products.get('errors') and 'products.fetch.wizard' in self._name:
-        #         errors = "Error: %s".format(configurable_products.get('errors'))
-        #         _logger.warning(errors)
-        #         raise UserError(_(errors))
-        #     ###############################################################
-        #     #Create Feed Order from Shopify################################
-        #     ###############################################################
-        #     if not configurable_products.get('errors'):
-        #         for sp_product in sp_product_list:
-        #             self.create_feed_parent_product(sp_product, marketplace_instance_id)
-        #     ###############################################################
-        #     update_products_no = len(sp_product_list)
-        #
-        #     # from pprint import pprint
-        #     # pprint(sp_product_list)
-        #
-        #     for con_pro in sp_product_list:
-        #         if con_pro.get('product_type') not in categ_list and con_pro.get('product_type') != '':
-        #             categ_list.append(con_pro.get('product_type'))
-        #
-        #         try:
-        #             self.shopify_update_categories(categ_list)
-        #         except Exception as e:
-        #             _logger.warning("Exception occured %s", e)
-        #             raise exceptions.UserError(_("Error Occured %s") % e)
-        #
-        #         if len(con_pro.get('variants')) == 1:
-        #             simple_products['items'].append(con_pro)
-        #
-        #         if con_pro.get('options'):
-        #             for option in con_pro.get('options'):
-        #                 attribute = {}
-        #                 attribute['attribute_id'] = str(option.get('id'))
-        #                 attribute['label'] = str(option.get('name'))
-        #                 attribute['attribute_code'] = str(option.get('name'))
-        #                 attribute['options'] = option.get('values')
-        #                 attributes['items'].append(attribute)
-        #
-        #     simple_products_list = simple_products['items']
-        #
-        #     _logger.info("start syncing simple products-->")
-        #     if simple_products_list:
-        #         existing_ids = self._shopify_import_products_list(
-        #             simple_products_list,
-        #             ids,
-        #             tmpl_vals,
-        #             attributes,
-        #             marketplace_instance_id,
-        #             'simple_product'
-        #         )
-        #     _logger.info("end syncing simple products-->")
-        #     # end syncing simple products
-        #
-        #     print("existing_ids")
-        #     print(existing_ids)
-        #
-        #     _logger.info("start syncing configurable products-->")
-        #     # fetching child products of configurable products
-        #     config_prod_list = []
-        #     for product in sp_product_list:
-        #         if len(product.get('variants')) > 0:
-        #             config_prod_list.append(product)
-        #
-        #     # config_prod_list = configurable_products['products']
-        #     # for config in config_prod_list:
-        #     #     if len(config.get('variants'))> 1:
-        #     #         config['childs'] = config.get('variants')
-        #
-        #     # we have gathered configurable products with their childs
-        #     # and the other simple products from shopify
-        #     # next: first we will create all the configurable products with their variants
-        #
-        #     # start creating configurable products
-        #     # need to fetch the complete required fields list
-        #     # and their values
-        #     if config_prod_list:
-        #         existing_ids = self._shopify_import_products_list(
-        #             config_prod_list,
-        #             ids,
-        #             tmpl_vals,
-        #             attributes,
-        #             marketplace_instance_id,
-        #             'configurable_product'
-        #         )
-        #     # end  creating configurable products
-        #     _logger.info("existing_ids-->%s" % (existing_ids))
-        #     _logger.info("end syncing configurable products-->")
-        #
-        # except Exception as e:
-        #     _logger.info("Exception occured: %s", e)
-        #     raise exceptions.UserError(_("Error Occured %s") % e)
 
         _logger.info("%d products are successfully updated." % update_products_no)
 

@@ -7,6 +7,7 @@
 import json
 import requests
 import base64
+import re
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 
@@ -19,7 +20,7 @@ class ShopifyFeedOrders(models.Model):
     _description = 'Shopify Feed Orders'
 
     _rec_name = 'name'
-    _order = 'name ASC'
+    _order = 'name DESC'
 
     name = fields.Char(
         string='Name',
@@ -56,11 +57,52 @@ class ShopifyFeedOrders(models.Model):
     shopify_customer_name = fields.Char(string='Customer Name', readonly=1)
     shopify_customer_id = fields.Char(string='Customer ID', readonly=1)
     shopify_gateway = fields.Char(string='Gateway', readonly=1)
-    shopify_order_number = fields.Char(string='Order Nnumber', readonly=1)
+    shopify_order_number = fields.Char(string='Order Number', readonly=1)
     shopify_financial_status = fields.Char(string='Financial Status', readonly=1)
     shopify_fulfillment_status = fields.Char(string='Fulfillment Status', readonly=1)
     shopify_line_items = fields.Char(string='Line Items', readonly=1)
     shopify_user_id = fields.Char(string='User ID', readonly=1)
+    sale_id = fields.Many2one(
+        string='Odoo Order',
+        comodel_name='sale.order',
+        ondelete='restrict',
+    )
+
+    def _get_instance_id(self):
+        ICPSudo = self.env['ir.config_parameter'].sudo()
+        try:
+            marketplace_instance_id = ICPSudo.get_param(
+                'syncoria_base_marketplace.marketplace_instance_id')
+            marketplace_instance_id = [int(s) for s in re.findall(
+                r'\b\d+\b', marketplace_instance_id)]
+        except:
+            marketplace_instance_id = False
+
+        if marketplace_instance_id:
+            marketplace_instance_id = self.env['marketplace.instance'].sudo().search(
+                [('id', '=', marketplace_instance_id[0])])
+        return marketplace_instance_id
+
+
+    def compute_price_unit(self, product_id, price_unit):
+        item_price = price_unit
+        marketplace_instance_id = self._get_instance_id()
+        pricelist_id = marketplace_instance_id.pricelist_id
+        pricelist_price = marketplace_instance_id.compute_pricelist_price
+        if pricelist_price and pricelist_id and 'product.product' in str(product_id):
+            item_line = marketplace_instance_id.pricelist_id.item_ids.filtered(
+                lambda l: l.product_tmpl_id.id == product_id.product_tmpl_id.id)
+            if not item_line:
+                _logger.warning("No Item Line found for {}".format(product_id))
+            item_price = item_line.fixed_price if item_line else item_price
+        if pricelist_price and pricelist_id and 'product.template' in str(product_id):
+            item_line = marketplace_instance_id.pricelist_id.item_ids.filtered(
+                lambda l: l.product_tmpl_id.id == product_id.id)
+            if not item_line:
+                _logger.warning("No Item Line found for {}".format(product_id))
+            item_price = item_line.fixed_price if item_line else item_price
+        return item_price
+
 
     def shopify_customer(self, values, env, shipping=False):
         customer={}
@@ -284,13 +326,17 @@ class ShopifyFeedOrders(models.Model):
                 _logger.warning("Exception-{}".format(e.args))
         return partner_id, partner_invoice_id, partner_shipping_id
 
+
+    def process_feed_orders(self):
+        for record in self:
+            record.process_feed_order()
+
+            
     def process_feed_order(self):
         """Convert Shopify Feed Order to Odoo Order"""
         msg_body = ''
-        log_msg = """Shopify Process Feed Order started for {}""".format(self)
-        msg_body += '\n' + log_msg
-        
-        _logger.info(log_msg)
+        error_msg_body = ''
+
         
         PartnerObj = self.env['res.partner'].sudo()
         OrderObj = self.env['sale.order'].sudo()
@@ -298,6 +344,10 @@ class ShopifyFeedOrders(models.Model):
         all_shopify_orders = self.env['sale.order'].sudo()
         try:
             for rec in self:
+                log_msg = """Shopify Process Feed Order started for {}""".format(rec)
+                # msg_body += '\n' + log_msg
+                _logger.info(log_msg)
+                
                 marketplace_instance_id = self.instance_id
                 i = json.loads(rec.order_data)
 
@@ -342,27 +392,29 @@ class ShopifyFeedOrders(models.Model):
                         product_tax_per = 0
                         product_tax_name = ''
                         if line.get('variant_id'):
-                            prod_dom = [
-                                # '|',
-                                        ('shopify_id', '=', str(
-                                            line['variant_id'])),
-                                ('shopify_instance_id','=',marketplace_instance_id.id)
-                                        # ('default_code', '=',
-                                        #  str(line['sku'])),
-                                        ]
-                            prod_rec = self.env['product.product'].sudo().search(
-                                prod_dom, limit=1)
+                            product_product = self.env['product.product'].sudo()
+                            prod_dom = [('shopify_instance_id','=',marketplace_instance_id.id)]
+                            prod_dom += ['|']
+                            prod_dom += [('shopify_id', '=', str(line['variant_id']))]
+                            prod_dom += [('default_code', '=', str(line['sku']))]
+                            prod_rec = product_product.search(prod_dom, limit=1)
                         else:
-                            prod_dom = [
-                                # '|',
-                                        ('shopify_id', '=', str(
-                                            line['product_id'])),
-                                ('shopify_instance_id', '=', marketplace_instance_id.id)
-                                        # ('default_code', '=',
-                                        #  str(line['sku'])),
-                                        ]
-                            prod_rec = self.env['product.product'].sudo().search(
-                                prod_dom, limit=1)
+                            product_product = self.env['product.product'].sudo()
+                            prod_dom = [('shopify_instance_id','=',marketplace_instance_id.id)]
+                            prod_dom += ['|']
+                            prod_dom += [('shopify_id', '=', str(line['product_id']))]
+                            prod_dom += [('default_code', '=', str(line['sku']))]
+                            prod_rec = product_product.search(prod_dom, limit=1)
+                            # prod_dom = [
+                            #      ('shopify_instance_id', '=', marketplace_instance_id.id),
+                            #     '|',
+                            #             ('shopify_id', '=', str(
+                            #                 line['product_id'])), 
+                            #             ('default_code', '=',
+                            #              str(line['sku'])),
+                            #             ]
+                            # prod_rec = self.env['product.product'].sudo().search(
+                            #     prod_dom, limit=1)
                         
                         if not prod_rec and marketplace_instance_id.auto_create_product:
                             _logger.info("# Need to create a new product")
@@ -415,7 +467,7 @@ class ShopifyFeedOrders(models.Model):
 
                         if not prod_rec:
                             prod_rec_variant_id = line.get('variant_id') or line.get('product_id') or ''
-                            log_msg = """Product not found for Shopify ID-{}, Name: {}""".format(prod_rec_variant_id, line.get('name'))
+                            log_msg = """Product not found for Shopify ID-{}, Name: {}, SKU: {}""".format(prod_rec_variant_id, line.get('name'), line.get('sku'))
                             msg_body += '\n' + log_msg
 
                         product_missing == True if not prod_rec else product_missing
@@ -554,14 +606,18 @@ class ShopifyFeedOrders(models.Model):
                         if product_missing:
                             log_msg = """Product is missing for Feed Order-{}""".format(self)
                             msg_body += '\n' + log_msg
+                            error_msg_body +=  '\n' + log_msg
                             log_msg = """Odoo Order cannot be created for Feed Order-{}""".format(self)
+                            error_msg_body +=  '\n' + log_msg
                             _logger.info(log_msg)
                             self.write({'state':'failed'})
+                            
 
                         if not order_vals['partner_id']:
                             log_msg = "Unable to Create Order %s. Reason: Partner ID Missing" % (
                                 order_vals['shopify_id'])
                             msg_body += '\n' + log_msg
+                            error_msg_body +=  '\n' + log_msg
                             _logger.info(log_msg)
                             self.write({'state':'failed'})
 
@@ -574,7 +630,10 @@ class ShopifyFeedOrders(models.Model):
                             _logger.info(log_msg)
 
                             if order_id:
-                                self.write({'state':'processed'})
+                                self.write({
+                                    'state':'processed',
+                                    'sale_id':order_id.id,
+                                })
                                 all_shopify_orders += order_id
 
 
@@ -641,6 +700,8 @@ class ShopifyFeedOrders(models.Model):
                 shopify_order.process_shopify_credit_note()
                 shopify_order.shopify_credit_note_register_payments()
             shopify_order._cr.commit()
+
+        return msg_body, error_msg_body
             
 
 

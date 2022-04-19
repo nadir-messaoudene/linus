@@ -19,8 +19,8 @@ class ShopifyFeedProducts(models.Model):
     _name = 'shopify.feed.products'
     _description = 'Shopify Feed Products'
 
-    _rec_name = 'name'
-    _order = 'name ASC'
+    _rec_name = 'title'
+    _order = 'name DESC'
 
     name = fields.Char(
         string='Name',
@@ -38,16 +38,15 @@ class ShopifyFeedProducts(models.Model):
     shopify_id = fields.Char(string='Shopify Id', readonly=1)
     inventory_id = fields.Char(string='Inventory Id', readonly=1)
     product_data = fields.Text(
-        string='Json Data',
+        string='Product Data',
     )
 
     state = fields.Selection(
-        string='state',
+        string='State',
         tracking=True,
         selection=[('draft', 'draft'), ('queue', 'Queue'),
                    ('processed', 'Processed'), ('failed', 'Failed')]
     )
-
     product_id = fields.Many2one(
         string='Product Variant',
         comodel_name='product.product',
@@ -63,13 +62,39 @@ class ShopifyFeedProducts(models.Model):
         comodel_name='feed.products.fetch.wizard',
         ondelete='restrict',
     )
-    barcode = fields.Char(
-        string='Barcode',
-    )
+    barcode = fields.Char()
     default_code = fields.Char(
         string='Default Code(SKU)',
     )
+    feed_varaint_ids = fields.One2many(
+        string='Feed Variants',
+        comodel_name='shopify.feed.products',
+        inverse_name='parent_id',
+    )
+    feed_variant_count = fields.Integer(compute="_compute_feed_variant_count")
     
+    @api.depends('feed_varaint_ids')
+    def _compute_feed_variant_count(self):
+        for record in self:
+            record.feed_variant_count = len(record.feed_varaint_ids)
+
+    def action_view_feed_variant(self):
+        self.ensure_one()
+        linked_child_varinats = self.mapped('feed_varaint_ids')
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Feed Child Products'),
+            'res_model': 'shopify.feed.products',
+            'view_mode': 'tree,form',
+            'domain': [('id', 'in', linked_child_varinats.ids)],
+        }
+
+    parent_id = fields.Many2one(
+        string='Parent Product',
+        comodel_name='shopify.feed.products',
+        domain=[('parent','=',True)]
+    )
+    parent_title = fields.Char()
     
 
     @api.onchange('product_tmpl_id')
@@ -99,6 +124,12 @@ class ShopifyFeedProducts(models.Model):
                 'shopify_inventory_id' : self.inventory_id,
                 'marketplace_type' : 'shopify',
             })
+
+
+
+    def process_feed_products(self):
+        for record in self:
+            record.process_feed_product()
 
 
     #TO DO: Feed Products to Odoo Products
@@ -271,8 +302,7 @@ class ShopifyFeedProducts(models.Model):
                         'template_suffix')
                     template['shopify_variants'] = str(
                         len(product.get('variants')))
-                    template['shopify_vendor']= product.get("vendor")
-
+                    template['shopify_vendor'] = product.get("vendor")
                     # -------------------------------------Invoice Policy------------------------------------------------
                     marketplace_instance_id = self.instance_id
                     if marketplace_instance_id.default_invoice_policy:

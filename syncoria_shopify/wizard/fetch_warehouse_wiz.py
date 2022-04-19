@@ -50,27 +50,20 @@ class WarehouseFetchWizard(models.TransientModel):
             version = marketplace_instance_id.marketplace_api_version
             url = marketplace_instance_id.marketplace_host + \
                   '/admin/api/%s/locations.json' % version
-
-            # if kwargs.get('fetch_o_product'):
-            #     # /admin/api/2021-04/products/{product_id}.json
-            #     url = marketplace_instance_id.marketplace_host + \
-            #           '/admin/api/%s/products/%s.json' % (
-            #               version, kwargs.get('product_id'))
-
-            _logger.info("Product URL-->" + str(url))
-
-            headers = {
-                'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password }
+            headers = {'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password}
             type_req = 'GET'
-
-            inventory_locations,next_link = self.env[
+            inventory_locations, next_link = self.env[
                 'marketplace.connector'].shopify_api_call(
                 headers=headers,
                 url=url,
                 type=type_req,
                 marketplace_instance_id=marketplace_instance_id
             )
-            print(inventory_locations)
+
+            _logger.info("url====>>>{}".format(url))
+            _logger.info("inventory_locations====>>>{}".format(inventory_locations))
+
+
             shopify_warehouse = self.env['shopify.warehouse']
             for location in inventory_locations["locations"]:
 

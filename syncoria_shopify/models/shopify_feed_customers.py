@@ -18,7 +18,7 @@ class ShopifyFeedCustomers(models.Model):
     _description = 'Shopify Feed Customers'
 
     _rec_name = 'name'
-    _order = 'name ASC'
+    _order = 'name DESC'
 
     name = fields.Char(
         string='Name',
@@ -51,9 +51,13 @@ class ShopifyFeedCustomers(models.Model):
     email = fields.Char(
         string='Email',
     )
+    
+
+
+    def process_feed_customers(self):
+        raise UserError(_("Feed Customer is disbaled for this App. Please contact Developer."))
+        for record in self:
+            record.process_feed_customer()
 
     def process_feed_customer(self):
-        print("process_feed_customer")
-        
-    
-    
+        """"""

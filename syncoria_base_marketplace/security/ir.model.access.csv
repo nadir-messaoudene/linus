@@ -24,4 +24,8 @@ access_marketplace_sync_history_man,access_marketplace_sync_history_man,model_ma
 access_marketplace_webhooks_usr,access_marketplace_webhooks_usr,model_marketplace_webhooks,base.group_user,1,0,0,0
 access_marketplace_webhooks_man,access_marketplace_webhooks_man,model_marketplace_webhooks,base.group_erp_manager,1,1,1,1
 ,,,,,,
-access_marketplace_webhooks_config_man,access_marketplace_webhooks_config,model_marketplace_webhooks_config,base.group_erp_manager,1,1,1,1
+syncoria_base_marketplace.access_marketplace_webhooks_config,access_marketplace_webhooks_config,syncoria_base_marketplace.model_marketplace_webhooks_config,base.group_erp_manager,1,1,1,1
+,,,,,,
+access_marketplace_logging_usr,access_marketplace_logging,model_marketplace_logging,base.group_user,1,0,0,0
+access_marketplace_logging_man,access_marketplace_logging,model_marketplace_logging,base.group_erp_manager,1,1,1,1
+,,,,,,

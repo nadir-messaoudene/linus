@@ -4,16 +4,38 @@
 #    __manifest__.py file at the root folder of this module.                  #
 ###############################################################################
 
-from odoo import models, exceptions, _
+from odoo import models, fields, api, exceptions, _
 from odoo.http import request
 import re
+import json
 import logging
-
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class CustomerFetchWizard(models.Model):
     _inherit = 'order.fetch.wizard'
+
+    def create_feed_customer(self, customer_data):
+        feed_customer_id = False
+        try:
+            domain = [('shopify_id', '=', customer_data['id'])]
+            feed_customer_id = self.env['shopify.feed.customers'].sudo().search(domain, limit=1)
+            if not feed_customer_id:
+                feed_customer_id = self.env['shopify.feed.customers'].sudo().create({
+                    'name': self.env['ir.sequence'].next_by_code('shopify.feed.customers'),
+                    'instance_id': self.instance_id.id,
+                    'shopify_id': customer_data['id'],
+                    'customer_data': json.dumps(customer_data),
+                    'state': 'draft',
+                    'customer_name': customer_data.get('first_name') + ' ' + customer_data.get('last_name'),
+                    'email': customer_data.get('email'),
+                })
+                feed_customer_id._cr.commit()
+                _logger.info(
+                    "Shopify Feed customer Created-{}".format(feed_customer_id))
+        except Exception as e:
+            _logger.warning("Exception-{}".format(e.args))
+        return feed_customer_id
 
 
     def shopify_fetch_customers_to_odoo(self, kwargs=None):
@@ -45,17 +67,32 @@ class CustomerFetchWizard(models.Model):
             marketplace_instance_id = kwargs.get('marketplace_instance_id')
             version = marketplace_instance_id.marketplace_api_version or '2021-01'
             url = marketplace_instance_id.marketplace_host +  '/admin/api/%s/customers.json'%version
+
+
+            tz_offset = '-00:00'
+            if self.env.user and self.env.user.tz_offset:
+                tz_offset = self.env.user.tz_offset
+
             if self.date_from and not self.date_to:
                 url += '?created_at_min=%s' % self.date_from.strftime(
-                    "%Y-%m-%dT00:00:00-04:00")
+                    "%Y-%m-%dT00:00:00" + tz_offset)
             if not self.date_from and self.date_to:
                 url += '?created_at_max=%s' % self.date_to.strftime(
-                    "%Y-%m-%dT00:00:00-04:00")
+                    "%Y-%m-%dT23:59:59" + tz_offset)
             if self.date_from and self.date_to:
                 url += '?created_at_min=%s' % self.date_from.strftime(
-                    "%Y-%m-%dT00:00:00-04:00")
+                    "%Y-%m-%dT00:00:00" + tz_offset)
                 url += '&created_at_max=%s' % self.date_to.strftime(
-                    "%Y-%m-%dT00:00:00-04:00")
+                    "%Y-%m-%dT23:59:59" + tz_offset)
+            if not self.date_from and not self.date_to:
+                url += '?created_at_min=%s' % fields.Datetime.now().strftime(
+                    "%Y-%m-%dT00:00:00" + tz_offset)
+                url += '&created_at_max=%s' % fields.Datetime.now().strftime(
+                    "%Y-%m-%dT23:59:59"  + tz_offset)
+
+            _logger.info("url===>>>>{}".format(url))
+
+
             headers = {'X-Shopify-Access-Token':marketplace_instance_id.marketplace_api_password}
             type_req = 'GET'
             params = {"limit":250}
@@ -105,10 +142,10 @@ class CustomerFetchWizard(models.Model):
 
                         if customer_id:
                             PartnerObj.browse(customer_id).write({"shopify_instance_id":marketplace_instance_id.id})
-                            logger.info(
+                            _logger.info(
                                 "Customer is created with id %s", customer_id)
                         else:
-                            logger.info("Unable to create Customer")
+                            _logger.info("Unable to create Customer")
                     else:
 
                         partner = PartnerObj.search([("shopify_id","=",i['id'])],limit=1)
@@ -134,7 +171,7 @@ class CustomerFetchWizard(models.Model):
                             else:
                                 partner.category_id.unlink()
                         except Exception as e:
-                            logger.warning(e)
+                            _logger.warning(e)
 
 
 
@@ -164,5 +201,5 @@ class CustomerFetchWizard(models.Model):
             except Exception as e:
                 if customer_list.get('errors'):
                     e = customer_list.get('errors')
-                logger.info("Exception occured: %s", e)
+                _logger.info("Exception occured: %s", e)
                 raise exceptions.UserError(_("Error Occured: %s") % e)

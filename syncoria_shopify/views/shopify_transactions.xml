@@ -91,7 +91,7 @@
       action="shopify_transactions_action_window"/>
 
 
-  <!--  -->
+    <!--  -->
     <record model="ir.ui.view" id="shopify_receipt_metadata_list">
       <field name="name">Receipt Metadata</field>
       <field name="model">shopify.payment.receipt.metadata</field>

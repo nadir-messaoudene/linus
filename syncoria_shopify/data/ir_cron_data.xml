@@ -70,7 +70,7 @@
         </record>
 
         <record id="ir_cron_update_product_quantity" model="ir.cron">
-            <field name="name">Shopify: Update Product Quantity</field>
+            <field name="name">Shopify: Update Stock Qty and Price</field>
             <field name="model_id" ref="syncoria_base_marketplace.model_update_stock_wizard"/>
             <field name="interval_number">1</field>
             <field name="interval_type">days</field>

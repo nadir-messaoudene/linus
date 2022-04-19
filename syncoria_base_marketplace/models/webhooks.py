@@ -19,8 +19,13 @@ class MarketplaceWebhooks(models.Model):
     _order = 'id desc'
     _check_company_auto = True
 
-    name = fields.Char(string='Name', required=True, copy=False,
-                       readonly=True, index=True, default=lambda self: _('New'))
+
+    name = fields.Char(
+        string='Name',
+        required=True,
+        copy=False,
+        readonly=True,
+        default=lambda self: self.env['ir.sequence'].next_by_code('marketplace.webhooks'))
     company_id = fields.Many2one(
         'res.company', 'Company', required=True, index=True, default=lambda self: self.env.company)
     marketplace_instance_id = fields.Many2one(

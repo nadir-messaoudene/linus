@@ -58,5 +58,13 @@
             <field name="company_id" eval="False"/>
         </record>
 
+        <record id="seq_marketplace_webhooks" model="ir.sequence">
+            <field name="name">Shopify Webhooks</field>
+            <field name="code">marketplace.webhooks</field>
+            <field name="prefix">MW</field>
+            <field name="padding">5</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
     </data>
 </odoo>

@@ -10,3 +10,4 @@ from . import res_config
 from . import res_partner
 from . import sync_history
 from . import webhooks
+from . import marketplace_logging

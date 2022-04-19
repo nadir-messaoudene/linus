@@ -30,5 +30,8 @@
             <field name="invoice_policy">order</field>
             <field name="taxes_id" eval="[]"/>
         </record>
+
+
+
     </data>
 </odoo>

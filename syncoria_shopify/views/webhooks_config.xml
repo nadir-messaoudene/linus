@@ -17,22 +17,18 @@
           </field>
       </record>
     
-    <record id="view_shopify_webhooks_config_form" model="ir.ui.view">
+      <record id="view_shopify_webhooks_config_form" model="ir.ui.view">
         <field name="name">view.marketplace.webhooks.config.form</field>
         <field name="model">marketplace.webhooks.config</field>
         <field name="type">form</field>
-        <field name="mode">primary</field>
-        <field name="priority" eval="16" />
-        <field name="active" eval="True" />
         <field name="arch" type="xml">
             <form string="Marketplace Webhooks Config Form" create="true" delete="true" edit="true">
               <header>
                 <field name="state" invisible="1"/>
                 <field name="state" widget="statusbar" statusbar_visible="draft,connected,disconnected"/>
+                 <button string="Fetch Webhooks" class="btn btn-primary" name="shopify_fetch_webhooks" type="object" attrs="{'invisible':[('marketplace_instance_type','!=','shopify')] }"/>
                 <button string="Activate Webhooks" class="btn btn-primary" name="shopify_activate_webhooks" type="object" attrs="{'invisible':[('marketplace_instance_type','!=','shopify')] }"/>
                 <!-- <button string="Update Shopify Webhook" class="btn btn-primary" name="action_update_webhook" type="object" attrs="{'invisible': ['|', ('state','not in',('confirm')), ('shopify_id','!=', 0)]  }" /> -->
-
-                
               </header>
               <sheet>
                 <div class="oe_title">
@@ -51,17 +47,17 @@
                   <page string="Order Webhooks" attrs="{'invisible':[('marketplace_instance_type','!=','shopify')] }">
                     <group>
                       <group>
-                        <!-- <field name="shopify_order_transactions_create"/> -->
-                        <!-- <field name="shopify_orders_cancelled"/> -->
+                        <field name="shopify_order_transactions_create"/>
+                        <field name="shopify_orders_cancelled"/>
                         <field name="shopify_orders_create"/>
-                        <!-- <field name="shopify_orders_delete"/> -->
-                        <!-- <field name="shopify_orders_edited"/> -->
+                        <field name="shopify_orders_delete"/>
+                        <field name="shopify_orders_edited"/>
                       </group>
                       <group>
-                        <!-- <field name="shopify_orders_fulfilled"/> -->
-                        <!-- <field name="shopify_orders_paid"/> -->
-                        <!-- <field name="shopify_orders_partially_fulfilled"/> -->
-                        <!-- <field name="shopify_orders_updated"/> -->
+                        <field name="shopify_orders_fulfilled"/>
+                        <field name="shopify_orders_paid"/>
+                        <field name="shopify_orders_partially_fulfilled"/>
+                        <field name="shopify_orders_updated"/>
                       </group>
                     </group>
                   </page>

@@ -18,7 +18,6 @@ FORMATS = [
 TOPICS = [('app/uninstalled', 'app/uninstalled'), ('bulk_operations/finish', 'bulk_operations/finish'), ('carts/create', 'carts/create'), ('carts/update', 'carts/update'), ('checkouts/create', 'checkouts/create'), ('checkouts/delete', 'checkouts/delete'), ('checkouts/update', 'checkouts/update'), ('collection_listings/add', 'collection_listings/add'), ('collection_listings/remove', 'collection_listings/remove'), ('collection_listings/update', 'collection_listings/update'), ('collections/create', 'collections/create'), ('collections/delete', 'collections/delete'), ('collections/update', 'collections/update'), ('customer_groups/create', 'customer_groups/create'), ('customer_groups/delete', 'customer_groups/delete'), ('customer_groups/update', 'customer_groups/update'), ('customer_payment_methods/create', 'customer_payment_methods/create'), ('customer_payment_methods/revoke', 'customer_payment_methods/revoke'), ('customer_payment_methods/update', 'customer_payment_methods/update'), ('customers/create', 'customers/create'), ('customers/delete', 'customers/delete'), ('customers/disable', 'customers/disable'), ('customers/enable', 'customers/enable'), ('customers/update', 'customers/update'), ('customers_marketing_consent/update', 'customers_marketing_consent/update'), ('disputes/create', 'disputes/create'), ('disputes/update', 'disputes/update'), ('domains/create', 'domains/create'), ('domains/destroy', 'domains/destroy'), ('domains/update', 'domains/update'), ('draft_orders/create', 'draft_orders/create'), ('draft_orders/delete', 'draft_orders/delete'), ('draft_orders/update', 'draft_orders/update'), ('fulfillment_events/create', 'fulfillment_events/create'), ('fulfillment_events/delete', 'fulfillment_events/delete'), ('fulfillments/create', 'fulfillments/create'), ('fulfillments/update', 'fulfillments/update'), ('inventory_items/create', 'inventory_items/create'), ('inventory_items/delete', 'inventory_items/delete'), ('inventory_items/update', 'inventory_items/update'), ('inventory_levels/connect', 'inventory_levels/connect'), ('inventory_levels/disconnect', 'inventory_levels/disconnect'),
           ('inventory_levels/update', 'inventory_levels/update'), ('locales/create', 'locales/create'), ('locales/update', 'locales/update'), ('locations/create', 'locations/create'), ('locations/delete', 'locations/delete'), ('locations/update', 'locations/update'), ('order_transactions/create', 'order_transactions/create'), ('orders/cancelled', 'orders/cancelled'), ('orders/create', 'orders/create'), ('orders/delete', 'orders/delete'), ('orders/edited', 'orders/edited'), ('orders/fulfilled', 'orders/fulfilled'), ('orders/paid', 'orders/paid'), ('orders/partially_fulfilled', 'orders/partially_fulfilled'), ('orders/updated', 'orders/updated'), ('product_listings/add', 'product_listings/add'), ('product_listings/remove', 'product_listings/remove'), ('product_listings/update', 'product_listings/update'), ('products/create', 'products/create'), ('products/delete', 'products/delete'), ('products/update', 'products/update'), ('profiles/create', 'profiles/create'), ('profiles/delete', 'profiles/delete'), ('profiles/update', 'profiles/update'), ('refunds/create', 'refunds/create'), ('scheduled_product_listings/add', 'scheduled_product_listings/add'), ('scheduled_product_listings/remove', 'scheduled_product_listings/remove'), ('scheduled_product_listings/update', 'scheduled_product_listings/update'), ('selling_plan_groups/create', 'selling_plan_groups/create'), ('selling_plan_groups/delete', 'selling_plan_groups/delete'), ('selling_plan_groups/update', 'selling_plan_groups/update'), ('shop/update', 'shop/update'), ('subscription_billing_attempts/challenged', 'subscription_billing_attempts/challenged'), ('subscription_billing_attempts/failure', 'subscription_billing_attempts/failure'), ('subscription_billing_attempts/success', 'subscription_billing_attempts/success'), ('subscription_contracts/create', 'subscription_contracts/create'), ('subscription_contracts/update', 'subscription_contracts/update'), ('tender_transactions/create', 'tender_transactions/create'), ('themes/create', 'themes/create'), ('themes/delete', 'themes/delete'), ('themes/publish', 'themes/publish'), ('themes/update', 'themes/update')]
 
-
 _logger = logging.getLogger(__name__)
 
 
@@ -26,7 +25,7 @@ class MarketplaceWebhooks(models.Model):
     _inherit = 'marketplace.webhooks'
 
 
-    shopify_id = fields.Integer()
+    shopify_id = fields.Char()
     shopify_api_version = fields.Char(
         related='marketplace_instance_id.marketplace_api_version',
         store=True
@@ -51,8 +50,8 @@ class MarketplaceWebhooks(models.Model):
         url += '/admin/api/%s/webhooks.json' % version
 
         headers = {
-            # 'Content-Type': 'application/json',
-            'X-Shopify-Access-Token': mkplc_id.marketplace_api_password
+            'Content-Type': 'application/json',
+            'X-Shopify-Access-Token': mkplc_id.marketplace_api_password,
         }
         data = self.get_wb_data(r_type)
         response = requests.request(headers=headers,
@@ -66,19 +65,24 @@ class MarketplaceWebhooks(models.Model):
         _logger.info("response===>>>%s", response)
         _logger.info("response===>>>%s", response.text)
         status_code = response.status_code
-        res =  response.json()
-        res['status_code'] = status_code
+        try:
+            res =  response.json()
+            res['status_code'] = status_code
+        except Exception as e:
+            res = {}
+            res['status_code'] = status_code
+            res['eroor'] = str(e.args)
         return res
 
     def action_create_webhook(self):
-        res = self.shopify_webhook_request('update')
+        res = self.shopify_webhook_request('create')
         if res['status_code'] == 201:
             self.shopify_id = res.get('webhook', {}).get('id')
             msg = "Webhook Creation Successfull for %s,webhook id: %s" % (
                 self.id, self.shopify_id)
             self.state = 'connected'
         else:
-            msg = "Webhook Creation Failure for : %s\n%s", str(self.id), str(res)
+            msg = "Webhook Creation Failure for : %s, <br>Message: %s</br>", str(self.id), str(res)
         _logger.info("action_create_webhook===>>>%s", msg)
         self.message_post(body=msg)
 
@@ -104,6 +108,8 @@ class MarketplaceWebhooks(models.Model):
         if r_type == 'update':
             webhook.update({'id': self.shopify_id})
         data = {'webhook': webhook}
+        import json
+        data = json.dumps(data)
         return data
 
 
@@ -197,6 +203,68 @@ class MarketplaceWebhooksConfig(models.Model):
     # shopify_themes_update = fields.Boolean(string="Themes update")
 
 
+    def shopify_fetch_webhooks(self):
+        _logger.info("shopify_activate_webhooks====>>>>>")
+        #Retrieves a list of webhooks
+        marketplace_webhooks =  self.env['marketplace.webhooks'].sudo()
+        mkplc_id = self.marketplace_instance_id
+        version = mkplc_id.marketplace_api_version or '2021-04'
+        url = 'https://' + mkplc_id.marketplace_host if 'https://' not in mkplc_id.marketplace_host or 'http://' not in mkplc_id.marketplace_host else mkplc_id.marketplace_host
+        url += '/admin/api/{}/webhooks.json'.format(version)
+        headers = {
+            'X-Shopify-Access-Token': mkplc_id.marketplace_api_password
+        }
+        response = requests.request(headers=headers,
+                                    url=url,
+                                    method='GET')
+
+        _logger.info("url===>>>%s", url)
+        _logger.info("headers===>>>%s", headers)
+        _logger.info("response===>>>%s", response)
+        _logger.info("response===>>>%s", response.text)
+        if response.status_code == 200:
+            _logger.info("Webhook Successfully Retrived")
+            res = response.json()
+            if res.get('webhooks'):
+                for webhook in res.get('webhooks'):
+                    try:
+                        webhook_id = False
+                        domain = ['|', ('shopify_topic', '=', webhook['topic']), ('shopify_id', '=', webhook['id'])]
+                        _logger.info("domain===>>>%s", domain)
+                        webhook_id = marketplace_webhooks.search(domain, limit=1)
+                        if webhook_id:
+                            vals = {
+                                'shopify_id' : webhook['id'],
+                                'shopify_api_version' : str(webhook['api_version']),
+                                'shopify_address' : str(webhook['address']),
+                                'shopify_format' : str(webhook['format']),
+                            }
+                            if webhook.get('fields'):
+                                vals.update({ 'shopify_fields' : webhook.get('fields') })
+                            if webhook.get('topic') and webhook_id.shopify_topic != webhook.get('topic'):
+                                vals.update({ 'shopify_topic' : webhook.get('topic') })
+                            webhook_id.sudo().write(vals)
+                            _logger.info("Webhook Updated-{}".format(webhook_id))
+                        
+                        if not webhook_id:
+                            webhook_id = marketplace_webhooks.create({
+                                'name' : self.env['ir.sequence'].next_by_code('marketplace.webhooks') or 'New',
+                                'company_id' : self.company_id.id,
+                                'marketplace_instance_id' : self.marketplace_instance_id.id,
+                                'marketplace_instance_type' : self.marketplace_instance_type,
+                                'state' : 'draft',
+                                'shopify_id' : webhook['id'],
+                                'shopify_api_version' : str(webhook['api_version']),
+                                'shopify_address' : str(webhook['address']),
+                                'shopify_topic' : str(webhook['topic']),
+                                'shopify_format' : str(webhook['format']),
+                                'shopify_fields' : str(webhook['fields']),
+                            })
+                            _logger.info("Webhook Created-{}".format(webhook_id))
+
+                    except Exception as e:
+                        _logger.info("Webhook Created-{}".format(e.args))
+
     def shopify_activate_webhooks(self):
         print("shopify_activate_webhooks")
         marketplace_webhooks = self.env['marketplace.webhooks']
@@ -204,7 +272,7 @@ class MarketplaceWebhooksConfig(models.Model):
         if self.shopify_order_transactions_create:
             topics += ['order_transactions/create']
         if self.shopify_orders_cancelled:
-            topics +=  ['orders/cancel']
+            topics +=  ['orders/cancelled']
         if self.shopify_orders_create:
             topics +=  ['orders/create']
         if self.shopify_orders_delete:
@@ -220,11 +288,22 @@ class MarketplaceWebhooksConfig(models.Model):
         if self.shopify_orders_updated:
             topics +=  ['orders/updated']
 
+        topic_ids = self.env['marketplace.webhooks'].sudo()
         for topic in topics:
             domain = [('shopify_topic', '=', topic)]
             domain += [('marketplace_instance_id', '=', self.marketplace_instance_id.id)]
             topic_id = marketplace_webhooks.search(domain)
             _logger.info("topic_id ===>>>>{}".format(topic_id))
+
+            web_base_url = self.env['ir.config_parameter'].get_param('web.base.url')
+
+            if 'order' in topic and topic in ['orders/cancelled', 'orders/create', 'orders/delete', 'orders/edited', 'orders/fulfilled', 'orders/paid', 'orders/partially_fulfilled', 'orders/updated']:
+                shopify_address = web_base_url + "/shopify/orders/"
+            if 'order' in topic and topic in ['order_transactions/create']:
+                shopify_address = web_base_url + "/shopify/order_transactions/create/"
+
+
+            _logger.info("shopify_address ===>>>>{}".format(shopify_address))
 
             if not topic_id:
                 topic_id = marketplace_webhooks.create({
@@ -234,13 +313,17 @@ class MarketplaceWebhooksConfig(models.Model):
                     'marketplace_instance_type' : self.marketplace_instance_type,
                     'state' : 'draft',
                     'shopify_api_version' : self.marketplace_instance_id.marketplace_api_version or '2022-01',
-                    'shopify_address' : '',
+                    'shopify_address' : shopify_address,
                     'shopify_topic' : topic,
                     'shopify_format' : 'json'
                 })
                 _logger.info("Webhook Created with Topic-{}".format(topic))
 
+            if topic_id:
+                topic_ids += topic_id
 
+
+        for topic_id in topic_ids:
             if topic_id.state == 'connected':
                 _logger.info("{} Webhook with Topic-{} is already connected".format(self, topic))
 

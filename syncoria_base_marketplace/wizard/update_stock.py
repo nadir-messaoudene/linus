@@ -9,7 +9,7 @@ from odoo import models, fields, exceptions, _, api
 import logging
 import re
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class ProductsFetchWizard(models.Model):
@@ -28,7 +28,7 @@ class ProductsFetchWizard(models.Model):
         print("_onchange_field")
     
     def update_stock_item(self):
-        print("******update_stock_item")
+        _logger.info("update_stock_item=====>>>>")
         ICPSudo = self.env['ir.config_parameter'].sudo()
         try:
             marketplace_instance_id = ICPSudo.get_param('syncoria_base_marketplace.marketplace_instance_id')

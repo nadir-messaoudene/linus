@@ -4,6 +4,7 @@
 #    __manifest__.py file at the root folder of this module.                  #
 ###############################################################################
 
+from locale import currency
 from odoo import models, fields, exceptions, api, _
 import re
 import logging
@@ -86,6 +87,10 @@ class SaleOrderShopify(models.Model):
     )
     shopify_is_invoice = fields.Boolean(string="Is shopify invoice paid?",default=False)
     shopify_is_refund = fields.Boolean(string="Is shopify credit note paid?",default=False)
+    transaction_fee_tax_amount = fields.Monetary()
+    transaction_fee_total_amount = fields.Monetary()
+    refund_fee_tax_amount = fields.Monetary()
+    refund_fee_total_amount = fields.Monetary()
 
     def fetch_shopify_payments(self):
         _logger.info("fetch_shopify_payments")
@@ -154,17 +159,12 @@ class SaleOrderShopify(models.Model):
                             for key, value in receipt.items():
                                 if key in receipt_fields:
                                     receipt_vals[key] = value
-                            
+                            metadata_vals_list = self.process_receipt_metadata(receipt=receipt, tran_type='sale')
+                            if metadata_vals_list:
+                                receipt_vals['shopify_receipt_metadata_ids'] = metadata_vals_list
 
-                            ########################################################################################################
-                            #Need Testing
-                            ########################################################################################################
-                            # metadata_vals_list = self.process_receipt_metadata(receipt=receipt, tran_type='sale')
-                            # if metadata_vals_list:
-                            #     receipt_vals['shopify_receipt_metadata_ids'] = metadata_vals_list
-                            ########################################################################################################
-                            ########################################################################################################
                             receipt_vals_list += [receipt_vals]
+                            ########################################################################################################
                             try:
                                 #Populate Exchange Rate:
                                 if receipt.get('charges',{}).get('data',{}) and transaction.get('amount') and receipt.get('amount'):
@@ -188,16 +188,12 @@ class SaleOrderShopify(models.Model):
                                 for key, value in receipt.items():
                                     if key in receipt_fields:
                                         receipt_vals[key] = value
-                                
-                                ########################################################################################################
-                                #Need Testing
-                                ########################################################################################################
-                                # metadata_vals_list = self.process_receipt_metadata(receipt=receipt, tran_type='sale')
-                                # if metadata_vals_list:
-                                #     receipt_vals['shopify_receipt_metadata_ids'] = metadata_vals_list
-                                ########################################################################################################
-                                ########################################################################################################
+                                metadata_vals_list = self.process_receipt_metadata(receipt=receipt, tran_type='sale')
+                                if metadata_vals_list:
+                                    receipt_vals['shopify_receipt_metadata_ids'] = metadata_vals_list
                                 receipt_vals_list += [receipt_vals]
+
+                                ########################################################################################################
                                 try:
                                     #Populate Exchange Rate:
                                     if receipt.get('charges',{}).get('data',{}) and transaction.get('amount') and receipt.get('amount'):
@@ -371,14 +367,9 @@ class SaleOrderShopify(models.Model):
                                     if key in receipt_fields:
                                         receipt_vals[key] = value
 
-                                ########################################################################################################
-                                #Need Testing
-                                ########################################################################################################
-                                # metadata_vals_list = self.process_receipt_metadata(receipt=receipt, tran_type='sale')
-                                # if metadata_vals_list:
-                                #     receipt_vals['shopify_receipt_metadata_ids'] = metadata_vals_list
-                                ########################################################################################################
-                                ########################################################################################################
+                                metadata_vals_list = self.process_receipt_metadata(receipt=receipt, tran_type='refund')
+                                if metadata_vals_list:
+                                    receipt_vals['shopify_receipt_metadata_ids'] = metadata_vals_list
                                 receipt_vals_list += [receipt_vals]
                                 ########################################################################################################
                                 try:
@@ -407,15 +398,9 @@ class SaleOrderShopify(models.Model):
                                         if key in receipt_fields:
                                             receipt_vals[key] = value
 
-                                    ########################################################################################################
-                                    #Need Testing
-                                    ########################################################################################################
-                                    # metadata_vals_list = self.process_receipt_metadata(receipt=receipt, tran_type='sale')
-                                    # if metadata_vals_list:
-                                    #     receipt_vals['shopify_receipt_metadata_ids'] = metadata_vals_list
-                                    ########################################################################################################
-                                    ########################################################################################################
-
+                                    metadata_vals_list = self.process_receipt_metadata(receipt=receipt, tran_type='refund')
+                                    if metadata_vals_list:
+                                        receipt_vals['shopify_receipt_metadata_ids'] = metadata_vals_list
                                     receipt_vals_list += [receipt_vals]
                                     
                                     ########################################################################################################
@@ -522,8 +507,6 @@ class SaleOrderShopify(models.Model):
         for rec in self:
             success_tran_ids = rec.shopify_transaction_ids.filtered(lambda l: l.shopify_status == 'success')
             move_id = account_move.search([('invoice_origin', '=', rec.name), ('move_type', "=", "out_invoice")])
-
-            
             try:
                 if move_id:
                     for tran_id in success_tran_ids:
@@ -567,9 +550,7 @@ class SaleOrderShopify(models.Model):
                                 rec.write({"shopify_is_invoice": True})
 
             except Exception as e:
-                # raise exceptions.UserError(f"{e}")
                 _logger.warning("Exception-{}-{}".format(rec.id,e.args))
-
 
                 # try:
                 #     move_id._cr.commit()
@@ -621,58 +602,56 @@ class SaleOrderShopify(models.Model):
         account_move = self.env['account.move'].sudo()
         account_payment = self.env['account.move'].sudo()
         move_id = False
-        if move_id:
-            for rec in self:
-                success_tran_ids = rec.shopify_refund_transaction_ids.filtered(
-                    lambda l: l.shopify_refund_status == 'success')
-                move_id = account_move.search([('invoice_origin', '=', rec.name), ('move_type', "=", "out_refund")])
-                for tran_id in success_tran_ids:
-                    shopify_instance_id = tran_id.shopify_instance_id or rec.shopify_instance_id
-                    if float(
-                            tran_id.shopify_refund_amount) > 0 and shopify_instance_id and move_id.payment_state != 'in_payment':
+        for rec in self:
+            success_tran_ids = rec.shopify_refund_transaction_ids.filtered(
+                lambda l: l.shopify_refund_status == 'success')
+            move_id = account_move.search([('invoice_origin', '=', rec.name), ('move_type', "=", "out_refund")])
+            try:
+                if move_id:
+                    for tran_id in success_tran_ids:
+                        shopify_instance_id = tran_id.shopify_instance_id or rec.shopify_instance_id
+                        if float(
+                                tran_id.shopify_refund_amount) > 0 and shopify_instance_id and move_id.payment_state != 'in_payment':
 
-                        #######################################################################################################
-                        shopify_refund_amount = float(tran_id.shopify_refund_amount)
-                        if tran_id.shopify_refund_currency and tran_id.shopify_refund_amount:
-                            if tran_id.shopify_refund_currency != tran_id.shopify_instance_id.pricelist_id.currency_id.name:
-                                shopify_refund_amount = float(tran_id.shopify_refund_amount)*float(tran_id.shopify_refund_exchange_rate)
-                        #######################################################################################################
+                            #######################################################################################################
+                            shopify_refund_amount = float(tran_id.shopify_refund_amount)
+                            if tran_id.shopify_refund_currency and tran_id.shopify_refund_amount:
+                                if tran_id.shopify_refund_currency != tran_id.shopify_instance_id.pricelist_id.currency_id.name:
+                                    shopify_refund_amount = float(tran_id.shopify_refund_amount)*float(tran_id.shopify_refund_exchange_rate)
+                            #######################################################################################################
 
-                        
-                        wizard_vals = {
-                            'journal_id': shopify_instance_id.marketplace_refund_journal_id.id,
-                            'amount': shopify_refund_amount,
-                            'payment_date': fields.Datetime.now(),
-                        }
 
-                        payment_method_line_id = shopify_instance_id.marketplace_refund_journal_id.outbound_payment_method_line_ids.filtered(
-                            lambda l:l.payment_method_id.id == shopify_instance_id.marketplace_outbound_method_id.id)
-                        if payment_method_line_id:
-                            wizard_vals['payment_method_line_id'] = payment_method_line_id.id
+                            wizard_vals = {
+                                'journal_id': shopify_instance_id.marketplace_refund_journal_id.id,
+                                'amount': shopify_refund_amount,
+                                'payment_date': fields.Datetime.now(),
+                            }
 
-                        wizard_vals['payment_date'] = tran_id.shopify_refund_processed_at.split('T')[
-                            0] if tran_id.shopify_refund_processed_at else fields.Datetime.now()
-                        domain = []
-                        for move in move_id:
-                            domain += [('ref', '=', move.name)]
-                        # if domain:
-                        #     pay_id = account_payment.search(domain)
-                        #     if pay_id:
-                        #         wizard_vals['communication'] = pay_id.ref.split('-')[0]
+                            payment_method_line_id = shopify_instance_id.marketplace_refund_journal_id.outbound_payment_method_line_ids.filtered(
+                                lambda l:l.payment_method_id.id == shopify_instance_id.marketplace_outbound_method_id.id)
+                            if payment_method_line_id:
+                                wizard_vals['payment_method_line_id'] = payment_method_line_id.id
 
-                        pmt_wizard = self.env['account.payment.register'].with_context(
-                            active_model='account.move',
-                            active_ids=move_id.ids).create(wizard_vals)
+                            wizard_vals['payment_date'] = tran_id.shopify_refund_processed_at.split('T')[
+                                0] if tran_id.shopify_refund_processed_at else fields.Datetime.now()
+                            domain = []
+                            for move in move_id:
+                                domain += [('ref', '=', move.name)]
+                            # if domain:
+                            #     pay_id = account_payment.search(domain)
+                            #     if pay_id:
+                            #         wizard_vals['communication'] = pay_id.ref.split('-')[0]
 
-                        payment = pmt_wizard.action_create_payments()
-                        print("===============>", payment)
-                        if move_id.payment_state in ['paid', 'in_payment']:
-                            rec.write({"shopify_is_refund": True})
+                            pmt_wizard = self.env['account.payment.register'].with_context(
+                                active_model='account.move',
+                                active_ids=move_id.ids).create(wizard_vals)
 
-                        # try:
-                        #     move_id._cr.commit()
-                        # except Exception as e:
-                        #     _logger.warning("Exception-{}".format(e.args))
+                            payment = pmt_wizard.action_create_payments()
+                            print("===============>", payment)
+                            if move_id.payment_state in ['paid', 'in_payment']:
+                                rec.write({"shopify_is_refund": True})
+            except Exception as e:
+                _logger.warning("Exception-{}-{}".format(rec.id,e.args))
         return move_id, message
 
 

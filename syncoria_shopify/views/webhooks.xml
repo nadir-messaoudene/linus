@@ -7,22 +7,31 @@
       <field name="arch" type="xml">
         <tree>
           <field name="name"/>
+          <field name="shopify_topic"/>
           <field name="marketplace_instance_id"/>
+          <field name="shopify_id"/>
         </tree>
       </field>
     </record>
 
+      <record id="view_shopify_webhooks_form" model="ir.ui.view">
+         <field name="name">view.marketplace.webhooks.form</field>
+        <field name="model">marketplace.webhooks</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
 
-    <record id="marketplace_webhooks_form" model="ir.ui.view">
+
+    <!-- <record id="view_shopify_webhooks_form" model="ir.ui.view">
       <field name="name">view.marketplace.webhooks.form</field>
       <field name="model">marketplace.webhooks</field>
-      <field name="arch" type="xml">
+      <field name="arch" type="xml"> -->
 
         <form string="Webhook" create="true" delete="true" edit="true">
           <header>
             <field name="state" invisible="1"/>
             <button string="Create Shopify Webhook" class="btn btn-primary" name="action_create_webhook" type="object" attrs="{'invisible': ['|', ('state','not in',('draft')), ('shopify_id','!=', 0)]  }" />
             <button string="Update Shopify Webhook" class="btn btn-primary" name="action_update_webhook" type="object" attrs="{'invisible': ['|', ('state','not in',('confirm')), ('shopify_id','!=', 0)]  }" />
+
             <field name="state" widget="statusbar" statusbar_visible="draft,connected"/>
           </header>
           <sheet>
@@ -55,14 +64,12 @@
               </page>
             </notebook>
           </sheet>
-          <div class="oe_chatter">
-              <field name="message_follower_ids" widget="mail_followers" groups="base.group_user"/>
-              <field name="activity_ids" widget="mail_activity"/>
-              <field name="message_ids" widget="mail_thread"/>
-          </div>
-
         </form>
-
+          <div class="oe_chatter">
+            <field name="message_follower_ids" widget="mail_followers" groups="base.group_user"/>
+            <field name="activity_ids" widget="mail_activity"/>
+            <field name="message_ids" widget="mail_thread"/>
+          </div>
       </field>
     </record>
 

@@ -50,23 +50,37 @@ class FeedOrderFetchWizard(models.Model):
         type_req = 'GET'
         version = marketplace_instance_id.marketplace_api_version or '2022-01'
         url = marketplace_instance_id.marketplace_host +  '/admin/api/%s/customers.json'%version
+        
+        tz_offset = '-00:00'
+        if self.env.user and self.env.user.tz_offset:
+            tz_offset = self.env.user.tz_offset
+
         if self.date_from and not self.date_to:
             url += '?created_at_min=%s' % self.date_from.strftime(
-                "%Y-%m-%dT00:00:00-04:00")
+                "%Y-%m-%dT00:00:00" + tz_offset)
         if not self.date_from and self.date_to:
             url += '?created_at_max=%s' % self.date_to.strftime(
-                "%Y-%m-%dT00:00:00-04:00")
+                "%Y-%m-%dT23:59:59" + tz_offset)
         if self.date_from and self.date_to:
             url += '?created_at_min=%s' % self.date_from.strftime(
-                "%Y-%m-%dT00:00:00-04:00")
+                "%Y-%m-%dT00:00:00" + tz_offset)
             url += '&created_at_max=%s' % self.date_to.strftime(
-                "%Y-%m-%dT00:00:00-04:00")
-        
+                "%Y-%m-%dT23:59:59" + tz_offset)
+        if not self.date_from and not self.date_to:
+            url += '?created_at_min=%s' % fields.Datetime.now().strftime(
+                "%Y-%m-%dT00:00:00" + tz_offset)
+            url += '&created_at_max=%s' % fields.Datetime.now().strftime(
+                "%Y-%m-%dT23:59:59"  + tz_offset)
+
+        _logger.info("url===>>>>{}".format(url))
         
         headers = {'X-Shopify-Access-Token':marketplace_instance_id.marketplace_api_password}
         type_req = 'GET'
         params = {"limit":250}
-
+        
+        summary = ''
+        error = ''
+        feed_customer_ids = self.env['shopify.feed.customers']
         items=[]
         while True:
             customer_list, next_link = self.env['marketplace.connector'].marketplace_api_call(
@@ -75,11 +89,11 @@ class FeedOrderFetchWizard(models.Model):
                 type=type_req,
                 marketplace_instance_id=marketplace_instance_id,
                 params=params)
-            items += customer_list['customers']
+            if customer_list.get('customers'):
+                items += customer_list['customers']
             if next_link:
                 if next_link.get("next"):
                     url = next_link.get("next").get("url")
-
                 else:
                     break
             else:
@@ -87,7 +101,27 @@ class FeedOrderFetchWizard(models.Model):
 
         try:
             for customer in items:
-                self.create_feed_customer(customer)
+                feed_customer_id, log_msg, error_msg = self.create_feed_customer(customer)
+                feed_customer_ids += feed_customer_id
+                summary += log_msg
+                error += error_msg
+            
+            try:
+                if feed_customer_ids and self.instance_id:
+                    log_id = self.env['marketplace.logging'].sudo().create({
+                        'name' : self.env['ir.sequence'].next_by_code('marketplace.logging'),
+                        'create_uid' : self.env.user.id,
+                        'marketplace_type' : self.instance_id.marketplace_instance_type,
+                        'shopify_instance_id' : self.instance_id.id,
+                        'level' : 'info',
+                        'summary' : summary.replace('<br>','').replace('</br>','\n'),
+                        'error' : error.replace('<br>','').replace('</br>','\n'),
+                    })
+                    log_id._cr.commit()
+                    print("log_id ===>>>{}".format(log_id))
+            except Exception as e:
+                print("Exception-{}".format(e.args))
+
 
         except Exception as e:
             if customer_list.get('errors'):
@@ -98,10 +132,23 @@ class FeedOrderFetchWizard(models.Model):
 
         
     def create_feed_customer(self, customer_data):
+        summary = ''
+        error = ''
         feed_customer_id = False
         try:
             domain = [('shopify_id', '=', customer_data['id'])]
             feed_customer_id = self.env['shopify.feed.customers'].sudo().search(domain, limit=1)
+            if feed_customer_id:
+                feed_customer_id.write({
+                    'customer_data': json.dumps(customer_data),
+                    'customer_name': customer_data.get('first_name','') + ' ' + customer_data.get('last_name',''),
+                    'email': customer_data.get('email'),     
+                })
+                message =  "Shopify Feed Customer Updated-{}, Customer ID-{}".format(feed_customer_id, customer_data['id'])
+                summary += '\n' + message
+                feed_customer_id.message_post(body=message)
+                _logger.info(message)
+
             if not feed_customer_id:
                 feed_customer_id = self.env['shopify.feed.customers'].sudo().create({
                     'name': self.env['ir.sequence'].next_by_code('shopify.feed.customers'),
@@ -109,12 +156,17 @@ class FeedOrderFetchWizard(models.Model):
                     'shopify_id': customer_data['id'],
                     'customer_data': json.dumps(customer_data),
                     'state': 'draft',
-                    'customer_name': customer_data.get('first_name') + ' ' + customer_data.get('last_name'),
-                    'email': customer_data.get('email'),
+                    'customer_name': customer_data.get('first_name','') + ' ' + customer_data.get('last_name',''),
+                    'email': customer_data.get('email', ''),
                 })
                 feed_customer_id._cr.commit()
-                _logger.info(
-                    "Shopify Feed customer Created-{}".format(feed_customer_id))
+                message =  "Shopify Feed Customer Created-{}, Customer ID-{}".format(feed_customer_id, customer_data['id'])
+                summary += '\n' + message
+                _logger.info(message)
+
         except Exception as e:
+            message = str(e.args)
+            summary += '\n' + message
+            error += '\n' + message
             _logger.warning("Exception-{}".format(e.args))
-        return feed_customer_id
+        return feed_customer_id, summary, error

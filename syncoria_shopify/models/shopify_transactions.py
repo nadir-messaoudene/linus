@@ -112,7 +112,13 @@ class ShopifyPaymentReceipt(models.Model):
     testcase = fields.Char(string='CC Bin', readonly=1)
     authorization = fields.Char(string='AVS Result Code', readonly=1)
     paid_amount = fields.Char(readonly=1)
-
+    
+    shopify_receipt_metadata_ids = fields.One2many(
+        string='Shopify Receipt Metadata',
+        comodel_name='shopify.payment.receipt.metadata',
+        inverse_name='receipt_id',
+    )
+    
 
 class ShopifyPaymentReceiptMetadata(models.Model):
     _name = 'shopify.payment.receipt.metadata'
@@ -149,4 +155,7 @@ class ShopifyPaymentReceiptMetadata(models.Model):
     currency_id = fields.Many2one('res.currency', string='Currency', readonly=True, )
     sale_id = fields.Many2one('sale.order', string='Sale Order', readonly=True, )
     receipt_id = fields.Many2one('shopify.payment.receipt', string='Receipt ID', readonly=True, )
+
+    
+    
     

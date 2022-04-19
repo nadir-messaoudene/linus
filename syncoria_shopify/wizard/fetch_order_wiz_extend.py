@@ -35,13 +35,16 @@ class OrderFetchWizardExtend(models.Model):
         return item_price
 
     def create_feed_orders(self, order_data):
+        log_msg = ''
+        error_msg = ''
         feed_order_id = False
         try:
             marketplace_instance_id = self.instance_id or self._get_instance_id() 
+            customer_name = order_data.get('customer',{}).get('first_name','') + ' ' + order_data.get('customer',{}).get('last_name','')
             domain = [('shopify_id', '=', order_data['id'])]
+            domain += [('instance_id', '=', marketplace_instance_id.id)]
             feed_order_id = self.env['shopify.feed.orders'].sudo().search(domain, limit=1)
             if not feed_order_id:
-                customer_name = order_data.get('customer',{}).get('first_name','') + ' ' + order_data.get('customer',{}).get('last_name','')
                 feed_order_id = self.env['shopify.feed.orders'].sudo().create({
                     'name': self.env['ir.sequence'].sudo().next_by_code('shopify.feed.orders'),
                     'instance_id': marketplace_instance_id.id,
@@ -62,10 +65,32 @@ class OrderFetchWizardExtend(models.Model):
                     'shopify_line_items' : len(order_data.get('line_items')),
                     'shopify_user_id' : order_data.get('user_id'),
                 })
-                feed_order_id._cr.commit()
-                _logger.info(
-                    "Shopify Feed Order Created-{}".format(feed_order_id))
-                return feed_order_id
+                
+                msg = _("Shopify Feed Order Created-{}".format(feed_order_id))
+                _logger.info(msg)
+                log_msg += "<br>" + msg + "</br>"
+            else:
+                feed_order_id.write({
+                    'order_data': json.dumps(order_data),
+                    'shopify_app_id' : order_data.get('app_id'),
+                    'shopify_confirmed' : order_data.get('confirmed'),
+                    'shopify_contact_email' : order_data.get('contact_email'),
+                    'shopify_currency' : order_data.get('currency'),
+                    'shopify_customer_name' : customer_name,
+                    'shopify_customer_id' : order_data.get('customer',{}).get('id',''),
+                    'shopify_gateway' : order_data.get('gateway'),
+                    'shopify_order_number' : order_data.get('order_number'),
+                    'shopify_financial_status' : order_data.get('financial_status'),
+                    'shopify_fulfillment_status' : order_data.get('fulfillment_status'),
+                    'shopify_line_items' : len(order_data.get('line_items')),
+                    'shopify_user_id' : order_data.get('user_id'),
+                })
+    
+                msg = _("\nShopify Feed Order Updated-{}".format(feed_order_id))
+                _logger.info(msg)
+                log_msg += "<br>" + msg + "</br>"
+
+            feed_order_id._cr.commit()
         except Exception as e:
-            _logger.warning("Exception-{}".format(e.args))
-        return feed_order_id
+            error_msg += '<br> Shopify Order Feed Order Creation: {} Exception-{} </br>'.format(order_data.get('order_number'), e.args)
+        return feed_order_id, log_msg, error_msg

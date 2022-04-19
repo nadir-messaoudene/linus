@@ -11,12 +11,15 @@ logger = logging.getLogger(__name__)
 
 class MarketplaceLogging(models.Model):
     _name = 'marketplace.logging'
-    _description = """Channel Advisor Logging"""
+    _description = """Marketplace Logging"""
     _order = 'id DESC'
 
     name = fields.Char(
         string='Name',
-    )
+        required=True,
+        copy=False,
+        default=lambda self: self.env['ir.sequence'].next_by_code('marketpalce.logging'))
+
     create_uid = fields.Integer(string='Created by', required=True)
     marketplace_type = fields.Selection(
         selection=[], default='channel_advisor', required=True)
@@ -28,6 +31,4 @@ class MarketplaceLogging(models.Model):
         string='Type',
         selection=[('client', 'Client'), ('server', 'Server')]
     )
-    model_name = fields.Char(
-        string='Model Name',
-    )
+    model_name = fields.Char()
