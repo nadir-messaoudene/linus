@@ -338,6 +338,8 @@ def shopify_api_call(**kwargs):
 
 
 def update_product_images(record, product_data, req_type):
+    if product_data.id == 95:
+        a = "test"
     data = {}
     attachments = [record.image_1920.decode()] if record.image_1920 else []
     # try:
@@ -355,7 +357,7 @@ def update_product_images(record, product_data, req_type):
                     "attachment": attachment
                 }
         }
-        marketplace_instance_id = get_marketplace(record)
+        marketplace_instance_id = record.shopify_instance_id
         version = marketplace_instance_id.marketplace_api_version or '2021-01'
         url = marketplace_instance_id.marketplace_host
         if req_type == 'create':
@@ -447,7 +449,8 @@ def shopify_pt_request(record, data, req_type):
                     vals = {
                         'shopify_id': varaint.get('id'),
                         'marketplace_type': 'shopify',
-                        'shopify_inventory_id': varaint.get("inventory_item_id")
+                        'shopify_inventory_id': varaint.get("inventory_item_id"),
+                        'shopify_instance_id': marketplace_instance_id.id
                     }
                     product_ids[0].write(vals)
                 else:

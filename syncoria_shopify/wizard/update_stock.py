@@ -199,22 +199,14 @@ class ProductsFetchWizard(models.Model):
                     }
 
                     product_template = product.product_tmpl_id
-
+                    variant = {"id": product.shopify_id}
+                    type_req = 'PUT'
+                    host = marketplace_instance_id.marketplace_host
+                    if marketplace_instance_id.marketplace_host:
+                        if '/' in marketplace_instance_id.marketplace_host[-1]:
+                            host = marketplace_instance_id.marketplace_host[0:-1]
+                    print("HOST===>>>", host)
                     if product.type == 'product' and product.shopify_id and product_template.attribute_line_ids:
-                        variant = {"id": product.shopify_id}
-                        type_req = 'PUT'
-                        host = marketplace_instance_id.marketplace_host
-                        if marketplace_instance_id.marketplace_host:
-                            if '/' in marketplace_instance_id.marketplace_host[-1]:
-                                host = marketplace_instance_id.marketplace_host[0:-1]
-                        print("HOST===>>>", host)
-
-                        if marketplace_instance_id.set_price:
-                            price = product.list_price
-                            if product.shopify_currency_id:
-                                price = product.shopify_price
-                            variant.update({"price": product.list_price})
-
                         if self.shopify_warehouse:
                             update_qty = self._shopify_update_qty(
                                 warehouse=self.shopify_warehouse.shopify_warehouse_id,
@@ -232,7 +224,22 @@ class ProductsFetchWizard(models.Model):
                                         quantity=int(quants.quantity),
                                         marketplace_instance_id=marketplace_instance_id,
                                         host=host)
+                    if not product_template.attribute_line_ids:
+                        if marketplace_instance_id.set_stock and product.qty_available and self.shopify_warehouse:
+                            host = marketplace_instance_id.marketplace_host
+                            if marketplace_instance_id.marketplace_host:
+                                if '/' in marketplace_instance_id.marketplace_host[-1]:
+                                    host = marketplace_instance_id.marketplace_host[0:-1]
 
+                            update_qty = self._shopify_update_qty(
+                                warehouse=warehouse_location.partner_id.shopify_warehouse_id,
+                                inventory_item_id=product.shopify_inventory_id, quantity=int(product.qty_available),
+                                marketplace_instance_id=marketplace_instance_id, host=host)
+                    if marketplace_instance_id.set_price:
+                        price = product.lst_price
+                        if product.shopify_currency_id:
+                            price = product.shopify_price
+                        variant.update({"price": price})
                         data = {'variant': variant}
                         product_url = host + "/admin/api/%s/variants/%s.json" % (api_version, product.shopify_id)
                         stock_item, next_link = Connector.shopify_api_call(
@@ -246,17 +253,6 @@ class ProductsFetchWizard(models.Model):
                             errors = stock_item.get('errors', {}).get('error')
                             _logger.warning(_("Request Error: %s" % (errors)))
 
-                    if not product_template.attribute_line_ids:
-                        if marketplace_instance_id.set_stock and product.qty_available and self.shopify_warehouse:
-                            host = marketplace_instance_id
-                            if marketplace_instance_id.marketplace_host:
-                                if '/' in marketplace_instance_id.marketplace_host[-1]:
-                                    host = marketplace_instance_id.marketplace_host[0:-1]
-
-                            update_qty = self._shopify_update_qty(
-                                warehouse=warehouse_location.partner_id.shopify_warehouse_id,
-                                inventory_item_id=product.shopify_inventory_id, quantity=int(product.qty_available),
-                                marketplace_instance_id=marketplace_instance_id, host=host)
                 except Exception as e:
                     _logger.warning("Error in Request: %s" % (e.args))
 

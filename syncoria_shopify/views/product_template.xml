@@ -53,7 +53,7 @@
                                 <field name="list_price"/>
                                 <field name="shopify_price"/>
                                 <field name="shopify_update_variants"/>
-                                <button name="computer_shopify_price"
+                                <button name="compute_shopify_price"
                                         string="Compute Shopify Price"
                                         type="object"
                                         class="btn btn-primary" />
@@ -140,7 +140,7 @@
                                 <field name="shopify_currency_id"/>
                                 <field name="list_price"/>
                                 <field name="shopify_price"/>
-                                <button name="computer_shopify_price"
+                                <button name="compute_shopify_price"
                                         string="Compute Shopify Price"
                                         type="object"
                                         class="btn btn-primary" />
@@ -194,7 +194,7 @@
                         <field name="shopify_currency_id"/>
                         <field name="list_price"/>
                         <field name="shopify_price"/>
-                        <button name="computer_shopify_price"
+                        <button name="compute_shopify_price"
                                 string="Compute Shopify Price"
                                 type="object"
                                 class="btn btn-primary" />

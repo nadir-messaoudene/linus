@@ -350,11 +350,15 @@ class ShopifyFeedProducts(models.Model):
 
                     if marketplace_instance_id.sync_product_image == True:
                         try:
-                            for pic in product['images']:
-                                if 'src' in pic:
-                                    image_file = pic.get('src')
-                                    pro_tmpl.update({'image_1920': self.shopify_image_processing(image_file),
-                                                    'default_code': product.get('sku')})
+                            # for pic in product['images']:
+                            #     if 'src' in pic:
+                            #         image_file = pic.get('src')
+                            #         pro_tmpl.update({'image_1920': self.shopify_image_processing(image_file),
+                            #                         'default_code': product.get('sku')})
+                            if 'image' in product:
+                                pro_tmpl.update({'image_1920': self.shopify_image_processing(product.get("image").get("src")),
+                                                 'default_code': product.get('sku')})
+
                         except:
                             _logger.info(
                                 "unable to import image url of product sku %s", product.get('sku'))
@@ -368,6 +372,9 @@ class ShopifyFeedProducts(models.Model):
                                 'default_code': product.get('variants')[0].get('sku'),
                                 'weight': product.get('variants')[0].get('weight'),
                                 'qty_available': product.get('variants')[0].get('inventory_quantity'),
+                            })
+                            product.write({
+                                'shopify_instance_id': instance_id.id,
                             })
 
                         if len(product.get('variants')) > 0:
@@ -405,11 +412,12 @@ class ShopifyFeedProducts(models.Model):
 
                                 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                                 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-                                if product.get('image'):
-                                    images = product.get('image') if type(product.get('image')) == list else [product.get('image')]
-                                    for image in images:
-                                        if image['id'] == child['image_id']:
-                                            child_file = image['src']
+                                # if product.get('image'):
+                                #     images = product.get('image') if type(product.get('image')) == list else [product.get('image')]
+                                #     for image in images.lam:
+                                #         if image['id'] == child['image_id']:
+                                #             child_file = image['src']
+
 
                                 domain = [("product_tmpl_id","=",pro_tmpl.id)]
                                 for option in option_names:
@@ -434,7 +442,16 @@ class ShopifyFeedProducts(models.Model):
                                         if child.get('barcode') not in child.get('barcode'):
                                             barcode = child.get('barcode')
 
-                                    product_id.write({
+                                    if product.get('images'):
+                                        image_src = [im.get("src") for im in product.get('images') if
+                                                     product_id.shopify_id in im.get("variant_ids")]
+                                        if len(child) >= 1:
+                                            child_file = image_src[0]
+                                        else:
+                                            child_file = False
+
+
+                                    product_datas  = {
                                         'marketplace_type': 'shopify',
                                         'shopify_instance_id': instance_id.id,
 
@@ -455,13 +472,16 @@ class ShopifyFeedProducts(models.Model):
                                         # 'old_inventory_quantity' : child['old_inventory_quantity'],
                                         # 'admin_graphql_api_id' : child['admin_graphql_api_id'],
                                         'shopify_type': 'simple',
-                                        'image_1920': self.shopify_image_processing(child_file) if marketplace_instance_id.sync_product_image == True else False,
                                         'qty_available': child['inventory_quantity'],
-                                        
+
                                         'requires_shipping': child['requires_shipping'],
                                         'taxable': child['taxable'],
-                                        
-                                    })
+
+                                    }
+
+                                    if marketplace_instance_id.sync_product_image == True and child_file:
+                                        product_datas['image_1920'] =  self.shopify_image_processing(child_file)
+                                    product_id.write(product_datas)
                                     ############TO DO################################################################
                                     # if marketplace_instance_id.marketplace_fetch_quantity == True:
                                     #     """Update Product Quantity in Odoo"""
