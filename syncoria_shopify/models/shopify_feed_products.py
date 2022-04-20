@@ -373,9 +373,9 @@ class ShopifyFeedProducts(models.Model):
                                 'weight': product.get('variants')[0].get('weight'),
                                 'qty_available': product.get('variants')[0].get('inventory_quantity'),
                             })
-                            product.write({
-                                'shopify_instance_id': instance_id.id,
-                            })
+                            # product.write({
+                            #     'shopify_instance_id': instance_id.id,
+                            # })
 
                         if len(product.get('variants')) > 0:
                             # since this product has variants, we need to get the
@@ -443,9 +443,15 @@ class ShopifyFeedProducts(models.Model):
                                             barcode = child.get('barcode')
 
                                     if product.get('images'):
-                                        image_src = [im.get("src") for im in product.get('images') if
-                                                     product_id.shopify_id in im.get("variant_ids")]
-                                        if len(child) >= 1:
+                                        # image_src=[im.get("src") for im in product.get('images') if int(product_id.shopify_id) or child['id'] in im.get("variant_ids")]
+                                        image_src = []
+                                        for im in product.get('images'):
+                                            if product_id.shopify_id in im.get("variant_ids"):
+                                                image_src.append(im.get("src"))
+                                            elif child['id'] in im.get("variant_ids"):
+                                                image_src.append(im.get("src"))
+
+                                        if len(image_src) >= 1:
                                             child_file = image_src[0]
                                         else:
                                             child_file = False
@@ -458,6 +464,7 @@ class ShopifyFeedProducts(models.Model):
                                         'shopify_id': str(child['id']),
                                         # 'shopify_product_id': str(child['product_id']),
                                         'list_price': str(child['price']),
+                                        'lst_price': str(child['price']),
                                         'default_code': child['sku'],
                                         'inventory_policy': child['inventory_policy'],
                                         'compare_at_price': child['compare_at_price'],

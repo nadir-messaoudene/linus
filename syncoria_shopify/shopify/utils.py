@@ -85,7 +85,7 @@ def get_protmpl_vals(record, values):
     if 'product.template' in str(record):
         variants = []
         variants_rec = record.product_variant_ids
-        insatnce_id = get_instance_id(record) 
+        insatnce_id = record.shopify_instance_id
         for var in variants_rec:
             variant = {}
             count = 1
@@ -97,9 +97,9 @@ def get_protmpl_vals(record, values):
                 hs_code = var.hs_code
                 _logger.warning("Exception ===>>>%s", e.args)
 
-            shopify_price = record.list_price
-            if insatnce_id.pricelist_id.currency_id.id != record.currency_id.id:
-                shopify_price = record.shopify_price
+            shopify_price = var.lst_price
+            if insatnce_id.pricelist_id.currency_id.id != var.currency_id.id:
+                shopify_price = var.shopify_price
             
             for attrib in var.product_template_attribute_value_ids:
                 _logger.info(attrib.attribute_id.name)
