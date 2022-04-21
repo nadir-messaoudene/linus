@@ -53,7 +53,7 @@ class ShopifyFeedProducts(models.Model):
         ondelete='restrict',
     )
     product_tmpl_id = fields.Many2one(
-        string='Parent Product',
+        string='Parent Product Temp',
         comodel_name='product.template',
         ondelete='restrict',
     )
