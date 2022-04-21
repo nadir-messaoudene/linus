@@ -77,10 +77,10 @@
                    position="after">
                 <field name="qb_id" invisible="1"/>
             </xpath>
-            <xpath expr="/form/sheet/notebook/page[1]/field[@name='order_line']/tree/field[@name='analytic_tag_ids']"
+            <!-- <xpath expr="/form/sheet/notebook/page[1]/field[@name='order_line']/tree/field[@name='analytic_tag_ids']"
                    position="attributes">
                 <attribute name="invisible">True</attribute>
-            </xpath>
+            </xpath> -->
 
 
         </field>
@@ -118,10 +118,10 @@
                    position="attributes">
                 <attribute name="invisible">True</attribute>
             </xpath>
-            <xpath expr="/form/sheet/notebook/page[1]/field[@name='invoice_line_ids']/tree/field[@name='analytic_tag_ids']"
+            <!-- <xpath expr="/form/sheet/notebook/page[1]/field[@name='invoice_line_ids']/tree/field[@name='analytic_tag_ids']"
                    position="attributes">
                 <attribute name="invisible">True</attribute>
-            </xpath>
+            </xpath> -->
             <xpath expr="/form/sheet/notebook/page[1]/field[@name='invoice_line_ids']/tree/field[@name='discount']"
                    position="attributes">
                 <attribute name="invisible">True</attribute>
@@ -150,10 +150,10 @@
                    position="attributes">
                 <attribute name="invisible">True</attribute>
             </xpath>
-            <xpath expr="/form/sheet/notebook/page[1]/field[@name='order_line']/tree/field[@name='analytic_tag_ids']"
+            <!-- <xpath expr="/form/sheet/notebook/page[1]/field[@name='order_line']/tree/field[@name='analytic_tag_ids']"
                    position="attributes">
                 <attribute name="invisible">True</attribute>
-            </xpath>
+            </xpath> -->
         </field>
     </record>
 
