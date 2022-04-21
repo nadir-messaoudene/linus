@@ -201,7 +201,7 @@ class MarketplaceInstance(models.Model):
         string='Auto Closed Order',
     )
     auto_create_product = fields.Boolean(
-        string='Auto Create Product if not found?',
+        string='Auto Create Product if not found?',default= False
     )
     notify_customer = fields.Boolean(
         string='Notify Customer about Update Order Status',
@@ -234,6 +234,9 @@ class MarketplaceInstance(models.Model):
                    ('Forecast', 'Forecast Quantity (product.product)')]
     )
 
+    @api.onchange('auto_create_product')
+    def _onchange_auto_create_product(self):
+        self.auto_create_product = False
     @api.model
     def create(self, vals):
         if 'company_id' in vals:
