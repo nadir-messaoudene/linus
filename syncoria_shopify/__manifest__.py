@@ -6,7 +6,7 @@
     'author': "Syncoria Inc",
     'website': "http://www.syncoria.com",
     'category': 'Uncategorized',
-    'version': '15.4.4.0.0',
+    'version': '15.5.0.0.0',
     'depends': ['base', 'mail', 'syncoria_base_marketplace', 'sale','sale_management', 'stock','sale_stock','delivery','product'],
     'images': [
         'static/description/banner.gif',
