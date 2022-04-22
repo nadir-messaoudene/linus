@@ -39,8 +39,11 @@ class OrderFetchWizardExtend(models.Model):
         error_msg = ''
         feed_order_id = False
         try:
-            marketplace_instance_id = self.instance_id or self._get_instance_id() 
-            customer_name = order_data.get('customer',{}).get('first_name','') + ' ' + order_data.get('customer',{}).get('last_name','')
+            marketplace_instance_id = self.instance_id or self._get_instance_id()
+            if order_data.get('customer', {}).get('first_name', '') is None:
+                customer_name = 'No name provided'
+            else:
+                customer_name = order_data.get('customer',{}).get('first_name','') + ' ' + order_data.get('customer',{}).get('last_name','')
             domain = [('shopify_id', '=', order_data['id'])]
             domain += [('instance_id', '=', marketplace_instance_id.id)]
             feed_order_id = self.env['shopify.feed.orders'].sudo().search(domain, limit=1)
