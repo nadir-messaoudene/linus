@@ -569,6 +569,9 @@ class ShopifyFeedOrders(models.Model):
                     tags = i.get('tags').split(",")
                     try:
                         tag_ids = []
+                        tag_b2c = self.env['crm.tag'].search([('name', '=', 'B2C')])
+                        if tag_b2c:
+                            tag_ids.append((4, tag_b2c.id))
                         for tag in tags:
                             tag_id = self.env['crm.tag'].search(
                                 [('name', '=', tag)])
