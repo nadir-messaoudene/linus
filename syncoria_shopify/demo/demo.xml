@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+
+    
+    <!-- <record id="model_marketplace_instance shopify" model="ir.model">
+        <field name="model">marketplace_instance</field>
+        <field name="name">Shopify Demo</field>
+        <field name="marketplace_api_key">96693025b5a8df71037cad97b8f31af5</field>
+        <field name="marketplace_api_password">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</field>
+        <field name="marketplace_secret_key">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</field>
+        <field name="marketplace_host">syncoriadev.myshopify.com</field>
+        <field name="marketplace_country_id">2</field>
+         <field name="marketplace_image_url">False</field>
+    </record>
+     -->
+
+        
+
+    </data>
+</odoo>

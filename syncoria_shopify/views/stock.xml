@@ -1,0 +1,42 @@
+<odoo>
+    <data>
+
+        <record id="view_stock_picking_form" model="ir.ui.view">
+            <field name="name">stock.picking</field>
+            <field name="model">stock.picking</field>
+            <field name="inherit_id" ref="stock.view_picking_form" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='shipping_weight']" position="after">
+                    <field name="shopify_track_updated" invisible="1"/>
+                    <field name="marketplace_type" invisible="1"/>
+                    <field name="sale_id" invisible="1"/>
+                </xpath>
+
+                <xpath expr="//notebook" position="inside">
+                    <page string="Shopify">
+                        <group>
+                            <group>
+                                <field name="shopify_id"/>
+                                <field name="shopify_order_id"/>
+                                <field name="shopify_status"/>
+                                <field name="shopify_service"/>
+                                <field name="shopify_track_updated"/>
+                            </group>
+                            <group>
+                            </group>
+                        </group>
+                    </page>
+                </xpath>
+
+                <xpath expr="//header" position="inside">
+                    <button name="create_shopify_fulfillment" string="Create Shopify Fullfillment" type="object" class="oe_highlight" attrs="{ 'invisible' :['|', ('shopify_track_updated','=', True), '|', ('sale_id','=', False), '|' , ('picking_type_code', '=','incoming'), '|' ,  ('state','not in','done'), ('shopify_track_updated','=',True)] }" />
+                    <button name="return_shopify_fulfillment" string="Return Shopify Fullfillment" type="object" class="oe_highlight" attrs="{ 'invisible' :['|', ('shopify_track_updated','=', True), '|', ('sale_id','=', False), '|' , ('picking_type_code', '=','outgoing'), '|', ('state','not in','done'), ('shopify_track_updated','=',True)] }" />
+                    <!-- <button name="update_shopify_tracking" string="Update Shopify Tracking" type="object" class="oe_highlight" attrs="{ 'invisible' :['|', ('sale_id','=', False), '|', ('state','not in','done'), ('shopify_track_updated','=',True)] }" /> -->
+                    <!-- <button name="get_order_fullfillments" string="Get Order Fullfillments" type="object" class="oe_highlight"/> -->
+                </xpath>
+
+            </field>
+        </record>
+
+    </data>
+</odoo>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data>
+    
+        <record id="shopify_customers_fetch_wiz" model="ir.ui.view">
+            <field name="name">Fetch Customer Wizard</field>
+            <field name="model">customer.fetch.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <p>The operation may take some time to complete. It depends on the number of records.
+                            Please wait patiently.</p>
+                        <group>
+                            <group>
+                                <field name="instance_id" required="1" options="{'no_open': True,'no_create': True}" />
+                            </group>
+                            <group>
+                                <field name="date_from" widget="date"/>
+                                <field name="date_to" widget="date"/>
+                            </group>
+                        </group>
+                        <footer>
+                            <button string='Fetch Customers' name="fetch_customers_to_odoo"
+                                    type="object" class="btn-primary" />
+                            <button string="Cancel" class="btn-default" special="cancel"/>
+                      </footer>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_shopify_fetch_customers" model="ir.actions.act_window">
+            <field name="name">Fetch Customers</field>
+            <field name="res_model">customer.fetch.wizard</field>
+            <field name="target">new</field>
+            <field name="view_mode">form</field>
+            <field name="view_ids"
+                   eval="[(5, 0, 0),
+                          (0, 0, {'view_mode': 'form', 'view_id': ref('shopify_customers_fetch_wiz')})
+                          ]"
+            />
+        </record>
+
+        <menuitem name="Synchronize" id="shopify_sync" sequence="5"
+                  parent="syncoria_shopify.syncoria_shopify_main"/>
+
+
+        <menuitem name="Fetch Customers" id="fetch_shopify_customers" sequence="2"
+                  parent="syncoria_shopify.shopify_sync" action="action_shopify_fetch_customers"/>
+        
+
+    </data>
+</odoo>

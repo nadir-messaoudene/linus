@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        
+        <record id="view_sync_history_form" model="ir.ui.view">
+            <field name="name">view.sync.history.form</field>
+            <field name="model">marketplace.sync.history</field>
+            <field name="arch" type="xml">
+                <form string="Sync History" create="false" delete="false" edit="true">
+                    <sheet>
+                        <div class="oe_title">
+                            <label for="name"/>
+                            <h1><field name="name" readonly="1"/></h1>
+                        </div>
+                        <group>
+                            <group>
+                                <h2>Product Sync History</h2>
+                                <field name="last_product_sync" readonly="1"/>
+                                <field name="last_product_sync_id" readonly="1"/>
+                                <field name="product_sync_no" readonly="1"/>
+                                <br></br>
+                            </group>
+                            <group>
+                                <h2>Customer Sync History</h2>
+                                <field name="last_customer_sync" readonly="1"/>
+                                <field name="last_customer_sync_id" readonly="1"/>
+                                <field name="customer_sync_no" readonly="1"/>
+                            </group>
+                            <group>
+                                <h2>Order Sync History</h2>
+                                <field name="last_order_sync" readonly="1"/>
+                                <field name="last_order_sync_id" readonly="1"/>
+                                <field name="order_sync_no" readonly="1"/>
+                            </group>
+                        </group>
+                        
+                        <notebook>
+                            <page string="Marketplace" >
+                                <group>
+                                    <field name="marketplace_type" widget="radio"/>
+                                </group>
+                            </page>
+                        </notebook>
+                        
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        <record id="action_shopify_sync_history" model="ir.actions.act_window">
+            <field name="name">Sync History</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">marketplace.sync.history</field>
+            <field name="view_id" ref="syncoria_shopify.view_sync_history_form"/>
+            <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create a new Sync History.
+                </p>
+            </field>
+        </record>
+
+
+
+        <menuitem 
+            name="Sync History" 
+            id="mktplc_sync_history" 
+            sequence="3"
+            parent="syncoria_shopify.shopify_sync" 
+            action="action_shopify_sync_history"/>
+
+    </data>
+</odoo>
