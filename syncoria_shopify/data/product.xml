@@ -31,7 +31,9 @@
             <field name="taxes_id" eval="[]"/>
         </record>
 
-
+        <record id="b2c_analytic_account" model="account.analytic.account">
+            <field name="name">B2C</field>
+        </record>
 
     </data>
 </odoo>
