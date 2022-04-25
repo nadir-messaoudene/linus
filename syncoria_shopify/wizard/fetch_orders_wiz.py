@@ -1206,7 +1206,7 @@ class ShopifyCustomer:
         exempt_ids=[]
         if values.get('tax_exempt'):
             for exempt in values.get('tax_exemptions'):
-                SpTaxExempt=self.env['shopify.tax.exempt']
+                SpTaxExempt=env['shopify.tax.exemptions']
                 exempt_id=SpTaxExempt.sudo().search(
                     [('name', '=', exempt)], limit=1)
                 exempt_ids.append(exempt_id.id) if exempt_id else None
