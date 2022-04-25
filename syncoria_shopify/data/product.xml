@@ -35,10 +35,5 @@
             <field name="name">B2C</field>
         </record>
 
-        <record id="b2c_crm_tag" model="crm.tag">
-            <field name="name">B2C</field>
-            <field name="color">1</field>
-        </record>
-
     </data>
 </odoo>
