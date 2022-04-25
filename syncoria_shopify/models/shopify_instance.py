@@ -6,6 +6,7 @@
 
 import pprint
 from odoo import models, fields, api, _
+from odoo.http import request
 import requests
 from odoo.exceptions import UserError, ValidationError
 
