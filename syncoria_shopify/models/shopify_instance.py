@@ -6,6 +6,7 @@
 
 import pprint
 from odoo import models, fields, api, _
+from odoo.http import request
 import requests
 from odoo.exceptions import UserError, ValidationError
 
@@ -272,3 +273,102 @@ class ModelName(models.Model):
         res =  response.json()
         res['status_code'] = status_code
         return response
+
+
+
+    color = fields.Integer(default=10)
+    marketplace_count_orders = fields.Integer('Order Count', compute='_compute_count_of_records')
+    marketplace_count_products = fields.Integer('Product Count', compute='_compute_count_of_records')
+    marketplace_count_customers = fields.Integer('Customer Count', compute='_compute_count_of_records')
+    marketplace_database_name = fields.Char('Database Name', compute='_compute_count_of_records')
+    marketplace_current_user = fields.Char('Current User', compute='_compute_count_of_records')
+
+
+    def _compute_count_of_records(self):
+        """
+        Count of Orders, Products, Customers for dashboard
+
+        :return: None
+        """
+        for rec in self:
+            search_query = [('shopify_instance_id', '=', rec.id), ('shopify_id', '!=', False)]
+            rec.marketplace_database_name = request.session.db
+            rec.marketplace_current_user = self.env.user.id
+            rec.marketplace_count_orders = rec.env['sale.order'].search_count(search_query)
+            rec.marketplace_count_products = rec.env['product.template'].search_count(search_query)
+            rec.marketplace_count_customers = rec.env['res.partner'].search_count(search_query)
+
+    def open_form_action(self):
+        """
+        Open the Operation Form View in the wizard
+
+        :return: The form view
+        """
+        view = self.env.ref('syncoria_shopify.view_instance_form_shopify')
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Shopify Operations',
+            'views': [(view.id, 'form')],
+            'view_id': view.id,
+            'res_model': 'marketplace.instance',
+            'view_mode': 'form',
+            # 'context': {'default_marketplace_instances': [(4, 0, [self.id])], 'default_woo_instance': True},
+            'target': 'new',
+        }
+
+    def shopify_open_marketplace_orders(self):
+        """
+        Open the view regarding the Sales Order with respective to Instance
+
+        :return: The view
+        """
+        action = self.env.ref('syncoria_shopify.shopify_order_action').read()[0]
+        action['domain'] = [('shopify_instance_id', '=', self.id)]
+        return action
+
+    def shopify_open_marketplace_products(self):
+        """
+        Open the view regarding the Products with respective to Instance
+
+        :return: The view
+        """
+        action = self.env.ref('syncoria_shopify.shopify_product_action').read()[0]
+        action['domain'] = [('shopify_instance_id', '=', self.id)]
+        return action
+
+
+    def shopify_open_marketplace_customers(self):
+        """
+        Open the view regarding the Customers with respective to Instance
+
+        :return: The view
+        """
+        action = self.env.ref('syncoria_shopify.res_partner_action_customer').read()[0]
+        action['domain'] = [('shopify_instance_id', '=', self.id)]
+        return action
+
+    def shopify_open_marketplace_configuration(self):
+        """
+        Open the Shopify Configuration wizard
+
+        :return: The form view
+        """
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Shopify Operations',
+            'view': 'form',
+            'res_id': self.id,
+            'res_model': 'marketplace.instance',
+            'view_mode': 'form',
+        }
+
+    def shopify_open_instance_logs(self):
+        """
+        Redirect to the Instance log form view
+
+        :return: The tree view
+        """
+        action = self.env.ref('syncoria_shopify.action_shopify_marketplace_logging').read()[0]
+        action['domain'] = [('shopify_instance_id', '=', self.id)]
+        return action
+
