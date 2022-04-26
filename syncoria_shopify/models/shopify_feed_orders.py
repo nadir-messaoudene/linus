@@ -571,12 +571,7 @@ class ShopifyFeedOrders(models.Model):
                         tag_ids = []
                         tag_b2c = self.env['crm.tag'].sudo().search([('name', '=', 'B2C')])
                         if tag_b2c:
-                            _logger.info('TAG_B2C:' + str(tag_b2c.id))
                             tag_ids.append((4, tag_b2c.id))
-                        else:
-                            tag_b2c = self.env['crm.tag'].sudo().search([])
-                            for tag in tag_b2c:
-                                _logger.info(tag.name)
                         for tag in tags:
                             tag_id = self.env['crm.tag'].search(
                                 [('name', '=', tag)])
@@ -584,6 +579,8 @@ class ShopifyFeedOrders(models.Model):
                                 tag_id=self.env['crm.tag'].create({"name":tag,"color":1})
                             if tag_id:
                                 tag_ids.append((4,tag_id.id))
+                        _logger.info('ORDER TAGS =>>>>>>>:')
+                        _logger.info(tag_ids)
                         order_vals['tag_ids'] = tag_ids
                     except Exception as e:
                         _logger.warning(e)
