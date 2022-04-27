@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    <data>
+
+        <record id="resolvepay_instance_action" model="ir.actions.act_window">
+            <field name="name">Resolvepay Instance</field>
+            <field name="res_model">resolvepay.instance</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record id="view_resolvepay_instance_tree" model="ir.ui.view">
+            <field name="name">resolvepay.instance.tree</field>
+            <field name="model">resolvepay.instance</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="instance_name" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_resolvepay_instance_form" model="ir.ui.view">
+            <field name="name">resolvepay.instance.form</field>
+            <field name="model">resolvepay.instance</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <header>
+                            <button string="Connect" class="btn btn-primary" name="check_connect_access" type="object" attrs="{  'invisible': [('connect_state','in',('confirm'))]  }" />
+                            <button string="Disconnect" class="btn btn-primary" name="disconnect_access" type="object" attrs="{  'invisible': [('connect_state','in',('draft'))]  }"/>
+                            <field name="connect_state" widget="statusbar" statusbar_visible="draft,confirm"/>
+                        </header>
+                        <group>
+                            <field name="instance_name"/>
+                        </group>
+                        <notebook>
+                            <page string="Credentials">
+                                <group>
+                                    <field name="instance_baseurl"/>
+                                    <field name="instance_secret_key"/>
+                                    <field name="instance_merchant_id"/>
+                                    <field name="instance_version"/>
+                                </group>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</odoo>
+

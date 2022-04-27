@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    <data>
+        <menuitem id="menu_resolvepay_config"
+            parent="sale.menu_sale_config"
+            sequence="5"
+            name="ResolvePay"/>
+
+        <menuitem
+            id="menu_instance_resolvepay_config"
+            name="Instance"
+            parent="menu_resolvepay_config"
+            action="resolvepay_instance_action"
+            sequence="1"/>
+
+        <menuitem
+            id="menu_instance_resolvepay_fetch_customer"
+            name="Fetch Customer"
+            parent="menu_resolvepay_config"
+            action="action_resolvepay_fetch_customers"
+            sequence="2"/>
+    </data>
+</odoo>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    <data>
+        <record id="create_customer_resolvepay" model="ir.actions.server">
+            <field name="name">Export to ResolvePay</field>
+            <field name="model_id" ref="base.model_res_partner"/>
+            <field name="binding_model_id" ref="base.model_res_partner"/>
+            <field name="binding_view_types">list,tree,form</field>
+            <field name="state">code</field>
+            <field name="code">if records:
+                records.create_customer_resolvepay()</field>
+        </record>
+
+    </data>
+</odoo>
