@@ -15,8 +15,8 @@ class ResolvepayFetch(models.Model):
     date_to = fields.Date('To')
 
     def fetch_customers_resolvepay(self):
-        params = {'limit': 25, 'page': 1}
+        params = {'limit': 100, 'page': 1}
         url = self.instance_id.instance_baseurl + 'customers'
         res = self.instance_id.get_data(url, params)
         if res.get('data'):
-            print('pass')
+            customers_arr = res.get('data')
