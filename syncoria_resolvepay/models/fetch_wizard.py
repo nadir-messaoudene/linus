@@ -1,6 +1,7 @@
 import logging
 import datetime
 from odoo import fields, models, exceptions, _
+from odoo.exceptions import UserError, ValidationError
 _logger = logging.getLogger(__name__)
 
 class ResolvepayFetch(models.Model):
@@ -25,8 +26,30 @@ class ResolvepayFetch(models.Model):
                 for customer in customer_list:
                     _logger.info("Customer info =====> %s", customer)
                     partner = self.env['res.partner'].search([('email', '=', customer.get('email'))], limit=1)
-                    if partner and not partner.resolvepay_customer_id:
-                        partner.resolvepay_customer_id = customer.get('id')
+                    if partner:
+                        if not partner.resolvepay_customer_id:
+                            partner.resolvepay_customer_id = customer.get('id')
                     else:
-                        # self.env['res.partner'].create()
-                        print('else')
+                        try:
+                            partner_dict = {}
+                            partner_dict['resolvepay_customer_id'] = customer.get('id')
+                            partner_dict['street'] = customer.get('business_address')
+                            partner_dict['city'] = customer.get('business_city')
+                            state_id = self.env['res.country.state'].search([
+                                ('code', '=', customer.get('business_state'))],
+                                limit=1)
+                            if state_id:
+                                partner_dict['state_id'] = state_id.id
+                            country_id = self.env['res.country'].search([
+                                ('code', '=', customer.get('business_country'))],
+                                limit=1)
+                            if country_id:
+                                partner_dict['country_id'] = country_id.id
+                            partner_dict['zip'] = customer.get('business_zip')
+                            partner_dict['email'] = customer.get('email')
+                            partner_dict['phone'] = customer.get('business_ap_phone')
+                            partner_dict['name'] = customer.get('business_name')
+                            self.env['res.partner'].create(partner_dict)
+                        except Exception as e:
+                            _logger.info("Error occurred =====> %s", e)
+                            raise ValidationError('Error occurred: %s', e)
