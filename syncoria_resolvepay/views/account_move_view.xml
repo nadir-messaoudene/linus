@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    <data>
+
+        <record id="account_move_resolvepay_form_inherit" model="ir.ui.view">
+            <field name="name">account.move.resolvepay.form.inherit</field>
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="account.view_move_form" />
+            <field name="arch" type="xml">
+                <xpath expr="//button[@name='button_set_checked']" position="after">
+                    <button name="create_invoice_resolvepay" string="Validate" class="oe_highlight" type="object" attrs="{'invisible': [('state', '=', 'draft')]}"/>
+                </xpath>
+                <xpath expr="//field[@name='partner_id']" position="after">
+                    <field name="resolvepay_invoice_id"/>
+                </xpath>
+            </field>
+	    </record>
+
+    </data>
+</odoo>

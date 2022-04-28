@@ -20,5 +20,12 @@
             parent="menu_resolvepay_config"
             action="action_resolvepay_fetch_customers"
             sequence="2"/>
+
+        <menuitem
+            id="menu_instance_resolvepay_fetch_invoice"
+            name="Fetch Invoice"
+            parent="menu_resolvepay_config"
+            action="action_resolvepay_fetch_invoices"
+            sequence="3"/>
     </data>
 </odoo>

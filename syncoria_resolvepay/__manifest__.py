@@ -13,6 +13,7 @@
         'views/res_partner.xml',
         'views/fetch_wizard_view.xml',
         'views/menu_item.xml',
+        'views/account_move_view.xml'
     ],
     'license': 'OPL-1',
     'support': "support@syncoria.com"

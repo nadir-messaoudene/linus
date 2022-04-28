@@ -40,5 +40,45 @@
                           ]"
             />
         </record>
+
+        <record id="resolvepay_invoices_fetch_wiz" model="ir.ui.view">
+            <field name="name">Fetch Invoice Wizard</field>
+            <field name="model">resolvepay.fetch.invoice</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <p>The operation may take some time to complete. It depends on the number of records.
+                            Please wait patiently.</p>
+                        <group>
+                            <group>
+                                <field name="instance_id" required="1" options="{'no_open': True,'no_create': True}" />
+                            </group>
+                            <group>
+                                <field name="date_from" widget="date" required="1"/>
+                                <field name="date_to" widget="date" required="1"/>
+                            </group>
+                        </group>
+                        <footer>
+                            <button string='Fetch Invoices' name="fetch_invoices_resolvepay"
+                                    type="object" class="btn-primary" />
+                            <button string="Cancel" class="btn-default" special="cancel"/>
+                      </footer>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_resolvepay_fetch_invoices" model="ir.actions.act_window">
+            <field name="name">Fetch Invoices</field>
+            <field name="res_model">resolvepay.fetch.invoice</field>
+            <field name="target">new</field>
+            <field name="view_mode">form</field>
+            <field name="view_ids"
+                   eval="[(5, 0, 0),
+                          (0, 0, {'view_mode': 'form', 'view_id': ref('resolvepay_invoices_fetch_wiz')})
+                          ]"
+            />
+        </record>
+
     </data>
 </odoo>

@@ -49,3 +49,5 @@ class ResPartner(models.Model):
                         data = res.get('data')
                         self.message_post(body="Export to ResolvePay successfully. ResolvePay Customer ID: {}".format(data.get('id')))
                         self.resolvepay_customer_id = data.get('id')
+                else:
+                    raise UserError('There is no ResolvePay instance')

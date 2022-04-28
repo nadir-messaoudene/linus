@@ -53,3 +53,25 @@ class ResolvepayFetch(models.Model):
                         except Exception as e:
                             _logger.info("Error occurred =====> %s", e)
                             raise ValidationError('Error occurred: %s', e)
+
+class ResolvepayFetchInvoice(models.Model):
+    _name = 'resolvepay.fetch.invoice'
+    _description = 'Fetch Invoice'
+
+    instance_id = fields.Many2one(
+        string='ResolvePay Instance',
+        comodel_name='resolvepay.instance',
+    )
+    date_from = fields.Date('From')
+    date_to = fields.Date('To')
+
+    def fetch_invoices_resolvepay(self):
+        params = {'limit': 100, 'page': 1}
+        url = self.instance_id.instance_baseurl + 'invoices'
+        res = self.instance_id.get_data(url, params)
+        if res.get('data'):
+            data = res.get('data')
+            if data.get('count') > 0:
+                invoice_list = data.get('results')
+                for invoice in invoice_list:
+                    _logger.info("Invoice info =====> %s", invoice)
