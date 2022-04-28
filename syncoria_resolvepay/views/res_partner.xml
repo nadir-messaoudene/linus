@@ -12,5 +12,16 @@
                 records.create_customer_resolvepay()</field>
         </record>
 
+        <record id="res_partner_resolvepay_form_inherit" model="ir.ui.view">
+            <field name="name">res.partner.resolvepay.form.inherit</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='category_id']" position="after">
+                    <field name="resolvepay_customer_id"/>
+                </xpath>
+            </field>
+	    </record>
+
     </data>
 </odoo>
