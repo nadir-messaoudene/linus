@@ -6,13 +6,13 @@
     'author': "Syncoria Inc",
     'website': "http://www.syncoria.com",
     'category': 'Uncategorized',
-    'depends': ['base'],
+    'depends': ['base', 'account'],
     'data': [
         'security/ir.model.access.csv',
         'views/resolvepay_view.xml',
         'views/res_partner.xml',
         'views/fetch_wizard_view.xml',
-        'views/menu_item.xml'
+        'views/menu_item.xml',
     ],
     'license': 'OPL-1',
     'support': "support@syncoria.com"
