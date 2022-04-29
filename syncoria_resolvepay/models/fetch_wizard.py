@@ -66,12 +66,22 @@ class ResolvepayFetchInvoice(models.Model):
     date_to = fields.Date('To')
 
     def fetch_invoices_resolvepay(self):
-        params = {'limit': 100, 'page': 1}
         url = self.instance_id.instance_baseurl + 'invoices'
-        res = self.instance_id.get_data(url, params)
-        if res.get('data'):
-            data = res.get('data')
-            if data.get('count') > 0:
-                invoice_list = data.get('results')
-                for invoice in invoice_list:
-                    _logger.info("Invoice info =====> %s", invoice)
+        invoice_resolvepay_map = self.env['account.move'].search([('resolvepay_invoice_id', '!=', '')])
+        for invoice in invoice_resolvepay_map:
+            complete_url = url + '/' + invoice.resolvepay_invoice_id
+            res = self.instance_id.get_data(complete_url)
+            if res.get('data'):
+                data = res.get('data')
+                _logger.info("Invoice data =====> %s", data)
+                if data.get('payout_fully_paid'):
+                    print(data.get('payout_fully_paid'))
+
+
+
+        # if res.get('data'):
+        #     data = res.get('data')
+        #     if data.get('count') > 0:
+        #         invoice_list = data.get('results')
+        #         for invoice in invoice_list:
+        #             _logger.info("Invoice info =====> %s", invoice)
