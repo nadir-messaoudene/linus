@@ -12,8 +12,9 @@ class ResolvepayFetch(models.Model):
         string='ResolvePay Instance',
         comodel_name='resolvepay.instance',
     )
-    date_from = fields.Date('From')
-    date_to = fields.Date('To')
+
+    # date_from = fields.Date('From')
+    # date_to = fields.Date('To')
 
     def fetch_customers_resolvepay(self):
         params = {'limit': 100, 'page': 1}
@@ -49,7 +50,7 @@ class ResolvepayFetch(models.Model):
                             partner_dict['email'] = customer.get('email')
                             partner_dict['phone'] = customer.get('business_ap_phone')
                             partner_dict['name'] = customer.get('business_name')
-                            self.env['res.partner'].create(partner_dict)
+                            self.env['res.partner'].with_context(res_partner_search_mode='customer').create(partner_dict)
                         except Exception as e:
                             _logger.info("Error occurred =====> %s", e)
                             raise ValidationError('Error occurred: %s', e)
@@ -62,8 +63,8 @@ class ResolvepayFetchInvoice(models.Model):
         string='ResolvePay Instance',
         comodel_name='resolvepay.instance',
     )
-    date_from = fields.Date('From')
-    date_to = fields.Date('To')
+    # date_from = fields.Date('From')
+    # date_to = fields.Date('To')
 
     def fetch_invoices_resolvepay(self):
         url = self.instance_id.instance_baseurl + 'invoices'

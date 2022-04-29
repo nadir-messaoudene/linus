@@ -12,7 +12,7 @@
                     <button name="create_invoice_resolvepay" string="Validate" class="oe_highlight" type="object" attrs="{'invisible': [('state', '=', 'draft')]}"/>
                 </xpath>
                 <xpath expr="//field[@name='partner_id']" position="after">
-                    <field name="resolvepay_invoice_id"/>
+                    <field name="resolvepay_invoice_id" readonly="1"/>
                 </xpath>
             </field>
 	    </record>

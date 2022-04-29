@@ -18,7 +18,7 @@
             <field name="inherit_id" ref="base.view_partner_form" />
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='category_id']" position="after">
-                    <field name="resolvepay_customer_id"/>
+                    <field name="resolvepay_customer_id" readonly="1"/>
                 </xpath>
             </field>
 	    </record>

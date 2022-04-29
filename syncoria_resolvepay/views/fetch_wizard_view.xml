@@ -14,10 +14,10 @@
                             <group>
                                 <field name="instance_id" required="1" options="{'no_open': True,'no_create': True}" />
                             </group>
-                            <group>
-                                <field name="date_from" widget="date" required="1"/>
-                                <field name="date_to" widget="date" required="1"/>
-                            </group>
+<!--                            <group>-->
+<!--                                <field name="date_from" widget="date" required="1"/>-->
+<!--                                <field name="date_to" widget="date" required="1"/>-->
+<!--                            </group>-->
                         </group>
                         <footer>
                             <button string='Fetch Customers' name="fetch_customers_resolvepay"
@@ -53,10 +53,10 @@
                             <group>
                                 <field name="instance_id" required="1" options="{'no_open': True,'no_create': True}" />
                             </group>
-                            <group>
-                                <field name="date_from" widget="date" required="1"/>
-                                <field name="date_to" widget="date" required="1"/>
-                            </group>
+<!--                            <group>-->
+<!--                                <field name="date_from" widget="date" required="1"/>-->
+<!--                                <field name="date_to" widget="date" required="1"/>-->
+<!--                            </group>-->
                         </group>
                         <footer>
                             <button string='Fetch Invoices' name="fetch_invoices_resolvepay"
