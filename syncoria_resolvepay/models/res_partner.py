@@ -9,7 +9,12 @@ _logger = logging.getLogger(__name__)
 
 class ResPartner(models.Model):
     _inherit = "res.partner"
+
     resolvepay_customer_id = fields.Char(string='ResolvePay Customer Id')
+    available_credit = fields.Integer(string='Available Credit')
+    advance_rate = fields.Float(string='Advance Rate')
+    terms = fields.Char(string='Terms')
+    net_terms_status = fields.Char(string='Status')
 
     def create_customer_resolvepay(self):
         print('create_customer_resolvepay')

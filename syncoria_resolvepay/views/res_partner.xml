@@ -17,8 +17,12 @@
             <field name="model">res.partner</field>
             <field name="inherit_id" ref="base.view_partner_form" />
             <field name="arch" type="xml">
-                <xpath expr="//field[@name='category_id']" position="after">
-                    <field name="resolvepay_customer_id" readonly="1"/>
+                <xpath expr="//notebook" position="inside">
+                    <page string="ResolvePay" attrs="{'invisible': [('resolvepay_customer_id','=',False)]}">
+                        <group>
+                            <field name="resolvepay_customer_id" readonly="1"/>
+                        </group>
+                    </page>
                 </xpath>
             </field>
 	    </record>
