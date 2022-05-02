@@ -21,6 +21,10 @@
                     <page string="ResolvePay" attrs="{'invisible': [('resolvepay_customer_id','=',False)]}">
                         <group>
                             <field name="resolvepay_customer_id" readonly="1"/>
+                            <field name="available_credit" readonly="1"/>
+                            <field name="advance_rate" readonly="1"/>
+                            <field name="terms" readonly="1"/>
+                            <field name="net_terms_status" readonly="1"/>
                         </group>
                     </page>
                 </xpath>

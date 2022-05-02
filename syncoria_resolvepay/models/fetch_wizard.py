@@ -28,8 +28,11 @@ class ResolvepayFetch(models.Model):
                     _logger.info("Customer info =====> %s", customer)
                     partner = self.env['res.partner'].search([('email', '=', customer.get('email'))], limit=1)
                     if partner:
-                        if not partner.resolvepay_customer_id:
-                            partner.resolvepay_customer_id = customer.get('id')
+                        partner.resolvepay_customer_id = customer.get('id')
+                        partner.available_credit = customer.get('amount_available')
+                        partner.advance_rate = customer.get('advance_rate')
+                        partner.terms = customer.get('default_terms')
+                        partner.net_terms_status = customer.get('net_terms_status')
                     else:
                         try:
                             partner_dict = {}
@@ -50,6 +53,10 @@ class ResolvepayFetch(models.Model):
                             partner_dict['email'] = customer.get('email')
                             partner_dict['phone'] = customer.get('business_ap_phone')
                             partner_dict['name'] = customer.get('business_name')
+                            partner_dict['available_credit'] = customer.get('amount_available')
+                            partner_dict['advance_rate'] = customer.get('advance_rate')
+                            partner_dict['terms'] = customer.get('default_terms')
+                            partner_dict['net_terms_status'] = customer.get('net_terms_status')
                             self.env['res.partner'].with_context(res_partner_search_mode='customer').create(partner_dict)
                         except Exception as e:
                             _logger.info("Error occurred =====> %s", e)
@@ -68,7 +75,7 @@ class ResolvepayFetchInvoice(models.Model):
 
     def fetch_invoices_resolvepay(self):
         url = self.instance_id.instance_baseurl + 'invoices'
-        invoice_resolvepay_map = self.env['account.move'].search([('resolvepay_invoice_id', '!=', '')])
+        invoice_resolvepay_map = self.env['account.move'].search([('resolvepay_invoice_id', '!=', ''), ('payment_state', 'in', ['not_paid', 'partial'])])
         for invoice in invoice_resolvepay_map:
             complete_url = url + '/' + invoice.resolvepay_invoice_id
             res = self.instance_id.get_data(complete_url)
@@ -77,8 +84,16 @@ class ResolvepayFetchInvoice(models.Model):
                 _logger.info("Invoice data =====> %s", data)
                 if data.get('payout_fully_paid'):
                     print(data.get('payout_fully_paid'))
-
-
+                    move_id = self.env['account.move'].search([('invoice_origin', '=', invoice.name), ('move_type', '=', 'out_invoice')])
+                    journal = self.env['account.journal'].search([('code', '=', 'RSP')])
+                    # pmt_wizard = self.env['account.payment.register'].with_context(active_model='account.move',
+                    #                                                                active_ids=self.ids).create({
+                    #     'amount': self.amount_residual,
+                    #     'payment_date': fields.Datetime.now(),
+                    #     'journal_id': journal.id,
+                    #     'payment_method_line_id': pmli.id,
+                    #     'payment_token_id': token_id.id,
+                    # })
 
         # if res.get('data'):
         #     data = res.get('data')
