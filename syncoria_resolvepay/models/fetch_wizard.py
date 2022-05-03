@@ -84,20 +84,48 @@ class ResolvepayFetchInvoice(models.Model):
                 _logger.info("Invoice data =====> %s", data)
                 if data.get('payout_fully_paid'):
                     print(data.get('payout_fully_paid'))
-                    move_id = self.env['account.move'].search([('invoice_origin', '=', invoice.name), ('move_type', '=', 'out_invoice')])
+                    move_id = self.env['account.move'].search(
+                        [('invoice_origin', '=', data.get('order_number')), ('move_type', "=", "out_invoice")])
                     journal = self.env['account.journal'].search([('code', '=', 'RSP')])
-                    # pmt_wizard = self.env['account.payment.register'].with_context(active_model='account.move',
-                    #                                                                active_ids=self.ids).create({
-                    #     'amount': self.amount_residual,
-                    #     'payment_date': fields.Datetime.now(),
-                    #     'journal_id': journal.id,
-                    #     'payment_method_line_id': pmli.id,
-                    #     'payment_token_id': token_id.id,
-                    # })
-
-        # if res.get('data'):
-        #     data = res.get('data')
-        #     if data.get('count') > 0:
-        #         invoice_list = data.get('results')
-        #         for invoice in invoice_list:
-        #             _logger.info("Invoice info =====> %s", invoice)
+                    if journal and move_id and move_id == invoice:
+                        payment_dict = {
+                            'journal_id': journal.id,
+                            'amount': data.get('amount_advance'),
+                            'payment_date': data.get('advanced_at'),
+                        }
+                    domain = []
+                    for move in move_id:
+                        domain += [('ref', '=', move.name)]
+                    if domain:
+                        pay_id = self.env['account.move'].search(domain, order='id desc', limit=1)
+                        if pay_id:
+                            payment_dict['communication'] = pay_id.ref.split('-')[0]
+                    pmt_wizard = self.env['account.payment.register'].with_context(active_model='account.move',
+                                                                                   active_ids=move_id.ids).create(
+                        payment_dict)
+                    payment = pmt_wizard.action_create_payments()
+                    print("===============>", payment)
+                elif data.get('advanced_at'):
+                    print(data.get('advanced_at'))
+                    move_id = self.env['account.move'].search([('invoice_origin', '=', data.get('order_number')), ('move_type', "=", "out_invoice")])
+                    journal = self.env['account.journal'].search([('code', '=', 'RSP')])
+                    if journal and move_id and move_id == invoice:
+                        payment_dict = {
+                            'journal_id': journal.id,
+                            'amount': data.get('amount_advance'),
+                            'payment_date': data.get('advanced_at'),
+                            'partner_id': invoice.partner_id.id
+                        }
+                        payment_method_line_id = journal.inbound_payment_method_line_ids
+                        if payment_method_line_id:
+                            payment_dict['payment_method_line_id'] = payment_method_line_id.id
+                        domain = []
+                        for move in move_id:
+                            domain += [('ref', '=', move.name)]
+                        if domain:
+                            pay_id = self.env['account.move'].search(domain, order='id desc', limit=1)
+                            if pay_id:
+                                payment_dict['communication'] = pay_id.ref.split('-')[0]
+                        pmt_wizard = self.env['account.payment.register'].with_context(active_model='account.move',active_ids=move_id.ids).create(payment_dict)
+                        payment = pmt_wizard.action_create_payments()
+                        print("===============>", payment)

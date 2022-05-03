@@ -34,6 +34,8 @@ class ResPartner(models.Model):
                     raise ValidationError('Email is required to export to ResolvePay')
                 if not partner.phone and not partner.mobile:
                     raise ValidationError('Phone is required to export to ResolvePay')
+                resolvepay_instance = self.env['resolvepay.instance'].search([('name', '=', 'ResolvePay')])
+                net_term = resolvepay_instance.get_net_term(self.property_supplier_payment_term_id.name)
                 partner_data = dict(
                     business_address=partner.street,
                     business_city=partner.city,
@@ -44,9 +46,8 @@ class ResPartner(models.Model):
                     business_ap_phone=partner.phone if partner.phone else partner.mobile,
                     business_name=partner.name,
                     email=partner.email,
-                    # default_terms='/',
+                    default_terms=net_term,
                 )
-                resolvepay_instance = self.env['resolvepay.instance'].search([('name', '=', 'ResolvePay')])
                 if len(resolvepay_instance):
                     url = resolvepay_instance.instance_baseurl + 'customers'
                     res = resolvepay_instance.post_data(url=url, data=json.dumps(partner_data))

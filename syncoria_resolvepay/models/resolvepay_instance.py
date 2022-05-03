@@ -82,3 +82,14 @@ class ResolvePay(models.Model):
             _logger.info("Exception occured: %s", e)
             raise UserError(_("Error Occured: %s") % e)
         return res
+
+    def get_net_term(self, net_term):
+        net_term_mappings = {
+            "Net 30": "net30",
+            "Net 60": "net60",
+            "Net 90": "net90"
+        }
+        days = net_term_mappings.get(net_term, False)
+        if not days:
+            return None
+        return days
