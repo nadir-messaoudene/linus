@@ -14,7 +14,7 @@ class ResPartner(models.Model):
     available_credit = fields.Integer(string='Available Credit')
     advance_rate = fields.Float(string='Advance Rate')
     terms = fields.Char(string='Terms')
-    net_terms_status = fields.Char(string='Status')
+    net_terms_status = fields.Char(string='Credit Line Status')
 
     def create_customer_resolvepay(self):
         print('create_customer_resolvepay')
