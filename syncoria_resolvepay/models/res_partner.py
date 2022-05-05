@@ -11,10 +11,10 @@ class ResPartner(models.Model):
     _inherit = "res.partner"
 
     resolvepay_customer_id = fields.Char(string='ResolvePay Customer Id')
-    available_credit = fields.Integer(string='Available Credit')
-    advance_rate = fields.Float(string='Advance Rate')
-    terms = fields.Char(string='Terms')
-    net_terms_status = fields.Char(string='Credit Line Status')
+    available_credit = fields.Integer(string='Available Credit', tracking=True)
+    advance_rate = fields.Float(string='Advance Rate', tracking=True)
+    terms = fields.Char(string='Terms', tracking=True)
+    net_terms_status = fields.Char(string='Credit Line Status', tracking=True)
 
     def create_customer_resolvepay(self):
         print('create_customer_resolvepay')
