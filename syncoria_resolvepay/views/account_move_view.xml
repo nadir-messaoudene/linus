@@ -17,5 +17,14 @@
             </field>
 	    </record>
 
+        <record id="resolvepay_fetch_invoice" model="ir.actions.server">
+            <field name="name">Resolve Pay update invoice</field>
+            <field name="model_id" ref="account.model_account_move"/>
+            <field name="binding_model_id" ref="account.model_account_move"/>
+            <field name="binding_view_types">list,tree,form</field>
+            <field name="state">code</field>
+            <field name="code">records.resolvepay_fetch_invoice()</field>
+        </record>
+
     </data>
 </odoo>

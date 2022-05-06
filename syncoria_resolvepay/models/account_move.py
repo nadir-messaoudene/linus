@@ -46,18 +46,40 @@ class Invoice(models.Model):
 
     def resolvepay_fetch_invoice(self):
         for invoice in self:
+            if self.state != 'posted':
+                raise UserError('This invoice is not confirmed'+self.name)
             resolvepay_instance = self.env['resolvepay.instance'].search([('name', '=', 'ResolvePay')])
             url = resolvepay_instance.instance_baseurl + 'invoices'
             complete_url = url + '/' + invoice.resolvepay_invoice_id
-            res = self.instance_id.get_data(complete_url)
+            res = resolvepay_instance.get_data(complete_url)
             if res.get('data'):
                 data = res.get('data')
                 _logger.info("Invoice data =====> %s", data)
                 try:
                     if data.get('amount_refunded'):
-                        pass
-                    elif data.get('advanced'):
-                        print(data.get('advanced_at'))
+                        move_id = self.env['account.move'].search(
+                            [('invoice_origin', '=', data.get('order_number')), ('move_type', "=", "out_invoice")])
+                        refund_move_id = self.env['account.move'].search(
+                            [('invoice_origin', '=', data.get('order_number')), ('move_type', "=", "out_refund")])
+                        if move_id != invoice:
+                            raise ValidationError("Invoice Resolve Pay-{} is different from Invoice Odoo-{}".format(move_id, invoice))
+                        if move_id == invoice and move_id.payment_state in ['paid', 'in_payment', 'partial'] and not refund_move_id:
+                            journal = self.env['account.journal'].search([('code', '=', 'RSP')])
+                            wizard_vals = {
+                                'refund_method': 'refund',
+                                'date_mode': 'entry',
+                                'journal_id': invoice.journal_id.id
+                            }
+                            reversal_wizard = self.env['account.move.reversal'].with_context(
+                                active_model='account.move',
+                                active_ids=move_id.ids).create(wizard_vals)
+                            reversal_wizard.sudo().reverse_moves()
+                            refund_move_id = self.env['account.move'].search(
+                                [('invoice_origin', '=', data.get('order_number')), ('move_type', "=", "out_refund")])
+                        if refund_move_id and refund_move_id.state != 'posted':
+                            refund_move_id.action_post()
+                            _logger.info("Credit Note-{} Posted for Invoice-{}".format(refund_move_id, invoice))
+                    if data.get('advanced'):
                         move_id = self.env['account.move'].search(
                             [('invoice_origin', '=', data.get('order_number')), ('move_type', "=", "out_invoice")])
                         journal = self.env['account.journal'].search([('code', '=', 'RSP')])
@@ -65,9 +87,9 @@ class Invoice(models.Model):
                             payment_dict = {
                                 'journal_id': journal.id,
                                 'amount': data.get('amount_advance'),
-                                'payment_date': data.get('updated_at'),
+                                'payment_date': data.get('advanced_at'),
                                 'partner_id': invoice.partner_id.id,
-                                'resolvepay_payment_date': data.get('updated_at')
+                                'resolvepay_payment_date': data.get('advanced_at')
                             }
                             payment_method_line_id = journal.inbound_payment_method_line_ids
                             if payment_method_line_id:
@@ -78,19 +100,22 @@ class Invoice(models.Model):
                             if domain:
                                 pay_id = self.env['account.payment'].search(domain, order='id desc', limit=1)
                                 if pay_id:
-                                    if pay_id.resolvepay_payment_date != data.get('updated_at'):
+                                    if pay_id.resolvepay_payment_date != data.get('advanced_at'):
                                         payment_dict['communication'] = pay_id.ref.split('-')[0]
                                         pmt_wizard = self.env['account.payment.register'].with_context(
                                             active_model='account.move', active_ids=move_id.ids).create(payment_dict)
                                         payment = pmt_wizard.action_create_payments()
                                         print("===============>", payment)
+                                        _logger.info(
+                                            "Payment-{} Posted for Invoice-{}".format(payment, invoice))
                                 else:
                                     pmt_wizard = self.env['account.payment.register'].with_context(
                                         active_model='account.move', active_ids=move_id.ids).create(payment_dict)
                                     payment = pmt_wizard.action_create_payments()
                                     print("===============>", payment)
-                    elif data.get('amount_paid'):
-                        print(data.get('advanced_at'))
+                                    _logger.info(
+                                        "Payment-{} Posted for Invoice-{}".format(payment, invoice))
+                    if data.get('amount_paid'):
                         move_id = self.env['account.move'].search(
                             [('invoice_origin', '=', data.get('order_number')), ('move_type', "=", "out_invoice")])
                         journal = self.env['account.journal'].search([('code', '=', 'RSP')])
@@ -110,18 +135,28 @@ class Invoice(models.Model):
                                 domain += [('ref', '=', move.name)]
                             if domain:
                                 pay_id = self.env['account.payment'].search(domain, order='id desc', limit=1)
+                                pay_ids = self.env['account.payment'].search(domain)
                                 if pay_id:
                                     if pay_id.resolvepay_payment_date != data.get('updated_at'):
-                                        payment_dict['communication'] = pay_id.ref.split('-')[0]
-                                        pmt_wizard = self.env['account.payment.register'].with_context(
-                                            active_model='account.move', active_ids=move_id.ids).create(payment_dict)
-                                        payment = pmt_wizard.action_create_payments()
-                                        print("===============>", payment)
+                                        total_amount = 0
+                                        for pay in pay_ids:
+                                            total_amount += pay.amount
+                                        if data.get('amount_paid') > total_amount:
+                                            payment_dict['communication'] = pay_id.ref.split('-')[0]
+                                            payment_dict['amount'] = data.get('amount_paid') - total_amount
+                                            pmt_wizard = self.env['account.payment.register'].with_context(
+                                                active_model='account.move', active_ids=move_id.ids).create(payment_dict)
+                                            payment = pmt_wizard.action_create_payments()
+                                            print("===============>", payment)
+                                            _logger.info(
+                                                "Payment-{} Posted for Invoice-{}".format(payment, invoice))
                                 else:
                                     pmt_wizard = self.env['account.payment.register'].with_context(
                                         active_model='account.move', active_ids=move_id.ids).create(payment_dict)
                                     payment = pmt_wizard.action_create_payments()
                                     print("===============>", payment)
+                                    _logger.info(
+                                        "Payment-{} Posted for Invoice-{}".format(payment, invoice))
                 except Exception as e:
                     _logger.warning("Exception-{}".format(e))
                     raise ValidationError(e)

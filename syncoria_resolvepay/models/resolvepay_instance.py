@@ -2,7 +2,7 @@ from odoo import models, fields, api, _
 import requests
 from odoo.exceptions import UserError, ValidationError
 from requests.auth import HTTPBasicAuth
-
+from odoo.http import request
 import logging
 _logger = logging.getLogger(__name__)
 
