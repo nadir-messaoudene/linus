@@ -19,8 +19,8 @@ odoo.define('syncoria_resolvepay.payment_checkout', require => {
                     modal: true,
                     merchant: {
                       id:          'linusbike',
-                      success_url: 'MERCHANT_WEBSITE/confirm',
-                      cancel_url:  'MERCHANT_WEBSITE/cancel'
+                      success_url: window.location.origin + '/resolvepay/confirm',
+                      cancel_url:  window.location.origin + '/resolvepay/cancel'
                     },
                     customer: {
                       ...orderInfo.customer

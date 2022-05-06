@@ -20,6 +20,32 @@ _logger = logging.getLogger(__name__)
 
 class ResolvepayController(http.Controller):
 
+    @http.route(['/resolvepay/success'], type='http', auth="public", website=True, sitemap=False)
+    def shop_payment_confirmation(self, **post):
+        """ End of checkout process controller. Confirmation is basically seing
+        the status of a sale.order. State at this point :
+
+         - should not have any context / session info: clean them
+         - take a sale.order id, because we request a sale.order and are not
+           session dependant anymore
+        """
+        sale_order_id = request.session.get('sale_last_order_id')
+        if sale_order_id:
+            order = request.env['sale.order'].sudo().browse(sale_order_id)
+            return request.render("syncoria_resolvepay.confirmation", {
+                'order': order,
+            })
+        else:
+            return request.redirect('/shop')
+
+    @http.route(['/resolvepay/cancel'], type='http', auth="public", website=True)
+    def resolvepay_after_success(self, **kw):
+        try:
+            request.website.sale_reset()
+            return request.redirect('/shop')
+        except Exception as e:
+            _logger.warning("Exception-{}".format(e))
+
     @http.route('/shop/resolvepay/get_sale_order', type='json', auth="public", website=True)
     def sale_order_info(self):
         print("sale_order_info")
@@ -69,3 +95,27 @@ class ResolvepayController(http.Controller):
         lastname = fullname[-1]
         firstname = ' '.join(fullname[:name_length - 1])
         return firstname, lastname
+
+    @http.route(['/resolvepay/confirm'], type='http', auth="public", website=True)
+    def resolvepay_after_success(self, charge_id, **kw):
+        try:
+            print("resolvepay_after_success")
+            order = request.website.sale_get_order()
+            print("sale_order ===>>>>", order)
+            order.sudo().action_confirm()
+            _logger.info("Creating Invoice for Sale Order-{}".format(order))
+            wiz = request.env['sale.advance.payment.inv'].sudo().with_context(
+                active_ids=order.ids,
+                open_invoices=True).create({})
+            wiz.sudo().create_invoices()
+            move_id = request.env['account.move'].sudo().search(
+                [('invoice_origin', '=', order.name), ('move_type', "=", "out_invoice")])
+            move_id.resolvepay_invoice_id = charge_id
+            if move_id and move_id.state != 'posted':
+                move_id.sudo().action_post()
+                request.website.sale_reset()
+                return request.redirect('/resolvepay/success')
+        except Exception as e:
+            _logger.warning("Exception-{}".format(e))
+
+

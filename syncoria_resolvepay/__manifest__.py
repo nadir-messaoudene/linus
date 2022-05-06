@@ -14,7 +14,8 @@
         'views/fetch_wizard_view.xml',
         'views/menu_item.xml',
         'views/account_move_view.xml',
-        'views/direct_checkout_view.xml'
+        'views/direct_checkout_view.xml',
+        'views/confirmation_view.xml'
     ],
     'assets': {
         'web.assets_frontend': [
