@@ -83,6 +83,27 @@ class ResolvePay(models.Model):
             raise UserError(_("Error Occured: %s") % e)
         return res
 
+    def put_data(self, url, data=None, headers=None):
+        if not headers or headers is None:
+            headers = {
+                'Content-Type': 'application/json'
+            }
+        _logger.info("Complete_url===>>>%s", url)
+        try:
+            res = dict()
+            response = requests.request('PUT', url, headers=headers, data=data,  auth=HTTPBasicAuth(self.instance_merchant_id, self.instance_secret_key))
+            if response.status_code != 200:
+                content = response.content
+                code = response.status_code
+                _logger.warning(_("Error:" + str(content)))
+                raise ValidationError('API returned %s response: %s' % (code, content))
+            else:
+                res['data'] = response.json()
+        except Exception as e:
+            _logger.info("Exception occured: %s", e)
+            raise UserError(_("Error Occured: %s") % e)
+        return res
+
     def get_net_term(self, net_term):
         net_term_mappings = {
             "Net 30": "net30",

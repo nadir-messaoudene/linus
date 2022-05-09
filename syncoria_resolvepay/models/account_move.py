@@ -9,6 +9,7 @@ class Invoice(models.Model):
     _inherit = 'account.move'
 
     resolvepay_invoice_id = fields.Char(string='ResolvePay Invoice Id')
+    resolvepay_charge_id = fields.Char(string='ResolvePay Charge Id')
 
     def create_invoice_resolvepay(self):
         print('create_invoice_resolvepay')
