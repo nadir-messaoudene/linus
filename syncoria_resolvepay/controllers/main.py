@@ -43,7 +43,7 @@ class ResolvepayController(http.Controller):
             return request.redirect('/shop')
 
     @http.route(['/resolvepay/cancel'], type='http', auth="user", website=True, save_session=False)
-    def resolvepay_after_success(self, **kw):
+    def resolvepay_after_success_cancel(self, **kw):
         try:
             request.website.sale_reset()
             return request.redirect('/shop')
@@ -138,8 +138,25 @@ class ResolvepayController(http.Controller):
                     request.website.sale_reset()
                     return request.redirect('/resolvepay/success')
                 elif data.get('count') > 1:
-                    raise ValidationError("There are more than 1 invoice with the same name-{}".format(invoice_resolvepay[0].get('order_number')))
-                    _logger.info("There are more than 1 invoice with the same name-{}".format(invoice_resolvepay[0].get('order_number')))
+                    _logger.info("There are more than 1 invoice with the same name-{}".format(
+                        invoice_resolvepay[0].get('order_number')))
+                    for iv in invoice_resolvepay:
+                        invoice_date = iv.get('created_at').split('T')[0]
+                        if invoice_date == str(move_id.date):
+                            print('True')
+                            move_id.resolvepay_invoice_id = iv.get('id')
+                            base_url = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
+                            invoice_url = base_url + '/my/invoices/' + str(move_id.id)
+                            invoice_data = dict(
+                                number=move_id.name,
+                                merchant_invoice_url=invoice_url
+                            )
+                            url = url + '/' + move_id.resolvepay_invoice_id
+                            resolvepay_instance.put_data(url=url, data=json.dumps(invoice_data))
+                            request.website.sale_reset()
+                            return request.redirect('/resolvepay/success')
+                    # raise ValidationError("There are more than 1 invoice with the same name-{}".format(invoice_resolvepay[0].get('order_number')))
+
         except Exception as e:
             _logger.warning("Exception-{}".format(e))
 

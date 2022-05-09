@@ -150,6 +150,7 @@ class Invoice(models.Model):
                                 reversal_wizard.sudo().reverse_moves()
                                 refund_move_id = self.env['account.move'].search(
                                     [('invoice_origin', '=', data.get('order_number')), ('move_type', "=", "out_refund")])
+                                refund_move_id.resolvepay_invoice_id = ''
                                 refund_move_id.invoice_line_ids.with_context(check_move_validity=False).unlink()
                                 refund_move_id.invoice_line_ids = [(0, 0, {'move_id': refund_move_id.id,
                                                                        'name': "Refund",
