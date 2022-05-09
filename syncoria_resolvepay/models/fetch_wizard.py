@@ -69,6 +69,6 @@ class ResolvepayFetchInvoice(models.Model):
     )
 
     def fetch_invoices_resolvepay(self):
-        invoice_resolvepay_map = self.env['account.move'].search([('resolvepay_invoice_id', '!=', ''), ('payment_state', 'in', ['not_paid', 'partial']), ('move_type', '=', 'out_invoice')])
+        invoice_resolvepay_map = self.env['account.move'].search([('resolvepay_invoice_id', '!=', ''), ('payment_state', 'in', ['not_paid', 'partial', 'in_payment']), ('move_type', '=', 'out_invoice')])
         for invoice in invoice_resolvepay_map:
             invoice.resolvepay_fetch_invoice()
