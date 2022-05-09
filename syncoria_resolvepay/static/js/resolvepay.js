@@ -16,7 +16,6 @@ odoo.define('syncoria_resolvepay.payment_checkout', require => {
             .then((orderInfo) => {
                 resolve.checkout({
                     sandbox: true, // INCLUDE ONLY IF USING SANDBOX ENVIRONMENT (default is production)
-                    modal: true,
                     merchant: {
                       id:          'linusbike',
                       success_url: window.location.origin + '/resolvepay/confirm',
