@@ -20,6 +20,10 @@ _logger = logging.getLogger(__name__)
 
 class ResolvepayController(http.Controller):
 
+    @http.route(['/confirm'], type='http', auth="public", website=True, sitemap=False, save_session=False)
+    def shop_payment_resolve_pay_confirmation(self, **post):
+        return request.redirect('/testing_confirm')
+
     @http.route(['/resolvepay/success'], type='http', auth="public", website=True, sitemap=False, save_session=False)
     def shop_payment_confirmation(self, **post):
         """ End of checkout process controller. Confirmation is basically seing
