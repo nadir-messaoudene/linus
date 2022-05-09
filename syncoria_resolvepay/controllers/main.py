@@ -20,7 +20,11 @@ _logger = logging.getLogger(__name__)
 
 class ResolvepayController(http.Controller):
 
-    @http.route(['/resolvepay/success'], type='http', auth="user", website=True, sitemap=False)
+    @http.route(['/confirm'], type='http', auth="public", website=True, sitemap=False, save_session=False)
+    def shop_payment_resolve_pay_confirmation(self, **post):
+        return request.redirect('/testing_confirm')
+
+    @http.route(['/resolvepay/success'], type='http', auth="user", website=True, sitemap=False, save_session=False)
     def shop_payment_confirmation(self, **post):
         """ End of checkout process controller. Confirmation is basically seing
         the status of a sale.order. State at this point :
@@ -38,7 +42,7 @@ class ResolvepayController(http.Controller):
         else:
             return request.redirect('/shop')
 
-    @http.route(['/resolvepay/cancel'], type='http', auth="user", website=True)
+    @http.route(['/resolvepay/cancel'], type='http', auth="user", website=True, save_session=False)
     def resolvepay_after_success(self, **kw):
         try:
             request.website.sale_reset()
@@ -46,7 +50,7 @@ class ResolvepayController(http.Controller):
         except Exception as e:
             _logger.warning("Exception-{}".format(e))
 
-    @http.route('/shop/resolvepay/get_sale_order', type='json', auth="user", website=True)
+    @http.route('/shop/resolvepay/get_sale_order', type='json', auth="user", website=True, save_session=False)
     def sale_order_info(self):
         print("sale_order_info")
         order = request.website.sale_get_order()
