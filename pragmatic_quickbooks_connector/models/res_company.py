@@ -15,6 +15,9 @@ _logger = logging.getLogger(__name__)
 class ResCompany(models.Model):
     _inherit = "res.company"
 
+    date_from = fields.Date('From')
+    date_to = fields.Date('To')
+
     def import_all(self):
         company = self.env['res.users'].search([('id', '=', 2)]).company_id
         _logger.info("Cron company is-> {}".format(company))
@@ -496,8 +499,10 @@ class ResCompany(models.Model):
     def import_customers(self):
         company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
         _logger.info("Company is   :-> {} ".format(company))
-        query = "select * from Customer WHERE Id > '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
-        company.last_imported_customer_id, company.start, company.limit)
+        # query = "select * from Customer WHERE Id > '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
+        # company.last_imported_customer_id, company.start, company.limit)
+        query = "select * from Customer WHERE MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id " % (
+        company.date_from, company.date_to)
         url_str = company.get_import_query_url()
         url = url_str.get('url') + '/query?%squery=%s' % (
             'minorversion=' + url_str.get('minorversion') + '&' if url_str.get('minorversion') else '', query)
