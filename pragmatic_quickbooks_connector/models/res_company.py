@@ -506,6 +506,7 @@ class ResCompany(models.Model):
         url = url_str.get('url') + '/query?%squery=%s' % (
             'minorversion=' + url_str.get('minorversion') + '&' if url_str.get('minorversion') else '', query)
         data = requests.request('GET', url, headers=url_str.get('headers'), verify=False)
+        _logger.info(url)
         _logger.info("Customer data is *************** {}".format(data.text))
         if data.status_code == 200:
             _logger.info("Customer data is ------------> {}".format(data))
@@ -523,6 +524,7 @@ class ResCompany(models.Model):
         url_str = company.get_import_query_url()
         url = url_str.get('url') + '/query?%squery=%s' % (
             'minorversion=' + url_str.get('minorversion') + '&' if url_str.get('minorversion') else '', query)
+        _logger.info(url)
         data = requests.request('GET', url, headers=url_str.get('headers'))
         if data.status_code == 200:
             _logger.info("Vendor data is ---------------> {}".format(data.text))
