@@ -140,10 +140,11 @@ class ResolvepayController(http.Controller):
                 elif data.get('count') > 1:
                     _logger.info("There are more than 1 invoice with the same name-{}".format(
                         invoice_resolvepay[0].get('order_number')))
+                    isFound = False
                     for iv in invoice_resolvepay:
                         invoice_date = iv.get('created_at').split('T')[0]
                         if invoice_date == str(move_id.date):
-                            print('True')
+                            isFound = True
                             move_id.resolvepay_invoice_id = iv.get('id')
                             base_url = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
                             invoice_url = base_url + '/my/invoices/' + str(move_id.id)
@@ -155,9 +156,10 @@ class ResolvepayController(http.Controller):
                             resolvepay_instance.put_data(url=url, data=json.dumps(invoice_data))
                             request.website.sale_reset()
                             return request.redirect('/resolvepay/success')
+                    if not isFound:
+                        _logger.info("Can not find corresponding invoice on Resolve Pay")
+                        request.website.sale_reset()
+                        return request.redirect('/shop')
                     # raise ValidationError("There are more than 1 invoice with the same name-{}".format(invoice_resolvepay[0].get('order_number')))
-
         except Exception as e:
             _logger.warning("Exception-{}".format(e))
-
-
