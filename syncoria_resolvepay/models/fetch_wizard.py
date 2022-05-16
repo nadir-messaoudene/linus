@@ -27,9 +27,10 @@ class ResolvepayFetch(models.Model):
                     if partner:
                         partner.resolvepay_customer_id = customer.get('id')
                         partner.available_credit = customer.get('amount_available')
-                        partner.advance_rate = customer.get('advance_rate')
-                        partner.terms = customer.get('default_terms')
-                        partner.net_terms_status = customer.get('net_terms_status')
+                        partner.advance_rate = customer.get('advance_rate') * 100 if customer.get('advance_rate') else customer.get('advance_rate')
+                        partner.terms = customer.get('default_terms').capitalize() if customer.get('default_terms') else customer.get('default_terms')
+                        partner.net_terms_status = customer.get('net_terms_status').capitalize() if customer.get('net_terms_status') else customer.get('net_terms_status')
+                        partner.credit_status = customer.get('credit_status').capitalize() if customer.get('credit_status') else customer.get('credit_status')
                     else:
                         try:
                             partner_dict = {}
@@ -51,9 +52,10 @@ class ResolvepayFetch(models.Model):
                             partner_dict['phone'] = customer.get('business_ap_phone')
                             partner_dict['name'] = customer.get('business_name')
                             partner_dict['available_credit'] = customer.get('amount_available')
-                            partner_dict['advance_rate'] = customer.get('advance_rate')
-                            partner_dict['terms'] = customer.get('default_terms')
-                            partner_dict['net_terms_status'] = customer.get('net_terms_status')
+                            partner_dict['advance_rate'] = customer.get('advance_rate') * 100 if customer.get('advance_rate') else customer.get('advance_rate')
+                            partner_dict['terms'] = customer.get('default_terms').capitalize() if customer.get('default_terms') else customer.get('default_terms')
+                            partner_dict['net_terms_status'] = customer.get('net_terms_status').capitalize() if customer.get('net_terms_status') else customer.get('net_terms_status')
+                            partner_dict['credit_status'] = customer.get('credit_status').capitalize() if customer.get('credit_status') else customer.get('credit_status')
                             self.env['res.partner'].with_context(res_partner_search_mode='customer').create(partner_dict)
                         except Exception as e:
                             _logger.info("Error occurred =====> %s", e)

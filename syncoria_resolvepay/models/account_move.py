@@ -179,9 +179,27 @@ class Invoice(models.Model):
                                                                            'name': "Refund",
                                                                            'quantity': 1,
                                                                            'price_unit': data.get('amount_refunded') - total_refund})]
-                        if refund_move_id and refund_move_id.state != 'posted':
-                            refund_move_id.action_post()
-                            _logger.info("Credit Note-{} Posted for Invoice-{}".format(refund_move_id, invoice))
+                            if refund_move_id and refund_move_id.state != 'posted':
+                                refund_move_id.action_post()
+                                _logger.info("Credit Note-{} Posted for Invoice-{}".format(refund_move_id, invoice))
+                            if not journal:
+                                raise ValidationError('Can not find Resolve Pay journal')
+                            if journal and refund_move_id:
+                                payment_dict = {
+                                    'journal_id': journal.id,
+                                    'amount': refund_move_id.amount_total,
+                                    'payment_date': data.get('updated_at'),
+                                }
+                                payment_method_line_id = journal.outbound_payment_method_line_ids
+                                if payment_method_line_id:
+                                    payment_dict['payment_method_line_id'] = payment_method_line_id.id
+                                pmt_wizard = self.env['account.payment.register'].with_context(
+                                    active_model='account.move', active_ids=refund_move_id.ids).create(
+                                    payment_dict)
+                                payment = pmt_wizard.action_create_payments()
+                                print("===============>", payment)
+                                _logger.info(
+                                    "Payment-{} Posted for Credit Note-{}".format(payment, refund_move_id))
                 except Exception as e:
                     _logger.info("Exception-{}".format(e))
                     raise ValidationError(e)

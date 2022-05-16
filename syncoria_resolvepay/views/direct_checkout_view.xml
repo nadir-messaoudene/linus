@@ -3,7 +3,7 @@
 
     <template id="resolvepay_payment_footer_inherit" name="resolvepay_payment_footer_inherit" inherit_id="website_sale.payment_footer">
         <xpath expr="//button[@name='o_payment_submit_button']" position="before">
-            <t t-if="env.user.has_group('base.group_user')">
+<!--            <t t-if="env.user.has_group('base.group_user')">-->
                 <button name="resolvepay_direct_checkout"
                     id="resolvepay_direct_checkout"
                     type="button"
@@ -11,7 +11,7 @@
                     data-icon-class="fa-chevron-right">
                  Pay with Resolve Pay <i class="fa fa-chevron-right"/>
                 </button>
-            </t>
+<!--            </t>-->
         </xpath>
     </template>
 

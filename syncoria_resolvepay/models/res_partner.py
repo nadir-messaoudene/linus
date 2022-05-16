@@ -12,9 +12,10 @@ class ResPartner(models.Model):
 
     resolvepay_customer_id = fields.Char(string='ResolvePay Customer Id')
     available_credit = fields.Integer(string='Available Credit', tracking=True)
-    advance_rate = fields.Float(string='Advance Rate', tracking=True)
+    advance_rate = fields.Float(string='Advance Rate (%)', tracking=True)
     terms = fields.Char(string='Terms', tracking=True)
-    net_terms_status = fields.Char(string='Credit Line Status', tracking=True)
+    net_terms_status = fields.Char(string='Net Term Status', tracking=True)
+    credit_status = fields.Char(string='Credit Check Status', tracking=True)
 
     def create_customer_resolvepay(self):
         print('create_customer_resolvepay')
@@ -56,8 +57,9 @@ class ResPartner(models.Model):
                         self.message_post(body="Export to ResolvePay successfully. ResolvePay Customer ID: {}".format(data.get('id')))
                         self.resolvepay_customer_id = data.get('id')
                         self.available_credit = data.get('amount_available')
-                        self.advance_rate = data.get('advance_rate')
-                        self.terms = data.get('default_terms')
-                        self.net_terms_status = data.get('net_terms_status')
+                        self.advance_rate = data.get('advance_rate') * 100 if data.get('advance_rate') else data.get('advance_rate')
+                        self.terms = data.get('default_terms').capitalize() if data.get('default_terms') else data.get('default_terms')
+                        self.net_terms_status = data.get('net_terms_status').capitalize() if data.get('net_terms_status') else data.get('net_terms_status')
+                        self.credit_status = data.get('credit_status').capitalize() if data.get('credit_status') else data.get('credit_status')
                 else:
                     raise UserError('There is no ResolvePay instance')
