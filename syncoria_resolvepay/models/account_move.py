@@ -192,7 +192,7 @@ class Invoice(models.Model):
                                 }
                                 payment_method_line_id = journal.outbound_payment_method_line_ids
                                 if payment_method_line_id:
-                                    payment_dict['payment_method_line_id'] = payment_method_line_id.id
+                                    payment_dict['payment_method_line_id'] = payment_method_line_id[0].id
                                 pmt_wizard = self.env['account.payment.register'].with_context(
                                     active_model='account.move', active_ids=refund_move_id.ids).create(
                                     payment_dict)

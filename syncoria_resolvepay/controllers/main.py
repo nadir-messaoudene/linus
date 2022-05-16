@@ -108,6 +108,8 @@ class ResolvepayController(http.Controller):
             if res.get('data'):
                 data = res.get('data')
                 if data.get('amount') == order.amount_total and data.get('order_number') == order.name:
+                    tag_id = request.env['crm.tag'].sudo().search([('name', '=', 'B2B')])
+                    order.tag_ids = [(4, tag_id.id)]
                     order.sudo().action_confirm()
                     _logger.info("Creating Invoice for Sale Order-{}".format(order))
                     wiz = request.env['sale.advance.payment.inv'].sudo().with_context(
