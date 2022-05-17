@@ -13,38 +13,40 @@ class Invoice(models.Model):
     available_credit = fields.Integer(string='Available Credit', related='partner_id.available_credit')
 
     def create_invoice_resolvepay(self):
-        print('create_invoice_resolvepay')
-        sale_order = self.env['sale.order'].search([('name', '=', self.invoice_origin)])
-        if not sale_order:
-            raise UserError('This invoice does not belong to any order')
-        tag = sale_order.tag_ids.search([('name', '=', 'B2B')])
-        if not tag:
-            raise UserError('The order that produced this invoice does not have tag B2B')
-        if self.resolvepay_invoice_id:
-            raise UserError('This invoice is already exported. ResolvepayId: ' + self.resolvepay_invoice_id)
-        resolvepay_instance = self.env['resolvepay.instance'].search([('name', '=', 'ResolvePay')])
-        if len(resolvepay_instance):
-            url = resolvepay_instance.instance_baseurl + 'invoices'
-            base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
-            invoice_url = base_url + '/my/invoices/' + str(self.id)
-            print(invoice_url)
-            if not self.partner_id.resolvepay_customer_id:
-                raise ValidationError('This customer does not exist in ResolvePay')
-            invoice_data = dict(
-                amount=self.amount_total,
-                customer_id=self.partner_id.resolvepay_customer_id,
-                number=self.name,
-                order_number=self.invoice_origin,
-                merchant_invoice_url=invoice_url
-            )
-            res = resolvepay_instance.post_data(url=url, data=json.dumps(invoice_data))
-            if res.get('data'):
-                data = res.get('data')
-                self.message_post(
-                    body="Export to ResolvePay successfully. ResolvePay Invoice ID: {}".format(data.get('id')))
-                self.resolvepay_invoice_id = data.get('id')
-        else:
-            raise UserError('There is no ResolvePay instance')
+        for record in self:
+            if record.state != 'posted':
+                raise UserError('This invoice is in draft mode')
+            sale_order = self.env['sale.order'].search([('name', '=', record.invoice_origin)])
+            if not sale_order:
+                raise UserError('This invoice does not belong to any order')
+            tag = sale_order.tag_ids.search([('name', '=', 'B2B')])
+            if not tag:
+                raise UserError('The order that produced this invoice does not have tag B2B')
+            if record.resolvepay_invoice_id:
+                raise UserError('This invoice is already exported. ResolvepayId: ' + record.resolvepay_invoice_id)
+            resolvepay_instance = self.env['resolvepay.instance'].search([('name', '=', 'ResolvePay')])
+            if len(resolvepay_instance):
+                url = resolvepay_instance.instance_baseurl + 'invoices'
+                base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+                invoice_url = base_url + '/my/invoices/' + str(record.id)
+                print(invoice_url)
+                if not record.partner_id.resolvepay_customer_id:
+                    raise ValidationError('This customer does not exist in ResolvePay')
+                invoice_data = dict(
+                    amount=record.amount_total,
+                    customer_id=record.partner_id.resolvepay_customer_id,
+                    number=record.name,
+                    order_number=record.invoice_origin,
+                    merchant_invoice_url=invoice_url
+                )
+                res = resolvepay_instance.post_data(url=url, data=json.dumps(invoice_data))
+                if res.get('data'):
+                    data = res.get('data')
+                    record.message_post(
+                        body="Export to ResolvePay successfully. ResolvePay Invoice ID: {}".format(data.get('id')))
+                    record.resolvepay_invoice_id = data.get('id')
+            else:
+                raise UserError('There is no ResolvePay instance')
 
     def resolvepay_fetch_invoice(self):
         for invoice in self:

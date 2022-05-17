@@ -24,12 +24,12 @@
             <field name="model">resolvepay.instance</field>
             <field name="arch" type="xml">
                 <form>
+                    <header>
+                        <button string="Connect" class="btn btn-primary" name="check_connect_access" type="object" attrs="{  'invisible': [('connect_state','in',('confirm'))]  }" />
+                        <button string="Disconnect" class="btn btn-primary" name="disconnect_access" type="object" attrs="{  'invisible': [('connect_state','in',('draft'))]  }"/>
+                        <field name="connect_state" widget="statusbar" statusbar_visible="draft,confirm"/>
+                    </header>
                     <sheet>
-                        <header>
-                            <button string="Connect" class="btn btn-primary" name="check_connect_access" type="object" attrs="{  'invisible': [('connect_state','in',('confirm'))]  }" />
-                            <button string="Disconnect" class="btn btn-primary" name="disconnect_access" type="object" attrs="{  'invisible': [('connect_state','in',('draft'))]  }"/>
-                            <field name="connect_state" widget="statusbar" statusbar_visible="draft,confirm"/>
-                        </header>
                         <group>
                             <field name="name"/>
                         </group>
