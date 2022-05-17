@@ -13,6 +13,7 @@
                 </xpath>
                 <xpath expr="//field[@name='partner_id']" position="after">
                     <field name="resolvepay_invoice_id" readonly="1"/>
+                    <field name="available_credit" readonly="1"/>
                 </xpath>
             </field>
 	    </record>

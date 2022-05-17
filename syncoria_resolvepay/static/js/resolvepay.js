@@ -14,6 +14,10 @@ odoo.define('syncoria_resolvepay.payment_checkout', require => {
                 route: "/shop/resolvepay/get_sale_order",
             })
             .then((orderInfo) => {
+                if (!orderInfo) {
+                    alert('You do not have enough credit')
+                    return
+                }
                 resolve.checkout({
                     sandbox: true, // INCLUDE ONLY IF USING SANDBOX ENVIRONMENT (default is production)
                     merchant: {

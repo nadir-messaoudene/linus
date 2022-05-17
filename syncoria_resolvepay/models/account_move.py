@@ -10,6 +10,7 @@ class Invoice(models.Model):
 
     resolvepay_invoice_id = fields.Char(string='ResolvePay Invoice Id')
     resolvepay_charge_id = fields.Char(string='ResolvePay Charge Id')
+    available_credit = fields.Integer(string='Available Credit', related='partner_id.available_credit')
 
     def create_invoice_resolvepay(self):
         print('create_invoice_resolvepay')

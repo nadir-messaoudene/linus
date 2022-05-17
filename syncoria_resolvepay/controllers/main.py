@@ -48,46 +48,65 @@ class ResolvepayController(http.Controller):
 
     @http.route('/shop/resolvepay/get_sale_order', type='json', auth="public", website=True, save_session=False)
     def sale_order_info(self):
-        print("sale_order_info")
         order = request.website.sale_get_order()
-        print("sale_order ===>>>>", order)
+        move_id = request.env['account.move'].sudo().search(
+            [('invoice_origin', '=', order.name), ('move_type', "=", "out_invoice")])
+        if move_id:
+            return False
         customer_fname, customer_lname = self.name_split(order.partner_id.name)
         invoice_fname, invoice_lname = self.name_split(order.partner_invoice_id.name)
         item_list = []
-        for item in order.order_line:
-            item_list.append(dict(
-                name=item.name,
-                sku=item.product_id.default_code,
-                unit_price=item.price_unit,
-                quantity=item.product_uom_qty
-            ))
-        return dict(
-            customer=dict(
-                first_name=customer_fname,
-                last_name=customer_lname,
-                phone=order.partner_id.phone,
-                email=order.partner_id.email
-            ),
-            shipping=dict(
-                name=order.partner_shipping_id.name,
-                phone=order.partner_shipping_id.phone,
-                address_line1=order.partner_shipping_id.street,
-                address_line2=order.partner_shipping_id.street2,
-                address_city=order.partner_shipping_id.city,
-                address_postal=order.partner_shipping_id.zip,
-                address_country=order.partner_shipping_id.country_id.code
-            ),
-            billing=dict(
-                first_name=invoice_fname,
-                last_name=invoice_lname,
-                phone=order.partner_invoice_id.phone
-            ),
-            item=item_list,
-            order_number=order.name,
-            shipping_amount=0,
-            tax_amount=order.amount_tax,
-            total_amount=order.amount_total
-        )
+        order.sudo().action_confirm()
+        tag_id = request.env['crm.tag'].sudo().search([('name', '=', 'B2B')])
+        order.tag_ids = [(4, tag_id.id)]
+        _logger.info("Creating Invoice for Sale Order-{}".format(order))
+        wiz = request.env['sale.advance.payment.inv'].sudo().with_context(
+            active_ids=order.ids,
+            open_invoices=True).create({})
+        wiz.sudo().create_invoices()
+        move_id = request.env['account.move'].sudo().search(
+            [('invoice_origin', '=', order.name), ('move_type', "=", "out_invoice")])
+        if order.partner_id.available_credit < order.amount_total:
+            move_id.message_post(body=_(
+                "Customer does not have enough credit"))
+            return False
+        else:
+            if move_id and move_id.state != 'posted':
+                move_id.sudo().action_post()
+                for item in order.order_line:
+                    item_list.append(dict(
+                        name=item.name,
+                        sku=item.product_id.default_code,
+                        unit_price=item.price_unit,
+                        quantity=item.product_uom_qty
+                    ))
+                return dict(
+                    customer=dict(
+                        first_name=customer_fname,
+                        last_name=customer_lname,
+                        phone=order.partner_id.phone,
+                        email=order.partner_id.email
+                    ),
+                    shipping=dict(
+                        name=order.partner_shipping_id.name,
+                        phone=order.partner_shipping_id.phone,
+                        address_line1=order.partner_shipping_id.street,
+                        address_line2=order.partner_shipping_id.street2,
+                        address_city=order.partner_shipping_id.city,
+                        address_postal=order.partner_shipping_id.zip,
+                        address_country=order.partner_shipping_id.country_id.code
+                    ),
+                    billing=dict(
+                        first_name=invoice_fname,
+                        last_name=invoice_lname,
+                        phone=order.partner_invoice_id.phone
+                    ),
+                    item=item_list,
+                    order_number=move_id.name,
+                    shipping_amount=0,
+                    tax_amount=order.amount_tax,
+                    total_amount=order.amount_total
+                )
 
     def name_split(self, customer_name):
         fullname = customer_name.split(' ')
@@ -99,30 +118,18 @@ class ResolvepayController(http.Controller):
     @http.route(['/resolvepay/confirm'], type='http', auth="public", website=True, csrf=False, save_session=False)
     def resolvepay_after_success(self, charge_id, **kw):
         try:
-            print("resolvepay_after_success")
             order = request.website.sale_get_order()
-            print("sale_order ===>>>>", order)
             resolvepay_instance = request.env['resolvepay.instance'].sudo().search([('name', '=', 'ResolvePay')])
             check_charge_id_url = resolvepay_instance.instance_baseurl + 'charges/' + charge_id
             res = resolvepay_instance.get_data(check_charge_id_url)
             if res.get('data'):
                 data = res.get('data')
-                if data.get('amount') == order.amount_total and data.get('order_number') == order.name:
-                    tag_id = request.env['crm.tag'].sudo().search([('name', '=', 'B2B')])
-                    order.tag_ids = [(4, tag_id.id)]
-                    order.sudo().action_confirm()
-                    _logger.info("Creating Invoice for Sale Order-{}".format(order))
-                    wiz = request.env['sale.advance.payment.inv'].sudo().with_context(
-                        active_ids=order.ids,
-                        open_invoices=True).create({})
-                    wiz.sudo().create_invoices()
-                    move_id = request.env['account.move'].sudo().search(
-                        [('invoice_origin', '=', order.name), ('move_type', "=", "out_invoice")])
+                move_id = request.env['account.move'].sudo().search(
+                    [('invoice_origin', '=', order.name), ('move_type', "=", "out_invoice")])
+                if data.get('amount') == order.amount_total and data.get('order_number') == move_id.name:
                     move_id.resolvepay_charge_id = charge_id
-                    if move_id and move_id.state != 'posted':
-                        move_id.sudo().action_post()
                     url = resolvepay_instance.instance_baseurl + 'invoices'
-                    res = resolvepay_instance.get_data(url, params={"filter[order_number][eq]": order.name})
+                    res = resolvepay_instance.get_data(url, params={"filter[order_number][eq]": move_id.name})
                     if res.get('data'):
                         data = res.get('data')
                         _logger.info("Invoice data =====> %s", data)
@@ -134,6 +141,7 @@ class ResolvepayController(http.Controller):
                             invoice_url = base_url + '/my/invoices/' + str(move_id.id)
                             invoice_data = dict(
                                 number=move_id.name,
+                                order_number=order.name,
                                 merchant_invoice_url=invoice_url
                             )
                             url = url + '/' + move_id.resolvepay_invoice_id
