@@ -145,7 +145,7 @@ class ResolvepayController(http.Controller):
                                 merchant_invoice_url=invoice_url
                             )
                             url = url + '/' + move_id.resolvepay_invoice_id
-                            resolvepay_instance.put_data(url=url, data=json.dumps(invoice_data))
+                            # resolvepay_instance.put_data(url=url, data=json.dumps(invoice_data))
                             request.website.sale_reset()
                             return request.redirect('/resolvepay/success')
                         elif data.get('count') > 1:
@@ -161,10 +161,11 @@ class ResolvepayController(http.Controller):
                                     invoice_url = base_url + '/my/invoices/' + str(move_id.id)
                                     invoice_data = dict(
                                         number=move_id.name,
+                                        order_number=order.name,
                                         merchant_invoice_url=invoice_url
                                     )
                                     url = url + '/' + move_id.resolvepay_invoice_id
-                                    resolvepay_instance.put_data(url=url, data=json.dumps(invoice_data))
+                                    # resolvepay_instance.put_data(url=url, data=json.dumps(invoice_data))
                                     request.website.sale_reset()
                                     return request.redirect('/resolvepay/success')
                             if not isFound:
