@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    <data>
+        <record id="create_customer_resolvepay" model="ir.actions.server">
+            <field name="name">Export to ResolvePay</field>
+            <field name="model_id" ref="base.model_res_partner"/>
+            <field name="binding_model_id" ref="base.model_res_partner"/>
+            <field name="binding_view_types">list,tree,form</field>
+            <field name="state">code</field>
+            <field name="code">if records:
+                records.create_customer_resolvepay()</field>
+        </record>
+
+        <record id="res_partner_resolvepay_form_inherit" model="ir.ui.view">
+            <field name="name">res.partner.resolvepay.form.inherit</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form" />
+            <field name="arch" type="xml">
+                <xpath expr="//notebook" position="inside">
+                    <page string="ResolvePay" attrs="{'invisible': [('resolvepay_customer_id','=',False)]}">
+                        <group>
+                            <field name="resolvepay_customer_id" readonly="1"/>
+                            <field name="available_credit" readonly="1"/>
+                            <field name="advance_rate" readonly="1"/>
+                            <field name="terms" readonly="1"/>
+                            <field name="net_terms_status" readonly="1"/>
+                            <field name="credit_status" readonly="1"/>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+	    </record>
+
+    </data>
+</odoo>
