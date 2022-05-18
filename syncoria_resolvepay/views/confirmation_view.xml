@@ -30,6 +30,20 @@
                                         </tr>
                                     </tbody>
                                 </table>
+                                <t t-if="order.amount_total &gt; order.partner_id.available_credit">
+                                    <div class="card bg-danger">
+                                        <div class="card-header">
+                                            <div>
+                                                <h3>You don't have enough credit for this order. Order is under reviewed.</h3>
+                                                <h4>Communication</h4>
+                                                <p>Please use the order name as communication reference.</p>
+                                            </div>
+                                        </div>
+                                        <div class="card-body">
+                                            <b>Communication: </b><span t-esc='order.name'/>
+                                        </div>
+                                    </div>
+                                </t>
                                 <div class="card mt-3">
                                   <div class="card-body">
                                     <t t-set="same_shipping" t-value="bool(order.partner_shipping_id==order.partner_id or only_services)" />
