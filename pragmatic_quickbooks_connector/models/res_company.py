@@ -499,8 +499,8 @@ class ResCompany(models.Model):
     def import_customers(self):
         company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
         _logger.info("Company is   :-> {} ".format(company))
-        query = "select * from Customer WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
-        company.last_imported_customer_id, company.date_from, company.date_to, company.start, company.limit)
+        query = "select * from Customer WHERE Id > '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
+        company.last_imported_customer_id, company.start, company.limit)
         url_str = company.get_import_query_url()
         url = url_str.get('url') + '/query?%squery=%s' % (
             'minorversion=' + url_str.get('minorversion') + '&' if url_str.get('minorversion') else '', query)
@@ -519,7 +519,7 @@ class ResCompany(models.Model):
     def import_vendors(self):
         company = self.env['res.users'].search([('id', '=', self._uid)], limit=1).company_id
         # query = "select * from vendor WHERE Id > '%s' order by Id" % (company.last_imported_vendor_id)
-        query = "select * from Vendor WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION '%s' MAXRESULTS '%s' " % (
+        query = "select * from Vendor WHERE Id > '%s' order by Id STARTPOSITION '%s' MAXRESULTS '%s' " % (
         company.last_imported_vendor_id, company.date_from, company.date_to, company.start, company.limit)
         url_str = company.get_import_query_url()
         url = url_str.get('url') + '/query?%squery=%s' % (
