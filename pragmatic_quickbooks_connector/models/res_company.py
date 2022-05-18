@@ -501,7 +501,6 @@ class ResCompany(models.Model):
         _logger.info("Company is   :-> {} ".format(company))
         query = "select * from Customer WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
         company.last_imported_customer_id, company.date_from, company.date_to, company.start, company.limit)
-        query = "select * from Customer"
         url_str = company.get_import_query_url()
         url = url_str.get('url') + '/query?%squery=%s' % (
             'minorversion=' + url_str.get('minorversion') + '&' if url_str.get('minorversion') else '', query)
