@@ -167,7 +167,7 @@ class ResolvepayController(http.Controller):
                                     url = url + '/' + move_id.resolvepay_invoice_id
                                     # resolvepay_instance.put_data(url=url, data=json.dumps(invoice_data))
                                     request.website.sale_reset()
-                                    return request.redirect('/resolvepay/success')
+                                    return request.redirect('/shop/confirmation')
                             if not isFound:
                                 _logger.info("Can not find corresponding invoice from Resolve Pay")
                                 request.website.sale_reset()
