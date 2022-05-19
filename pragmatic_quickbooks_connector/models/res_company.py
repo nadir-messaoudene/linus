@@ -1445,7 +1445,7 @@ class ResCompany(models.Model):
             # query = "select * from estimate WHERE Id > '%s' order by Id  STARTPOSITION %s MAXRESULTS %s " % (
             # company.quickbooks_last_sale_imported_id, company.start, company.limit)
             # query = "select * from estimate WHERE MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id" % (company.date_from, company.date_to)
-            query = "select * from estimate WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION '%s' MAXRESULTS '%s' " % (
+            query = "select * from estimate WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
             company.quickbooks_last_sale_imported_id, company.date_from, company.date_to, company.start, company.limit)
             _logger.info("Query is -----> {}".format(query))
             data = requests.request('GET', company.url + str(company.realm_id) + "/query?query=" + query,
@@ -1868,7 +1868,7 @@ class ResCompany(models.Model):
             # query = "select * from purchaseorder WHERE Id > '%s' order by Id" % (
             #     company.quickbooks_last_purchase_imported_id)
             # query = "select * from purchaseorder WHERE MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id" % (company.date_from, company.date_to)
-            query = "select * from purchaseorder WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION '%s' MAXRESULTS '%s' " % (
+            query = "select * from purchaseorder WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
             company.quickbooks_last_purchase_imported_id, company.date_from, company.date_to, company.start, company.limit)
             data = requests.request('GET', company.url + str(company.realm_id) + "/query?query=" + query,
                                     headers=headers)
