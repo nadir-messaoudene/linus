@@ -342,8 +342,8 @@ class AccountInvoice(models.Model):
                             invoice_obj = self.env['res.partner'].search([('id', '=', dict_i.get('partner_id'))],
                                                                          limit=1)
                             invoice_line = self.odoo_create_invoice_line_dict(cust, invoice_obj, type,dict_i.get('qbo_invoice_id'))
-                            if not invoice_line:
-                                continue
+                            # if not invoice_line:
+                            #     continue
                             if invoice_line:
                                 for k in invoice_line:
                                     dict_i['invoice_line_ids'].append((0, 0, k))
