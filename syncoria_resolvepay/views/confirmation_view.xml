@@ -66,4 +66,20 @@
             </div>
         </t>
     </template>
+
+    <template id="pre_confirmation">
+        <t t-call="website.layout">
+            <div align="center">
+                <h1 style="font-weight: bold; margin-top: 50px; margin-bottom: 10px;">WARNING</h1>
+                <h2>Your order exceeds the Resolve Pay credit on your account ($<t t-esc="order.partner_id.available_credit" />)</h2>
+                <h2>Are you sure you want to submit the order?</h2>
+                <button type="button" class="btn btn-primary" data-icon-class="fa-chevron-right">
+                    <a href="/shop/payment" style="color:white;">Cancel</a>
+                </button>
+                <button type="button" class="btn btn-primary" data-icon-class="fa-chevron-right">
+                    <a href="/resolvepay/success" style="color:white;">Submit</a>
+                </button>
+            </div>
+        </t>
+    </template>
 </odoo>

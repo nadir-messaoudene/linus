@@ -38,7 +38,7 @@ odoo.define('syncoria_resolvepay.payment_checkout', require => {
             })
             .then((orderInfo) => {
                 if (!orderInfo) {
-                    window.location.replace('/resolvepay/success');
+                    window.location.replace('/resolvepay/pre_confirmation');
                 } else {
                     resolve.checkout({
                     sandbox: true, // INCLUDE ONLY IF USING SANDBOX ENVIRONMENT (default is production)
