@@ -99,6 +99,57 @@ class AccountInvoice(models.Model):
         else:
             return False
 
+    def single_import_partner(self, qbo_id):
+        company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
+        _logger.info("Company is   :-> {} ".format(company))
+        query = "select * from Customer WHERE Id = '%s'" % (qbo_id)
+        url_str = company.get_import_query_url()
+        url = url_str.get('url') + '/query?%squery=%s' % (
+            'minorversion=' + url_str.get('minorversion') + '&' if url_str.get('minorversion') else '', query)
+        data = requests.request('GET', url, headers=url_str.get('headers'), verify=False)
+        _logger.info(url)
+        _logger.info("Customer data is *************** {}".format(data.text))
+        if data.status_code == 200:
+            partner = self.env['res.partner'].create_partner(data, is_customer=True)
+            return partner
+        else:
+            raise UserError("Empty Data")
+            _logger.warning(_('Empty data'))
+
+    def single_import_vendor(self, qbo_id):
+        company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
+        _logger.info("Company is   :-> {} ".format(company))
+        query = "select * from Vendor WHERE Id = '%s'" % (qbo_id)
+        url_str = company.get_import_query_url()
+        url = url_str.get('url') + '/query?%squery=%s' % (
+            'minorversion=' + url_str.get('minorversion') + '&' if url_str.get('minorversion') else '', query)
+        data = requests.request('GET', url, headers=url_str.get('headers'), verify=False)
+        _logger.info(url)
+        _logger.info("Vendor data is *************** {}".format(data.text))
+        if data.status_code == 200:
+            partner = self.env['res.partner'].create_partner(data, is_vendor=True)
+            return partner
+        else:
+            raise UserError("Empty Data")
+            _logger.warning(_('Empty data'))
+
+    def single_import_chart_of_account(self, qbo_id):
+        company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
+        _logger.info("Company is   :-> {} ".format(company))
+        query = "select * from Account WHERE Id = '%s'" % (qbo_id)
+        url_str = company.get_import_query_url()
+        url = url_str.get('url') + '/query?%squery=%s' % (
+            'minorversion=' + url_str.get('minorversion') + '&' if url_str.get('minorversion') else '', query)
+        data = requests.request('GET', url, headers=url_str.get('headers'), verify=False)
+        _logger.info(url)
+        _logger.info("Account data is *************** {}".format(data.text))
+        if data.status_code == 200:
+            acc = self.env['account.account'].create_account_account(data)
+            return acc
+        else:
+            raise UserError("Empty Data")
+            _logger.warning(_('Empty data'))
+
     def create_invoice_dict(self, cust, type):
         dict_i = {}
         if type == 'out_invoice' or type == 'out_refund':
@@ -108,8 +159,16 @@ class AccountInvoice(models.Model):
         # print ("assssssssssssssssssssssssssssssssssssss", cust.get(partner_type).get('value'))
         if type == 'in_invoice':
             res_partner = self.env['res.partner'].search([('qbo_vendor_id', '=', cust.get(partner_type).get('value'))], limit=1)
+            if not res_partner:
+                res_partner = self.single_import_vendor(cust.get(partner_type).get('value'))
         else:
             res_partner = self.env['res.partner'].search([('qbo_customer_id', '=', cust.get(partner_type).get('value'))], limit=1)
+            if not res_partner:
+                # if '(deleted)' in cust.get(partner_type).get('name'):
+                #     _logger.info("Partner is deleted ---> Id:{} Name: {}".format(cust.get(partner_type).get('value'), cust.get(partner_type).get('name')))
+                #     return False
+                # else:
+                res_partner = self.single_import_partner(cust.get(partner_type).get('value'))
 
         _logger.info("Partner is ---> {}".format(res_partner))
 
@@ -182,7 +241,8 @@ class AccountInvoice(models.Model):
             headers['accept'] = 'application/json'
             headers['Content-Type'] = 'text/plain'
 
-            query = "select * from invoice WHERE Id > '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (company.quickbooks_last_invoice_imported_id, company.start, company.limit)
+            query = "select * from invoice WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
+                company.quickbooks_last_invoice_imported_id, company.date_from, company.date_to, company.start, company.limit)
             # query = "select * from invoice WHERE Id = '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (119, company.start, company.limit)
             data = requests.request('GET', company.url + str(company.realm_id) + "/query?query=" + query,headers=headers)
             if data.status_code == 200:
@@ -197,14 +257,18 @@ class AccountInvoice(models.Model):
             headers['accept'] = 'application/json'
             headers['Content-Type'] = 'text/plain'
 
-            query = "select * from CreditMemo WHERE Id > '%s' order by Id" % (company.quickbooks_last_credit_note_imported_id)
-
+            # query = "select * from CreditMemo WHERE Id > '%s' order by Id" % (company.quickbooks_last_credit_note_imported_id)
+            query = "select * from CreditMemo WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
+                company.quickbooks_last_credit_note_imported_id, company.date_from, company.date_to, company.start,
+                company.limit)
             data = requests.request('GET', company.url + str(company.realm_id) + "/query?query=" + query,
                                     headers=headers)
             if data.status_code == 200:
                 self.create_invoice(data, 'out_refund')
             else:
-                _logger.error('Connection Error...!')
+                _logger.error(data)
+                raise UserError('Connection Error...!')
+
     def import_vendor_bill(self):
         # print ("------------------------------------------------------------------------000000000000000000000000")
         company = self.env['res.users'].search([('id', '=', 2)]).company_id
@@ -217,12 +281,18 @@ class AccountInvoice(models.Model):
             headers['accept'] = 'application/json'
             headers['Content-Type'] = 'text/plain'
 
-            query = "select * from Bill WHERE Id > '%s' order by Id" % (
-                company.quickbooks_last_vendor_bill_imported_id)
-
+            # query = "select * from Bill WHERE Id > '%s' order by Id" % (
+            #     company.quickbooks_last_vendor_bill_imported_id)
+            query = "select * from bill WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
+                company.quickbooks_last_vendor_bill_imported_id, company.date_from, company.date_to, company.start,
+                company.limit)
             data = requests.request('GET', company.url + str(company.realm_id) + "/query?query=" + query, headers=headers)
             if data.status_code == 200:
                 self.create_invoice(data, 'in_invoice')
+            else:
+                _logger.info(data)
+                raise UserError("Connection Error !!!")
+
 
     def create_invoice(self, data, type='out_invoice'):
 
@@ -266,10 +336,14 @@ class AccountInvoice(models.Model):
                             _logger.info("Attempting for Invoice Creation")
                             _logger.info("QBO obj is -----> {}".format(cust))
                             dict_i = self.create_invoice_dict(cust, type)
+                            # if not dict_i:
+                            #     continue
                             dict_i['invoice_line_ids'] = []
                             invoice_obj = self.env['res.partner'].search([('id', '=', dict_i.get('partner_id'))],
                                                                          limit=1)
                             invoice_line = self.odoo_create_invoice_line_dict(cust, invoice_obj, type,dict_i.get('qbo_invoice_id'))
+                            if not invoice_line:
+                                continue
                             if invoice_line:
                                 for k in invoice_line:
                                     dict_i['invoice_line_ids'].append((0, 0, k))
@@ -509,6 +583,13 @@ class AccountInvoice(models.Model):
 
                 res_account = self.env['account.account'].search(
                     [('qbo_id', '=', i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value'))])
+                if not res_account:
+                    res_account = self.single_import_chart_of_account(i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value'))
+                    if not res_account:
+                        _logger.info(
+                            'Account QBO ID ' + i.get('AccountBasedExpenseLineDetail').get('AccountRef').get(
+                                'value') + ' doesnot exists in Odoo. ')
+                        return False
                 _logger.info(_('\n\n=============== AccountBasedExpenseLineDetailAccountBasedExpenseLineDetailAccountBasedExpenseLineDetail %s'% res_account))
                 if not res_account:
                     raise UserError('Account QBO ID '+i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value')+' doesnot exists in Odoo. ')
@@ -954,6 +1035,13 @@ class AccountInvoice(models.Model):
 
             if 'AccountBasedExpenseLineDetail' in i and i.get('AccountBasedExpenseLineDetail'):
                 res_account = self.env['account.account'].search([('qbo_id', '=', i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value'))])
+                if not res_account:
+                    res_account = self.single_import_chart_of_account(i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value'))
+                    if not res_account:
+                        _logger.info(
+                            'Account QBO ID ' + i.get('AccountBasedExpenseLineDetail').get('AccountRef').get(
+                                'value') + ' doesnot exists in Odoo. ')
+                        return False
                 if not res_account:
                     raise UserError('Account QBO ID '+i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value')+' doesnot exists in Odoo. ')
                 if res_account:

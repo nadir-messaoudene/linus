@@ -538,7 +538,7 @@ class ResCompany(models.Model):
 
     def import_chart_of_accounts(self):
         company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
-        query = "select * from Vendor WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION '%s' MAXRESULTS '%s' " % (
+        query = "select * from Account WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION '%s' MAXRESULTS '%s' " % (
         company.last_acc_imported_id, company.date_from, company.date_to, company.start, company.limit)
         url_str = company.get_import_query_url()
         url = url_str.get('url') + '/query?query=' + query

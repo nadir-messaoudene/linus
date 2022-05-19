@@ -53,6 +53,8 @@ class AccountAccount(models.Model):
         if len(Account) >=1 :
             for account in Account:
                  if not 'AcctNum' in account:
+                    _logger.info(_("Account created failed! Account: %s" % (account)))
+                    return False
                     raise ValidationError(_("""
                         Account Number not set for {}
                         
