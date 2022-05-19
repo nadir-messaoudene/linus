@@ -67,6 +67,8 @@ class ResolvepayController(http.Controller):
         move_id = request.env['account.move'].sudo().search(
             [('invoice_origin', '=', order.name), ('move_type', "=", "out_invoice")])
         if order.partner_id.available_credit < order.amount_total:
+            tag_id = request.env['crm.tag'].sudo().search([('name', '=', 'Not Enough Credit')])
+            order.tag_ids = [(4, tag_id.id)]
             move_id.message_post(body=_(
                 "Customer does not have enough credit"))
             return False
