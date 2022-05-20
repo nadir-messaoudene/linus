@@ -752,8 +752,7 @@ class ResCompany(models.Model):
             #     company.realm_id) + "/query?query=select * from term where Id > '{}'".format(
             #     str(company.x_quickbooks_last_paymentterm_imported_id)), headers=headers)
             data = requests.request('GET', company.url + str(
-                company.realm_id) + "/query?query=select * from term where MetaData.CreateTime >= '{}' AND MetaData.CreateTime <= '{}'".format(
-                company.date_from, company.date_to), headers=headers)
+                company.realm_id) + "/query?query=select * from term WHERE Id > '{}' AND MetaData.CreateTime >= '{}' AND MetaData.CreateTime <= '{}' order by Id STARTPOSITION {} MAXRESULTS {}".format(company.x_quickbooks_last_paymentterm_imported_id, company.date_from, company.date_to, company.start, company.limit), headers=headers)
             if data.status_code == 200:
                 ''' Holds quickbookIds which are inserted '''
                 recs = []
