@@ -133,22 +133,22 @@ class AccountInvoice(models.Model):
             raise UserError("Empty Data")
             _logger.warning(_('Empty data'))
 
-    def single_import_chart_of_account(self, qbo_id):
-        company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
-        _logger.info("Company is   :-> {} ".format(company))
-        query = "select * from Account WHERE Id = '%s'" % (qbo_id)
-        url_str = company.get_import_query_url()
-        url = url_str.get('url') + '/query?%squery=%s' % (
-            'minorversion=' + url_str.get('minorversion') + '&' if url_str.get('minorversion') else '', query)
-        data = requests.request('GET', url, headers=url_str.get('headers'), verify=False)
-        _logger.info(url)
-        _logger.info("Account data is *************** {}".format(data.text))
-        if data.status_code == 200:
-            acc = self.env['account.account'].create_account_account(data)
-            return acc
-        else:
-            raise UserError("Empty Data")
-            _logger.warning(_('Empty data'))
+    # def single_import_chart_of_account(self, qbo_id):
+    #     company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
+    #     _logger.info("Company is   :-> {} ".format(company))
+    #     query = "select * from Account WHERE Id = '%s'" % (qbo_id)
+    #     url_str = company.get_import_query_url()
+    #     url = url_str.get('url') + '/query?%squery=%s' % (
+    #         'minorversion=' + url_str.get('minorversion') + '&' if url_str.get('minorversion') else '', query)
+    #     data = requests.request('GET', url, headers=url_str.get('headers'), verify=False)
+    #     _logger.info(url)
+    #     _logger.info("Account data is *************** {}".format(data.text))
+    #     if data.status_code == 200:
+    #         acc = self.env['account.account'].create_account_account(data)
+    #         return acc
+    #     else:
+    #         raise UserError("Empty Data")
+    #         _logger.warning(_('Empty data'))
 
     def create_invoice_dict(self, cust, type):
         dict_i = {}
@@ -580,11 +580,10 @@ class AccountInvoice(models.Model):
                     inv_line_data.append(dict_ol)
 
             if 'AccountBasedExpenseLineDetail' in i and i.get('AccountBasedExpenseLineDetail'):
-
-                res_account = self.env['account.account'].search(
-                    [('qbo_id', '=', i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value'))])
-                if not res_account:
-                    res_account = self.single_import_chart_of_account(i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value'))
+                # res_account = self.env['account.account'].search(
+                #     [('name', '=', i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('name'))])
+                res_account_id = self.env['account.account'].get_account_ref(i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value'))
+                res_account = self.env['account.account'].browse(res_account_id)
                 _logger.info(_('\n\n=============== AccountBasedExpenseLineDetailAccountBasedExpenseLineDetailAccountBasedExpenseLineDetail %s'% res_account))
                 if not res_account:
                     raise UserError('Account QBO ID '+i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value')+' doesnot exists in Odoo. ')
@@ -1029,9 +1028,8 @@ class AccountInvoice(models.Model):
 
 
             if 'AccountBasedExpenseLineDetail' in i and i.get('AccountBasedExpenseLineDetail'):
-                res_account = self.env['account.account'].search([('qbo_id', '=', i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value'))])
-                if not res_account:
-                    res_account = self.single_import_chart_of_account(i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value'))
+                res_account_id = self.env['account.account'].get_account_ref(i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value'))
+                res_account = self.env['account.account'].browse(res_account_id)
                 if not res_account:
                     raise UserError('Account QBO ID '+i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value')+' doesnot exists in Odoo. ')
                 if res_account:
