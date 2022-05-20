@@ -233,8 +233,8 @@ class AccountInvoice(models.Model):
         return dict_i
 
     def import_invoice(self):
-        company = self.env['res.users'].search([('id', '=', 2)]).company_id
-
+        # company = self.env['res.users'].search([('id', '=', 2)]).company_id
+        company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
         if company.access_token:
             headers = {}
             headers['Authorization'] = 'Bearer ' + company.access_token
@@ -249,8 +249,8 @@ class AccountInvoice(models.Model):
                 self.create_invoice(data, 'out_invoice')
 
     def import_credit_memo(self):
-        company = self.env['res.users'].search([('id', '=', 2)]).company_id
-
+        # company = self.env['res.users'].search([('id', '=', 2)]).company_id
+        company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
         if company.access_token:
             headers = {}
             headers['Authorization'] = 'Bearer ' + company.access_token
@@ -274,7 +274,7 @@ class AccountInvoice(models.Model):
         company = self.env['res.users'].search([('id', '=', 2)]).company_id
 
         _logger.info("inside vendor bill ****************************")
-        company = self.env['res.users'].search([('id', '=', 2)]).company_id
+        company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
         if company.access_token:
             headers = {}
             headers['Authorization'] = 'Bearer ' + company.access_token
@@ -585,11 +585,6 @@ class AccountInvoice(models.Model):
                     [('qbo_id', '=', i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value'))])
                 if not res_account:
                     res_account = self.single_import_chart_of_account(i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value'))
-                    if not res_account:
-                        _logger.info(
-                            'Account QBO ID ' + i.get('AccountBasedExpenseLineDetail').get('AccountRef').get(
-                                'value') + ' doesnot exists in Odoo. ')
-                        return False
                 _logger.info(_('\n\n=============== AccountBasedExpenseLineDetailAccountBasedExpenseLineDetailAccountBasedExpenseLineDetail %s'% res_account))
                 if not res_account:
                     raise UserError('Account QBO ID '+i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value')+' doesnot exists in Odoo. ')
@@ -1037,11 +1032,6 @@ class AccountInvoice(models.Model):
                 res_account = self.env['account.account'].search([('qbo_id', '=', i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value'))])
                 if not res_account:
                     res_account = self.single_import_chart_of_account(i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value'))
-                    if not res_account:
-                        _logger.info(
-                            'Account QBO ID ' + i.get('AccountBasedExpenseLineDetail').get('AccountRef').get(
-                                'value') + ' doesnot exists in Odoo. ')
-                        return False
                 if not res_account:
                     raise UserError('Account QBO ID '+i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value')+' doesnot exists in Odoo. ')
                 if res_account:

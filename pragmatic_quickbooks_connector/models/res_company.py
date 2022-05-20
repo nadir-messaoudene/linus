@@ -499,8 +499,10 @@ class ResCompany(models.Model):
     def import_customers(self):
         company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
         _logger.info("Company is   :-> {} ".format(company))
-        query = "select * from Customer WHERE Id > '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
-        company.last_imported_customer_id, company.start, company.limit)
+        # query = "select * from Customer WHERE Id > '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
+        # company.last_imported_customer_id, company.start, company.limit)
+        query = "select * from Customer WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
+            company.last_imported_customer_id, company.date_from, company.date_to, company.start, company.limit)
         url_str = company.get_import_query_url()
         url = url_str.get('url') + '/query?%squery=%s' % (
             'minorversion=' + url_str.get('minorversion') + '&' if url_str.get('minorversion') else '', query)
@@ -519,8 +521,10 @@ class ResCompany(models.Model):
     def import_vendors(self):
         company = self.env['res.users'].search([('id', '=', self._uid)], limit=1).company_id
         # query = "select * from vendor WHERE Id > '%s' order by Id" % (company.last_imported_vendor_id)
-        query = "select * from Vendor WHERE Id > '%s' order by Id STARTPOSITION '%s' MAXRESULTS '%s' " % (
-        company.last_imported_vendor_id, company.date_from, company.date_to, company.start, company.limit)
+        # query = "select * from Vendor WHERE Id > '%s' order by Id STARTPOSITION '%s' MAXRESULTS '%s' " % (
+        # company.last_imported_vendor_id, company.date_from, company.date_to, company.start, company.limit)
+        query = "select * from Vendor WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
+            company.last_imported_vendor_id, company.date_from, company.date_to, company.start, company.limit)
         url_str = company.get_import_query_url()
         url = url_str.get('url') + '/query?%squery=%s' % (
             'minorversion=' + url_str.get('minorversion') + '&' if url_str.get('minorversion') else '', query)
@@ -538,7 +542,7 @@ class ResCompany(models.Model):
 
     def import_chart_of_accounts(self):
         company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
-        query = "select * from Account WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION '%s' MAXRESULTS '%s' " % (
+        query = "select * from Account WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
         company.last_acc_imported_id, company.date_from, company.date_to, company.start, company.limit)
         url_str = company.get_import_query_url()
         url = url_str.get('url') + '/query?query=' + query
@@ -556,7 +560,7 @@ class ResCompany(models.Model):
         #         self.ensure_one()
         company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
         # query = "select * From TaxCode WHERE Id > '%s' order by Id" % (company.last_imported_tax_id)
-        query = "select * from TaxCode WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION '%s' MAXRESULTS '%s' " % (
+        query = "select * from TaxCode WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
         company.last_imported_tax_id, company.date_from, company.date_to, company.start, company.limit)
         url_str = company.get_import_query_url()
         url = url_str.get('url') + '/query?query=' + query
@@ -575,7 +579,7 @@ class ResCompany(models.Model):
         company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
         #         self.ensure_one()
         # query = "select * From TaxAgency WHERE Id > '%s' order by Id" % (company.last_imported_tax_agency_id)
-        query = "select * from TaxAgency WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION '%s' MAXRESULTS '%s' " % (
+        query = "select * from TaxAgency WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
         company.last_imported_tax_agency_id, company.date_from, company.date_to, company.start, company.limit)
         url_str = company.get_import_query_url()
         url = url_str.get('url') + '/query?query=' + query
@@ -594,7 +598,9 @@ class ResCompany(models.Model):
     def import_product_category(self):
         #         self.ensure_one()
         company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
-        query = "select * from Item where Id > '%s' order by Id" % (company.last_imported_product_category_id)
+        # query = "select * from Item where Id > '%s' order by Id" % (company.last_imported_product_category_id)
+        query = "select * from Item WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
+            company.last_imported_product_category_id, company.date_from, company.date_to, company.start, company.limit)
         url_str = company.get_import_query_url()
         url = url_str.get('url') + '/query?%squery=%s' % (
             'minorversion=' + url_str.get('minorversion') + '&' if url_str.get('minorversion') else '', query)
@@ -613,7 +619,7 @@ class ResCompany(models.Model):
         #         self.ensure_one()
         company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
         # query = "select * from Item where Id > '%s' order by Id STARTPOSITION %s MAXRESULTS %s  " % (
-        query = "select * from Item WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION '%s' MAXRESULTS '%s' " % (
+        query = "select * from Item WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
         company.last_imported_product_id, company.date_from, company.date_to, company.start, company.limit)
         url_str = company.get_import_query_url()
         url = url_str.get('url') + '/query?%squery=%s' % (
@@ -637,7 +643,7 @@ class ResCompany(models.Model):
             # query = "select * from Item"
             # query = "select * from Item WHERE Id > '%s' AND MetaData.CreateTime >= '%s' order by Id STARTPOSITION 1 MAXRESULTS '%s' " % (
             #     company.last_imported_tax_id, company.start, company.limit)
-            query = "select * from Item WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION '%s' MAXRESULTS '%s' " % (
+            query = "select * from Item WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
             company.last_imported_product_id, company.date_from, company.date_to, company.start, company.limit)
             url_str = company.get_import_query_url()
             url = url_str.get('url') + '/query?%squery=%s' % (
@@ -672,7 +678,7 @@ class ResCompany(models.Model):
     def import_payment_method(self):
         company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
         # query = "select * From PaymentMethod WHERE Id > '%s' order by Id" % (company.last_imported_payment_method_id)
-        query = "select * from PaymentMethod WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION '%s' MAXRESULTS '%s' " % (
+        query = "select * from PaymentMethod WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
         company.last_imported_payment_method_id, company.date_from, company.date_to, company.start, company.limit)
         url_str = self.get_import_query_url()
         url = url_str.get('url') + '/query?%squery=%s' % (
@@ -688,11 +694,11 @@ class ResCompany(models.Model):
             raise UserError("Empty data")
 
     def import_payment(self):
-        company = self.env['res.company'].search([('id', '=', 1)], limit=1)
+        company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
 
         #         self.ensure_one()
         # query = "select * From Payment WHERE Id > '%s' order by Id" % (company.last_imported_payment_id)
-        query = "select * from Payment WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION '%s' MAXRESULTS '%s' " % (
+        query = "select * from Payment WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
         company.last_imported_payment_id, company.date_from, company.date_to, company.start, company.limit)
         url_str = self.get_import_query_url()
         url = url_str.get('url') + '/query?%squery=%s' % (
@@ -715,7 +721,7 @@ class ResCompany(models.Model):
 
         #         self.ensure_one()
         # query = "select * From billpayment WHERE Id > '%s' order by Id" % (company.last_imported_bill_payment_id)
-        query = "select * from billpayment WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION '%s' MAXRESULTS '%s' " % (
+        query = "select * from billpayment WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
         company.last_imported_bill_payment_id, company.date_from, company.date_to, company.start, company.limit)
         url_str = company.get_import_query_url()
         url = url_str.get('url') + '/query?%squery=%s' % (
@@ -1124,7 +1130,7 @@ class ResCompany(models.Model):
             #     company.quickbooks_last_employee_imported_id)
             # query = "select * from employee WHERE MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id" % (company.date_from, company.date_to)
 
-            query = "select * from employee WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION '%s' MAXRESULTS '%s' " % (
+            query = "select * from employee WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
             company.quickbooks_last_employee_imported_id, company.date_from, company.date_to, company.start, company.limit)
 
             data = requests.request('GET', company.url + str(company.realm_id) + "/query?query=" + query,
@@ -1378,7 +1384,7 @@ class ResCompany(models.Model):
             headers['Content-Type'] = 'text/plain'
             # query = "select * from department WHERE Id > '%s' order by Id" % (company.quickbooks_last_dept_imported_id)
             # query = "select * from department WHERE MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id" % (company.date_from, company.date_to)
-            query = "select * from department WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION '%s' MAXRESULTS '%s' " % (
+            query = "select * from department WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
             company.quickbooks_last_dept_imported_id, company.date_from, company.date_to, company.start, company.limit)
             data = requests.request('GET', company.url + str(company.realm_id) + "/query?query=" + query,
                                     headers=headers)
@@ -3202,9 +3208,11 @@ class ResCompany(models.Model):
             headers['accept'] = 'application/json'
             headers['Content-Type'] = 'text/plain'
 
-            query = "select * from JournalEntry WHERE Id > '%s' order by Id" % (
-                company.quickbooks_last_journal_entry_imported_id)
-
+            # query = "select * from JournalEntry WHERE Id > '%s' order by Id" % (
+            #     company.quickbooks_last_journal_entry_imported_id)
+            query = "select * from JournalEntry WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
+                company.quickbooks_last_journal_entry_imported_id, company.date_from, company.date_to, company.start,
+                company.limit)
             data = requests.request('GET', self.url + str(self.realm_id) + "/query?query=" + query,
                                     headers=headers)
             if data:
