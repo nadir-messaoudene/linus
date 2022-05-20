@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    <data>
+
+        <record id="instance_3pl_action" model="ir.actions.act_window">
+            <field name="name">3PL Instance</field>
+            <field name="res_model">instance.3pl</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record id="view_instance_3pl_tree" model="ir.ui.view">
+            <field name="name">instance.3pl.tree</field>
+            <field name="model">instance.3pl</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_instance_3pl_form" model="ir.ui.view">
+            <field name="name">instance.3pl.form</field>
+            <field name="model">instance.3pl</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button string="Get Access Token" class="btn btn-primary" name="get_access_token" type="object"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                            <field name="username"/>
+                            <field name="password" password="True"/>
+                            <field name="access_token"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</odoo>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    <data>
+        <menuitem id="menu_3pl_config"
+            parent="stock.menu_stock_config_settings"
+            name="3PL"/>
+
+        <menuitem
+            id="menu_instance_3pl_config"
+            name="Instance"
+            parent="menu_3pl_config"
+            action="instance_3pl_action"
+            sequence="1"/>
+
+    </data>
+</odoo>
