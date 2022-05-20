@@ -16,7 +16,7 @@ _logger = logging.getLogger(__name__)
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
 
-    shopify_id = fields.Char(string="Fulfillment ID", copy=False, readonly="1")
+    shopify_id = fields.Char(string="Fulfillment ID", copy=False)
     shopify_order_id = fields.Char(string="Shopify Order ID", copy=False, readonly="1")
     shopify_status = fields.Char(copy=False, readonly="1")
     shopify_service = fields.Char(copy=False, readonly="1")

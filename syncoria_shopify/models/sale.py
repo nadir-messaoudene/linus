@@ -85,6 +85,11 @@ class SaleOrderShopify(models.Model):
         comodel_name='shopify.refunds.transaction',
         inverse_name='sale_id',
     )
+    shopify_fulfilment_ids = fields.One2many(
+        string='Shopify Fulfilment',
+        comodel_name='shopify.fulfilment',
+        inverse_name='sale_order_id',
+    )
     shopify_is_invoice = fields.Boolean(string="Is shopify invoice paid?",default=False)
     shopify_is_refund = fields.Boolean(string="Is shopify credit note paid?",default=False)
     transaction_fee_tax_amount = fields.Monetary()
@@ -653,6 +658,193 @@ class SaleOrderShopify(models.Model):
             except Exception as e:
                 _logger.warning("Exception-{}-{}".format(rec.id,e.args))
         return move_id, message
+
+    def get_order_fullfillments(self):
+        for rec in self:
+            marketplace_instance_id = rec.shopify_instance_id
+            version = marketplace_instance_id.marketplace_api_version or '2022-01'
+            url = marketplace_instance_id.marketplace_host + \
+                '/admin/api/%s/orders/%s/fulfillments.json' % (
+                    version, rec.shopify_id)
+            headers = {
+                'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password,
+                'Content-Type': 'application/json'
+            }
+            type_req = 'GET'
+            fullfillment,next_link = self.env[
+                'marketplace.connector'].shopify_api_call(
+                headers=headers,
+                url=url,
+                type=type_req,
+                marketplace_instance_id=marketplace_instance_id,
+                data={}
+            )
+            _logger.info("\nfullfillment---->" + str(fullfillment))
+
+
+            if fullfillment.get('errors'):
+                raise exceptions.UserError(_(fullfillment.get('errors')))
+            else:
+                _logger.info("\nSuccess---->")
+                if rec.state not in ['cancel'] and fullfillment.get('fulfillments') and marketplace_instance_id.auto_create_fulfilment :
+                    shopify_fulfil_obj = self.env['shopify.fulfilment']
+                    for fulfillment in fullfillment.get('fulfillments'):
+                        exist_fulfilment = shopify_fulfil_obj.search([("shopify_fulfilment_id", "=", fulfillment['id']),
+                                                                      ("shopify_instance_id", "=", marketplace_instance_id.id),
+                                                                      ("sale_order_id","=",rec.id)],limit=1)
+
+                        fulfillment_vals = {
+                            "name": rec.name+'#'+str(fulfillment.get("order_id"))[:3],
+                            "sale_order_id": rec.id,
+                            "shopify_instance_id": marketplace_instance_id.id,
+                            "shopify_order_id": fulfillment.get("order_id"),
+                            "shopify_fulfilment_id": fulfillment.get("id"),
+                            "shopify_fulfilment_tracking_number": ','.join(fulfillment.get("tracking_numbers")),
+                            "shopify_fulfilment_service": ','.join(fulfillment.get("service")),
+                          "shopify_fulfilment_status": fulfillment.get("line_items")[0].get("fulfillment_status"),
+                            "shopify_status": fulfillment.get("status")
+                        }
+                        fulfillment_line_vals=[]
+                        for line_item in fulfillment.get("line_items"):
+                            fulfillment_line_vals +=[(0,0,{
+                                "sale_order_id": rec.id,
+                                "name":rec.name+":"+line_item.get("name"),
+                                "shopify_instance_id": marketplace_instance_id.id,
+                              "shopify_fulfilment_line_id": line_item.get("id"),
+                             "shopify_fulfilment_product_id": line_item.get("product_id"),
+                             "shopify_fulfilment_product_variant_id": line_item.get("variant_id"),
+                             "shopify_fulfilment_product_title": line_item.get("title"),
+                             "shopify_fulfilment_product_name": line_item.get("name"),
+                             "shopify_fulfilment_service": line_item.get("fulfillment_service"),
+                             "shopify_fulfilment_qty": line_item.get("quantity"),
+                             "shopify_fulfilment_grams": line_item.get("grams"),
+                             "shopify_fulfilment_price": line_item.get("price"),
+                             "shopify_fulfilment_total_discount": line_item.get("total_discount"),
+                             "shopify_fulfilment_status": line_item.get("total_discount"),
+                            })]
+                        fulfillment_vals["shopify_fulfilment_line"] = fulfillment_line_vals
+                        if exist_fulfilment:
+                            shopify_fulfil_obj.update(fulfillment_vals)
+                        else:
+                            shopify_fulfil_obj.create(fulfillment_vals)
+
+    def _process_picking(self,fulfilment,picking,order):
+        backorder = False
+        move_lines = []
+        picking.move_line_ids_without_package.unlink()
+        for fulfilment_item in fulfilment.shopify_fulfilment_line:
+            product_id = order.order_line.filtered_domain([("product_id.shopify_id", "=",
+                                                          fulfilment_item.shopify_fulfilment_product_variant_id)]).product_id
+            # move_lines += [(0, 0, {
+            #     'name': '/',
+            #     'product_id': product_id.id,
+            #     'product_uom': product_id.uom_id.id,
+            #     'product_uom_qty': fulfilment_item.shopify_fulfilment_qty,
+            #     'location_id': rec.picking_ids.location_id.id,
+            #     # 'location_dest_id': rec.picking_ids.location_dest_id.id,
+            # })]
+            # rec.picking_ids.move_line_ids_without_package.unlink()
+            if product_id:
+                picking.move_line_ids_without_package = [(0, 0, {
+                    'company_id': self.env.company.id,
+                    'location_id': picking.location_id.id,
+                    'location_dest_id': picking.location_dest_id.id,
+                    'product_id': product_id.id,
+                    'product_uom_id': product_id.uom_id.id,
+                    'qty_done': fulfilment_item.shopify_fulfilment_qty,
+                    'product_uom_qty': 0.0,
+                })]
+            else:
+                picking.message_post(body="No associate product %s this shopify product ID"%(fulfilment_item.shopify_fulfilment_product_variant_id))
+        # rec.picking_ids.move_lines.state = 'draft'
+        # rec.picking_ids.sudo().move_ids_without_package = [(5,[0])]
+        # move_lines = [(5, 0), move_lines]
+
+        # pick_output.action_assign()
+        picking.shopify_id = fulfilment.shopify_fulfilment_id
+        picking.carrier_tracking_ref = fulfilment.shopify_fulfilment_tracking_number
+        picking.shopify_service = fulfilment.shopify_fulfilment_service
+        picking.action_confirm()
+        picking.action_assign()
+        validate_picking = picking.button_validate()
+        if type(validate_picking) == dict and validate_picking.get('res_model') == 'stock.backorder.confirmation':
+            yy = self.env['stock.backorder.confirmation'].with_context(validate_picking.get('context')).process()
+
+        # if picking._check_backorder():
+        #     backorder = True
+        #
+        # return backorder
+
+
+
+    def process_shopify_fulfilment(self):
+        message = ""
+        for rec in self:
+            success_fulfilment = rec.shopify_fulfilment_ids.filtered(lambda l: l.shopify_status == 'success')
+            # paid_amount = sum([ float(amount) for amount in success_tran_ids.mapped('shopify_amount')])
+            if success_fulfilment:
+               for fulfilment in success_fulfilment:
+                   picking_exist = rec.picking_ids.filtered_domain([('shopify_id',"=",fulfilment.shopify_fulfilment_id)])
+                   try:
+                       if not picking_exist:
+                           if rec.delivery_count ==1 and not rec.picking_ids.shopify_id:
+                               self._process_picking(fulfilment,rec.picking_ids,rec)
+
+                               # move_lines = []
+                               # rec.picking_ids.move_line_ids_without_package.unlink()
+                               # for fulfilment_item in fulfilment.shopify_fulfilment_line:
+                               #     product_id = rec.order_line.filtered_domain([("product_id.shopify_id", "=",
+                               #                                                   fulfilment_item.shopify_fulfilment_product_variant_id)]).product_id
+                               #     # move_lines += [(0, 0, {
+                               #     #     'name': '/',
+                               #     #     'product_id': product_id.id,
+                               #     #     'product_uom': product_id.uom_id.id,
+                               #     #     'product_uom_qty': fulfilment_item.shopify_fulfilment_qty,
+                               #     #     'location_id': rec.picking_ids.location_id.id,
+                               #     #     # 'location_dest_id': rec.picking_ids.location_dest_id.id,
+                               #     # })]
+                               #     # rec.picking_ids.move_line_ids_without_package.unlink()
+                               #
+                               #     rec.picking_ids.move_line_ids_without_package = [(0, 0, {
+                               #         'company_id': self.env.company.id,
+                               #         'location_id': rec.picking_ids.location_id.id,
+                               #         'location_dest_id': rec.picking_ids.location_dest_id.id,
+                               #         'product_id': product_id.id,
+                               #         'product_uom_id': product_id.uom_id.id,
+                               #         'qty_done': fulfilment_item.shopify_fulfilment_qty,
+                               #         'product_uom_qty': 0.0,
+                               #     })]
+                               # # rec.picking_ids.move_lines.state = 'draft'
+                               # # rec.picking_ids.sudo().move_ids_without_package = [(5,[0])]
+                               # # move_lines = [(5, 0), move_lines]
+                               #
+                               # # pick_output.action_assign()
+                               # rec.picking_ids.shopify_id = fulfilment.shopify_fulfilment_id
+                               # rec.picking_ids.action_confirm()
+                               # rec.picking_ids.action_assign()
+                               # test = rec.picking_ids.button_validate()
+                               # if type(test) == dict and test.get('res_model') == 'stock.backorder.confirmation':
+                               #     yy = self.env['stock.backorder.confirmation'].with_context(test.get('context')).process()
+                               #     # yy.process()
+                               # # else:
+                               # #  pass
+
+
+                           else:
+                               backorder_picking = rec.picking_ids.filtered_domain([('backorder_id', "!=", False),('state','!=','done')])
+                               self._process_picking(fulfilment, backorder_picking, rec)
+                       else:
+                           if picking_exist.state != 'done':
+                               self._process_picking(fulfilment, picking_exist, rec)
+                   except Exception as e:
+                        rec.message_post(body="Exception-Order#{}-{}".format(rec.id, e.args))
+                       # pass
+                   # pass
+
+               # if len(success_fulfilment) == 1 and success_fulfilment.shopify_fulfilment_status == 'fulfilled':
+               #
+               # elif len(success_fulfilment) >1:
+
 
 
 class SaleOrderLine(models.Model):

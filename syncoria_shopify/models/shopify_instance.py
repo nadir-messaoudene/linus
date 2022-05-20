@@ -17,10 +17,10 @@ class ModelName(models.Model):
 
     marketplace_app_id = fields.Integer(string='App ID',default=0)
     marketplace_instance_type = fields.Selection(selection_add=[('shopify', 'Shopify')], default='shopify')
-    marketplace_api_key = fields.Char(string='API key', default='5302cfad84dc491cbbd6e7b9f549b750')
-    marketplace_api_password = fields.Char(string='Password', default='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')
-    marketplace_secret_key = fields.Char(string='Secret Key', default='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')
-    marketplace_host = fields.Char(string='Host', default='faire-child-makewear.myshopify.com/')
+    marketplace_api_key = fields.Char(string='API key')
+    marketplace_api_password = fields.Char(string='Password')
+    marketplace_secret_key = fields.Char(string='Secret Key')
+    marketplace_host = fields.Char(string='Host')
     marketplace_webhook = fields.Boolean(
         string='Use Webhook?',
     )

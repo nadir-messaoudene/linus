@@ -338,8 +338,6 @@ def shopify_api_call(**kwargs):
 
 
 def update_product_images(record, product_data, req_type):
-    if product_data.id == 95:
-        a = "test"
     data = {}
     attachments = [record.image_1920.decode()] if record.image_1920 else []
     # try:
