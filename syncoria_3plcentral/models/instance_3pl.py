@@ -1,5 +1,5 @@
 from odoo import models, fields
-import requests
+import requests, json
 from requests.auth import HTTPBasicAuth
 
 class Instance3PL(models.Model):
@@ -17,7 +17,20 @@ class Instance3PL(models.Model):
 
     def get_access_token(self):
         get_access_token_url = 'https://secure-wms.com/AuthServer/api/Token'
-        headers = {'Content-Type': 'application/json'}
-        response = requests.request('POST', get_access_token_url, auth=HTTPBasicAuth(self.username, self.password))
-        print(response.status_code)
-        # if result.status_code == 200:
+        payload = json.dumps({
+            "grant_type": "client_credentials",
+            })
+        headers = {
+            'Host': 'secure-wms.com',
+            'Connection': 'keep-alive',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Accept-Encoding': 'gzip,deflate,sdch',
+            'Accept-Language': 'en-US,en;q=0.8'
+            }
+
+        response = requests.request("POST", get_access_token_url, headers=headers, auth=HTTPBasicAuth(self.username, self.password), data=payload)
+        
+        if response.status_code == 200:
+            response = json.loads(response.text)
+            self.access_token = response.get('access_token')
