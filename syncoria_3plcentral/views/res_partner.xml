@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    <data>
+        <record id="create_customer_3pl" model="ir.actions.server">
+            <field name="name">Export to 3PL</field>
+            <field name="model_id" ref="base.model_res_partner"/>
+            <field name="binding_model_id" ref="base.model_res_partner"/>
+            <field name="binding_view_types">list,tree,form</field>
+            <!-- <field name="state">code</field> -->
+            <!-- <field name="code">if records:
+                records.create_customer_3pl()</field> -->
+        </record>
+
+        <record id="res_partner_resolvepay_form_inherit" model="ir.ui.view">
+            <field name="name">res.partner.resolvepay.form.inherit</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form" />
+            <field name="arch" type="xml">
+                <xpath expr="//notebook" position="inside">
+                    <page string="ResolvePay" attrs="{'invisible': [('threepl_customer_id','=',False)]}">
+                        <group>
+                            <field name="threepl_customer_id" readonly="1"/>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+	    </record>
+
+    </data>
+</odoo>
