@@ -12,6 +12,7 @@
         'views/3pl_view.xml',
         'views/res_partner.xml',
         'views/menu.xml',
+        'views/refresh_access_token.xml'
     ],
     'license': 'OPL-1',
     'support': "support@syncoria.com"

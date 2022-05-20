@@ -15,7 +15,7 @@ class Instance3PL(models.Model):
         ('instance_name_uniq', 'unique (name)', 'Instance name must be unique.')
     ]
 
-    def get_access_token(self):
+    def upsert_access_token(self):
         get_access_token_url = 'https://secure-wms.com/AuthServer/api/Token'
         payload = json.dumps({
             "grant_type": "client_credentials",
@@ -30,7 +30,13 @@ class Instance3PL(models.Model):
             }
 
         response = requests.request("POST", get_access_token_url, headers=headers, auth=HTTPBasicAuth(self.username, self.password), data=payload)
-        
         if response.status_code == 200:
             response = json.loads(response.text)
             self.access_token = response.get('access_token')
+            
+    def refresh_access_token(self):
+        to_refresh = self.env['instance.3pl'].search([])
+        if not to_refresh:
+            return
+        for instance in to_refresh:
+            instance.upsert_access_token()
