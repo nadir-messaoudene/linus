@@ -155,6 +155,7 @@
                       <field name="ao_update_user_id" class="oe_inline" attrs="{'required': [('ao_update','=',True)]  }"/>
                     </div>
                     <field name="auto_create_invoice"/>
+                    <field name="auto_create_fulfilment"/>
                     <field name="analytic_account_id" attrs="{'required': [('auto_create_invoice','=',True)]  }"/>
                     <field name="order_tracking_ref"/>
                     <field name="order_prefix"/>

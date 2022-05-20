@@ -29,6 +29,7 @@
         'views/account.xml',
         'views/stock.xml',
         'views/shopify_warehouse_views.xml',
+        'views/shopify_fulfilment.xml',
         # Wizards
         'wizard/fetch_customers_wiz.xml',
         'wizard/fetch_orders_wiz.xml',

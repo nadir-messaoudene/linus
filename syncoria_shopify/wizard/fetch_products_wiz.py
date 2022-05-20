@@ -895,9 +895,15 @@ class ProductsFetchWizard(models.Model):
                     params=params
                 )
                 try:
-                    if type(fetched_products).__name__== 'list':
+                    # if type(fetched_products).__name__== 'list':
+                    #     products += fetched_products['products']
+                    # elif type(fetched_products).__name__== 'dict':
+                    #     products = fetched_products.get('products') or fetched_products.get('product')
+                    # else:
+                    #     products=fetched_products['product']
+                    if 'products' in fetched_products:
                         products += fetched_products['products']
-                    elif type(fetched_products).__name__== 'dict':
+                    elif 'product' in fetched_products:
                         products = fetched_products.get('products') or fetched_products.get('product')
                     else:
                         products=fetched_products['product']
