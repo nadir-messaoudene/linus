@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <t t-name="linus_stock.warehouseFilter" t-inherit="stock.warehouseFilter" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('o_stock_report_warehouse_filter')]" position="replace">
+            <div id="warehouse_filter" class="btn-group dropdown o_stock_report_warehouse_filter"
+                t-if="displayWarehouseFilter">
+                <button type="button" class="dropdown-toggle btn btn-secondary dropdown-toggle"
+                    data-toggle="dropdown">
+                    <span class="fa fa-home"/> Location: <t t-esc="active_warehouse['complete_name']"/>
+                </button>
+                <div class="dropdown-menu o_filter_menu" role="menu">
+                    <t t-foreach="warehouses" t-as="wh">
+                        <a role="menuitem" class="dropdown-item warehouse_filter"
+                            data-filter="warehouses" t-att-data-warehouse-id="wh['id']"
+                            t-esc="wh['complete_name']"/>
+                    </t>
+                </div>
+            </div>
+        </xpath>
+    </t>
+</templates>
