@@ -63,6 +63,8 @@ class Invoice(models.Model):
                     if data.get('advanced'):
                         move_id = self.env['account.move'].search(
                             [('invoice_origin', '=', data.get('order_number')), ('move_type', "=", "out_invoice")])
+                        if not move_id:
+                            move_id = self.env['account.move'].search([('name', '=', data.get('number'))])
                         journal = self.env['account.journal'].search([('code', '=', 'RSP')])
                         if not journal:
                             raise ValidationError('Can not find Resolve Pay journal')
@@ -92,6 +94,8 @@ class Invoice(models.Model):
                     if data.get('amount_paid'):
                         move_id = self.env['account.move'].search(
                             [('invoice_origin', '=', data.get('order_number')), ('move_type', "=", "out_invoice")])
+                        if not move_id:
+                            move_id = self.env['account.move'].search([('name', '=', data.get('number'))])
                         journal = self.env['account.journal'].search([('code', '=', 'RSP')])
                         if not journal:
                             raise ValidationError('Can not find Resolve Pay journal')
@@ -135,6 +139,8 @@ class Invoice(models.Model):
                     if data.get('amount_refunded'):
                         move_id = self.env['account.move'].search(
                             [('invoice_origin', '=', data.get('order_number')), ('move_type', "=", "out_invoice")])
+                        if not move_id:
+                            move_id = self.env['account.move'].search([('name', '=', data.get('number'))])
                         refund_move_id = self.env['account.move'].search(
                             [('invoice_origin', '=', data.get('order_number')), ('move_type', "=", "out_refund")])
                         if move_id != invoice:
@@ -153,6 +159,10 @@ class Invoice(models.Model):
                                 reversal_wizard.sudo().reverse_moves()
                                 refund_move_id = self.env['account.move'].search(
                                     [('invoice_origin', '=', data.get('order_number')), ('move_type', "=", "out_refund")])
+                                if not refund_move_id:
+                                    refund_move_id = self.env['account.move'].search(
+                                        [('invoice_origin', '=', move_id.invoice_origin),
+                                         ('move_type', "=", "out_refund")])
                                 refund_move_id.resolvepay_invoice_id = ''
                                 refund_move_id.invoice_line_ids.with_context(check_move_validity=False).unlink()
                                 refund_move_id.invoice_line_ids = [(0, 0, {'move_id': refund_move_id.id,
