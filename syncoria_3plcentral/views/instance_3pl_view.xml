@@ -30,12 +30,15 @@
                         <button string="Connect" class="btn btn-primary" name="action_connect" type="object" attrs="{'invisible': [('access_token','=',False)]}"/>
                     </header>
                     <sheet>
-                        <group>
+                        <group name="credential" string="Credential">
                             <field name="name"/>
                             <field name="username"/>
                             <field name="password" password="True"/>
                             <field name="access_token" invisible="1"/>
-                            <field name="customerId"/>
+                        </group>
+                        <group name="customer_infor" string="Customer Infor">
+                            <field name="customerId" readonly="1"/>
+                            <field name="customerName" readonly="1"/>
                             <field name="company_id"/>
                         </group>
                     </sheet>

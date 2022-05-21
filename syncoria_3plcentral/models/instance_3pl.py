@@ -1,6 +1,7 @@
 from odoo import models, fields
 import requests, json
 from requests.auth import HTTPBasicAuth
+from odoo.exceptions import UserError
 
 class Instance3PL(models.Model):
     _name = 'instance.3pl'
@@ -11,6 +12,7 @@ class Instance3PL(models.Model):
     password = fields.Char(string='Password', required=True)
     access_token = fields.Char(string='Access Token')
     customerId = fields.Integer(string="Customer ID")
+    customerName = fields.Char(string="Customer Name")
     company_id = fields.Many2one('res.company', string='Company', required=True, default=lambda self: self.env.company)
 
     _sql_constraints = [
@@ -18,6 +20,7 @@ class Instance3PL(models.Model):
     ]
 
     def action_connect(self):
+        #Get CustomerId
         url = "https://secure-wms.com/customers"
         headers = {
             'Accept-Language': 'en-US,en;q=0.8',
@@ -29,8 +32,14 @@ class Instance3PL(models.Model):
         response = requests.request('GET', url, headers=headers, data={})
         if response.status_code == 200:
             response = json.loads(response.text)
-            print(response)
-            self.customerId = 1479
+            try:
+                customerId = response.get('_embedded').get('http://api.3plCentral.com/rels/customers/customer')[0].get('readOnly').get('customerId')
+                self.customerId = customerId
+                companyName = response.get('_embedded').get('http://api.3plCentral.com/rels/customers/customer')[0].get('companyInfo').get('companyName')
+                self.customerName = companyName
+            except:
+                raise UserError("Can not connect 3PL Centrla server.")
+
 
     def upsert_access_token(self):
         get_access_token_url = 'https://secure-wms.com/AuthServer/api/Token'
