@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    <data>
+
+        <record id="instance_3pl_action" model="ir.actions.act_window">
+            <field name="name">3PL Instance</field>
+            <field name="res_model">instance.3pl</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record id="view_instance_3pl_tree" model="ir.ui.view">
+            <field name="name">instance.3pl.tree</field>
+            <field name="model">instance.3pl</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_instance_3pl_form" model="ir.ui.view">
+            <field name="name">instance.3pl.form</field>
+            <field name="model">instance.3pl</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button string="Get Access Token" class="btn btn-primary" name="upsert_access_token" type="object" attrs="{'invisible': [('access_token','!=',False)]}"/>
+                        <button string="Get Access Token" class="btn btn-primary" name="upsert_access_token" type="object" />
+                        <button string="Connect" class="btn btn-primary" name="action_connect" type="object" attrs="{'invisible': [('access_token','=',False)]}"/>
+                    </header>
+                    <sheet>
+                        <group name="credential" string="Credential">
+                            <field name="name"/>
+                            <field name="username"/>
+                            <field name="password" password="True"/>
+                            <field name="access_token" invisible="1"/>
+                        </group>
+                        <group name="customer_infor" string="Customer Infor">
+                            <field name="customerId" readonly="1"/>
+                            <field name="customerName" readonly="1"/>
+                            <field name="company_id"/>
+                        </group>
+                        <group name="facilities" string="Facilities">
+                            <div>
+                                <field name="facilities_ids" no_label="1">
+                                    <tree editable="top" create="0" delete="0">
+                                        <field name="facilityId" readonly="1"/>
+                                        <field name="name" readonly="1"/>
+                                        <field name="warehouse_id"/>
+                                    </tree>
+                                </field>
+                            </div>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</odoo>

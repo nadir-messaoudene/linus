@@ -58,7 +58,7 @@ class ResPartner(models.Model):
         string='Orders Count',
     )
     shopify_state = fields.Selection(
-        string='Statas',
+        string='Status',
         selection=[('disabled', 'Disabled'), ('invited', 'Invited'),('enabled','Enabled'),('declined','Declined')],
     )
 

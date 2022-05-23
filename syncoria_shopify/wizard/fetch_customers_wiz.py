@@ -9,6 +9,7 @@ from odoo.http import request
 import re
 import json
 import logging
+
 _logger = logging.getLogger(__name__)
 
 
@@ -37,7 +38,6 @@ class CustomerFetchWizard(models.Model):
             _logger.warning("Exception-{}".format(e.args))
         return feed_customer_id
 
-
     def shopify_fetch_customers_to_odoo(self, kwargs=None):
         """
             Fetch Customers
@@ -55,8 +55,9 @@ class CustomerFetchWizard(models.Model):
             try:
                 marketplace_instance_id = ICPSudo.get_param('syncoria_base_marketplace.marketplace_instance_id')
                 marketplace_instance_id = [int(s) for s in re.findall(r'\b\d+\b', marketplace_instance_id)]
-                marketplace_instance_id = self.env['marketplace.instance'].sudo().search([('id','=',marketplace_instance_id[0])])
-                kwargs = {'marketplace_instance_id': marketplace_instance_id } 
+                marketplace_instance_id = self.env['marketplace.instance'].sudo().search(
+                    [('id', '=', marketplace_instance_id[0])])
+                kwargs = {'marketplace_instance_id': marketplace_instance_id}
             except:
                 marketplace_instance_id = False
 
@@ -66,8 +67,7 @@ class CustomerFetchWizard(models.Model):
         if len(kwargs.get('marketplace_instance_id')) > 0:
             marketplace_instance_id = kwargs.get('marketplace_instance_id')
             version = marketplace_instance_id.marketplace_api_version or '2021-01'
-            url = marketplace_instance_id.marketplace_host +  '/admin/api/%s/customers.json'%version
-
+            url = marketplace_instance_id.marketplace_host + '/admin/api/%s/customers.json' % version
 
             tz_offset = '-00:00'
             if self.env.user and self.env.user.tz_offset:
@@ -88,17 +88,20 @@ class CustomerFetchWizard(models.Model):
                 url += '?created_at_min=%s' % fields.Datetime.now().strftime(
                     "%Y-%m-%dT00:00:00" + tz_offset)
                 url += '&created_at_max=%s' % fields.Datetime.now().strftime(
-                    "%Y-%m-%dT23:59:59"  + tz_offset)
+                    "%Y-%m-%dT23:59:59" + tz_offset)
 
             _logger.info("url===>>>>{}".format(url))
 
-
-            headers = {'X-Shopify-Access-Token':marketplace_instance_id.marketplace_api_password}
+            headers = {'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password}
             type_req = 'GET'
-            params = {"limit":250}
-            items=[]
+            params = {"limit": 250}
+            items = []
             while True:
-                customer_list,next_link = self.env['marketplace.connector'].marketplace_api_call(headers=headers, url=url, type=type_req,marketplace_instance_id=marketplace_instance_id,params=params)
+                customer_list, next_link = self.env['marketplace.connector'].marketplace_api_call(headers=headers,
+                                                                                                  url=url,
+                                                                                                  type=type_req,
+                                                                                                  marketplace_instance_id=marketplace_instance_id,
+                                                                                                  params=params)
                 items += customer_list['customers']
                 if next_link:
                     if next_link.get("next"):
@@ -126,7 +129,7 @@ class CustomerFetchWizard(models.Model):
                     return
                 cr.execute("select name from ir_model_fields "
                            "where model_id=%s and required=True ",
-                           (partner_model[0], ))
+                           (partner_model[0],))
                 res = cr.fetchall()
                 fields_list = [i[0] for i in res if res] or []
                 partner_vals = PartnerObj.default_get(fields_list)
@@ -141,15 +144,27 @@ class CustomerFetchWizard(models.Model):
                         )
 
                         if customer_id:
-                            PartnerObj.browse(customer_id).write({"shopify_instance_id":marketplace_instance_id.id})
+                            PartnerObj.browse(customer_id).write({"shopify_instance_id": marketplace_instance_id.id})
                             _logger.info(
                                 "Customer is created with id %s", customer_id)
                         else:
                             _logger.info("Unable to create Customer")
                     else:
 
-                        partner = PartnerObj.search([("shopify_id","=",i['id'])],limit=1)
-                        partner.write({"shopify_instance_id": marketplace_instance_id.id})
+                        partner = PartnerObj.search([("shopify_id", "=", i['id'])], limit=1)
+                        partner_updates = {
+                            "shopify_instance_id": marketplace_instance_id.id,
+                            "name": (i.get(
+                                'first_name') or "") + " " + (i.get('last_name') or ""),
+                            "phone": i.get('phone') or "",
+                            "email": i.get('email') or "",
+                            "shopify_last_order_id": i.get('last_order_name') or "",
+                            "shopify_total_spent": i.get('total_spent') or "",
+                            "comment": i.get('note') or "",
+                            "shopify_state": i.get('state'),
+                        }
+                        self._process_addresses(partner_updates,i)
+                        partner.write(partner_updates)
                         tags = i.get('tags').split(",")
                         try:
                             tag_ids = []
@@ -173,16 +188,13 @@ class CustomerFetchWizard(models.Model):
                         except Exception as e:
                             _logger.warning(e)
 
-
-
-
                 # self.update_sync_history({
                 #     'last_product_sync' : '',
                 #     'last_product_sync_id' : sp_product_list[-1].get('id') if len(sp_product_list) > 0 else '',
                 #     'product_sync_no': update_products_no,
                 # })
-                
-                if 'call_button'  in str(request.httprequest):
+
+                if 'call_button' in str(request.httprequest):
                     return {
                         'name': ('Shopify Customers'),
                         'type': 'ir.actions.act_window',
@@ -191,7 +203,7 @@ class CustomerFetchWizard(models.Model):
                         'res_model': 'res.partner',
                         'view_id': False,
                         'domain': [('marketplace_type', '=', 'shopify')],
-                        'target':'current',
+                        'target': 'current',
                     }
                 return {
                     'type': 'ir.actions.client',
@@ -203,3 +215,51 @@ class CustomerFetchWizard(models.Model):
                     e = customer_list.get('errors')
                 _logger.info("Exception occured: %s", e)
                 raise exceptions.UserError(_("Error Occured: %s") % e)
+
+    def _process_addresses(self,update_values,values):
+        ############Default Address Starts####################################
+        if values.get('default_address') or values.get('addresses'):
+            default_address=values.get(
+                'default_address') or values.get('addresses')[0]
+        else:
+            default_address=values
+        country=False
+        state=False
+
+        if default_address:
+
+            update_values['street']=default_address.get(
+                'address1') or ""
+            update_values['street2']=default_address.get(
+                'address2') or ""
+            update_values['city']=default_address.get('city') or ""
+
+            search_domain=[]
+            if default_address.get('country_code'):
+                search_domain += [('code', '=',
+                                default_address.get('country_code'))]
+                # country = env['res.country'].sudo().search(
+                #     [('code', '=', default_address.get('country_code'))], limit=1)
+            elif default_address.get('country'):
+                search_domain += [('name', '=',
+                                default_address.get('country'))]
+                # country = env['res.country'].sudo().search(
+                #     [('name', '=', default_address.get('country'))], limit=1)
+            country=self.env['res.country'].sudo().search(search_domain, limit=1)
+            update_values['country_id']=country.id if country else None
+            state_domain=[('country_id', '=', country.id)] if country else []
+            if default_address.get('province_code'):
+                state_domain += [('code', '=',
+                                default_address.get('province_code'))]
+                # state = env['res.country.state'].sudo().search(
+                #     [('code', '=', default_address.get('province_code'))], limit=1)
+            elif default_address.get('province'):
+                search_domain += [('name', '=',
+                                default_address.get('province'))]
+                # state = env['res.country.state'].sudo().search(
+                #     [('name', '=', default_address.get('province'))], limit=1)
+            state=self.env['res.country.state'].sudo().search(
+                state_domain, limit=1)
+
+            update_values['state_id']=state.id if state else None
+            update_values['zip']=default_address.get('zip') or ""

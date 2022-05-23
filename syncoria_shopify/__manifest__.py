@@ -29,6 +29,7 @@
         'views/account.xml',
         'views/stock.xml',
         'views/shopify_warehouse_views.xml',
+        'views/shopify_fulfilment.xml',
         # Wizards
         'wizard/fetch_customers_wiz.xml',
         'wizard/fetch_orders_wiz.xml',
@@ -51,8 +52,14 @@
         'views/webhooks_config.xml',
         # 'views/sync_history.xml',
         'views/marketplace_logging.xml',
+        'views/shopify_dashnoard_view.xml',
 
     ],
+    'assets': {
+        'web.assets_backend': [
+            'syncoria_shopify/static/src/css/style.css',
+        ],
+    },
     'price': 500,
     'currency': 'USD',
     'license': 'OPL-1',

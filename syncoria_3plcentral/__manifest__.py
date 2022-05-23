@@ -9,10 +9,11 @@
     'depends': ['base', 'stock'],
     'data': [
         'security/ir.model.access.csv',
-        'views/3pl_view.xml',
+        'views/instance_3pl_view.xml',
         'views/res_partner.xml',
         'views/menu.xml',
-        'views/refresh_access_token.xml'
+        'views/refresh_access_token.xml',
+        'views/stock_move_view.xml'
     ],
     'license': 'OPL-1',
     'support': "support@syncoria.com"

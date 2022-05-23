@@ -12,9 +12,11 @@
                     <button name="fetch_shopify_payments" string="Fetch Shopify Payments" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
                     <button name="fetch_shopify_refunds" string="Fetch Shopify Refunds" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
                     <button name="process_shopify_invoice" string="Process Shopify Invoice" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
-                    <button name="shopify_invoice_register_payments" string="invoice_register_payments" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
+                    <button name="shopify_invoice_register_payments" string="Invoice Register Payments" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
                     <button name="process_shopify_credit_note" string="Process Shopify Credit" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
                     <button name="shopify_credit_note_register_payments" string="Register Credit" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
+                    <button name="get_order_fullfillments" string="Fetch Fulfilment" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
+                    <button name="process_shopify_fulfilment" string="Process Fulfilment" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
 
                 </xpath>
                 <xpath expr="//notebook" position="inside">
@@ -50,20 +52,20 @@
                             </tree>
                         </field>
                     </page>
-                    <page string="Shopify Refunds">
-                        <field name="shopify_refund_ids">
-                            <tree string="Refunds" create="false" delete="false" edit="false" editable="bottom">
-                                <field name="name"/>
-                                <field name="shopify_id"/>
-                                <field name="shopify_order_id"/>
-                                <field name="shopify_note"/>
-                                <field name="shopify_user_id"/>
-                                <field name="shopify_processed_at"/>
-                                <field name="shopify_restock"/>
-                                <field name="shopify_transaction_id"/>
-                            </tree>
-                        </field>
-                    </page>
+<!--                    <page string="Shopify Refunds">-->
+<!--                        <field name="shopify_refund_ids">-->
+<!--                            <tree string="Refunds" create="false" delete="false" edit="false" editable="bottom">-->
+<!--                                <field name="name"/>-->
+<!--                                <field name="shopify_id"/>-->
+<!--                                <field name="shopify_order_id"/>-->
+<!--                                <field name="shopify_note"/>-->
+<!--                                <field name="shopify_user_id"/>-->
+<!--                                <field name="shopify_processed_at"/>-->
+<!--                                <field name="shopify_restock"/>-->
+<!--                                <field name="shopify_transaction_id"/>-->
+<!--                            </tree>-->
+<!--                        </field>-->
+<!--                    </page>-->
                     <page string="Shopify Refunds Transaction">
                         <field name="shopify_refund_transaction_ids">
                             <tree string="Refunds Transaction" create="false" delete="false" edit="false" editable="bottom">
@@ -81,6 +83,14 @@
                                 <field name="shopify_refund_currency"/>
                             </tree>
                         </field>
+                    </page>
+                    <page string="Shopify Fulfilment Line">
+                        <field name="shopify_fulfilment_ids"/>
+<!--                            <tree string="Fulfilment Lines">-->
+<!--                               <field name="sale_order_id"/>-->
+<!--                               <field name="name"/>-->
+<!--                            </tree>-->
+<!--                        </field>-->
                     </page>
                 </xpath>
             </field>

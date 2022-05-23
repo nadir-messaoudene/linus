@@ -391,12 +391,13 @@ class ShopifyFeedOrders(models.Model):
                     for line in i['line_items']:
                         product_tax_per = 0
                         product_tax_name = ''
+                        # if not str(line['sku']) =='':
                         if line.get('variant_id'):
                             product_product = self.env['product.product'].sudo()
                             prod_dom = [('shopify_instance_id','=',marketplace_instance_id.id)]
                             # if line.get("sku"):
                                 # prod_dom += ['|']
-                                # prod_dom += [('shopify_id', '=', str(line['variant_id']))]
+                            # prod_dom += [('shopify_id', '=', str(line['variant_id']))]
                             prod_dom += [('default_code', '=', str(line['sku']))]
                             # else:
                             #     prod_dom += [('shopify_id', '=', str(line['variant_id']))]
@@ -406,7 +407,7 @@ class ShopifyFeedOrders(models.Model):
                             prod_dom = [('shopify_instance_id','=',marketplace_instance_id.id)]
                             # if line.get("sku"):
                             #     prod_dom += ['|']
-                            #     prod_dom += [('shopify_id', '=', str(line['product_id']))]
+                            # prod_dom += [('shopify_id', '=', str(line['product_id']))]
                             prod_dom += [('default_code', '=', str(line['sku']))]
                             # else:
                             #     prod_dom += [('shopify_id', '=', str(line['variant_id']))]
@@ -415,13 +416,14 @@ class ShopifyFeedOrders(models.Model):
                             #      ('shopify_instance_id', '=', marketplace_instance_id.id),
                             #     '|',
                             #             ('shopify_id', '=', str(
-                            #                 line['product_id'])), 
+                            #                 line['product_id'])),
                             #             ('default_code', '=',
                             #              str(line['sku'])),
                             #             ]
                             # prod_rec = self.env['product.product'].sudo().search(
                             #     prod_dom, limit=1)
-                        
+                        # else:
+                        #     prod_rec =False
                         if not prod_rec and marketplace_instance_id.auto_create_product:
                             _logger.info("# Need to create a new product")
                             sp_product_list = self.env['products.fetch.wizard'].shopify_fetch_products_to_odoo({
@@ -569,6 +571,14 @@ class ShopifyFeedOrders(models.Model):
                     tags = i.get('tags').split(",")
                     try:
                         tag_ids = []
+                        tag_b2c = self.env['crm.tag'].sudo().search([('name', '=', 'B2C')])
+                        if tag_b2c:
+                            _logger.info('TAG_B2C:' + str(tag_b2c.id))
+                            tag_ids.append((4, tag_b2c.id))
+                        else:
+                            tag_b2c = self.env['crm.tag'].sudo().search([])
+                            for tag in tag_b2c:
+                                _logger.info(tag.name)
                         for tag in tags:
                             tag_id = self.env['crm.tag'].search(
                                 [('name', '=', tag)])
@@ -683,7 +693,51 @@ class ShopifyFeedOrders(models.Model):
                     _logger.info(log_msg)
                     self.write({'state':'processed'})
 
+                if order_exists:
+                    order_id = current_order_id
+                else:
+                    order_id = order_id
 
+                if order_id.state not in ['cancel'] and i['fulfillments'] and marketplace_instance_id.auto_create_fulfilment :
+                    shopify_fulfil_obj = self.env['shopify.fulfilment']
+                    for fulfillment in i['fulfillments']:
+                        exist_fulfilment = shopify_fulfil_obj.search([("shopify_fulfilment_id", "=", fulfillment['id']),
+                                                                      ("shopify_instance_id", "=", marketplace_instance_id.id),
+                                                                      ("sale_order_id","=",order_id.id)],limit=1)
+
+                        fulfillment_vals = {
+                            "name": order_id.name+'#'+str(fulfillment.get("order_id"))[:3],
+                            "sale_order_id": order_id.id,
+                            "shopify_instance_id": marketplace_instance_id.id,
+                            "shopify_order_id": fulfillment.get("order_id"),
+                            "shopify_fulfilment_id": fulfillment.get("id"),
+                            "shopify_fulfilment_tracking_number": ','.join(fulfillment.get("tracking_numbers")),
+                          "shopify_fulfilment_status": i.get("fulfillment_status") or fulfillment.get("line_items")[0].get("fulfillment_status"),
+                          "shopify_status": fulfillment.get("status")
+                        }
+                        fulfillment_line_vals=[]
+                        for line_item in fulfillment.get("line_items"):
+                            fulfillment_line_vals +=[(0,0,{
+                                "sale_order_id": order_id.id,
+                                "name":order_id.name+":"+line_item.get("name"),
+                                "shopify_instance_id": marketplace_instance_id.id,
+                              "shopify_fulfilment_line_id": line_item.get("id"),
+                             "shopify_fulfilment_product_id": line_item.get("product_id"),
+                             "shopify_fulfilment_product_variant_id": line_item.get("variant_id"),
+                             "shopify_fulfilment_product_title": line_item.get("title"),
+                             "shopify_fulfilment_product_name": line_item.get("name"),
+                             "shopify_fulfilment_service": line_item.get("fulfillment_service"),
+                             "shopify_fulfilment_qty": line_item.get("quantity"),
+                             "shopify_fulfilment_grams": line_item.get("grams"),
+                             "shopify_fulfilment_price": line_item.get("price"),
+                             "shopify_fulfilment_total_discount": line_item.get("total_discount"),
+                             "shopify_fulfilment_status": line_item.get("total_discount"),
+                            })]
+                        fulfillment_vals["shopify_fulfilment_line"] = fulfillment_line_vals
+                        if exist_fulfilment:
+                            shopify_fulfil_obj.update(fulfillment_vals)
+                        else:
+                            shopify_fulfil_obj.create(fulfillment_vals)
                 log_msg = """Shopify Process Feed Order finished for {}""".format(self)
                 msg_body += '\n' + log_msg
                 _logger.info(log_msg)
@@ -700,12 +754,17 @@ class ShopifyFeedOrders(models.Model):
         for shopify_order in all_shopify_orders:
             shopify_order.fetch_shopify_payments()
             shopify_order.fetch_shopify_refunds()
-            if shopify_order and shopify_order.state in ['sale', 'done'] and marketplace_instance_id.auto_create_invoice == True:
+            shopify_order.get_order_fullfillments()
+            # if shopify_order and shopify_order.state in ['sale', 'done'] and marketplace_instance_id.auto_create_invoice == True:
+            if shopify_order and shopify_order.state not in ['draft'] and marketplace_instance_id.auto_create_invoice == True:
                 shopify_order.process_shopify_invoice()
                 shopify_order.shopify_invoice_register_payments()
                 shopify_order.process_shopify_credit_note()
                 shopify_order.shopify_credit_note_register_payments()
+            if shopify_order and shopify_order.state not in ['draft'] and marketplace_instance_id.auto_create_fulfilment == True:
+                shopify_order.process_shopify_fulfilment()
             shopify_order._cr.commit()
+
 
         return msg_body, error_msg_body
             

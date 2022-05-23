@@ -25,3 +25,4 @@ from . import shopify_transactions
 from . import shopify_refunds
 
 from . import marketplace_logging
+from . import shopify_fulfilments
