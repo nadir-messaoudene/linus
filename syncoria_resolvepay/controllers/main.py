@@ -32,6 +32,19 @@ class ResolvepayController(http.Controller):
         sale_order_id = request.session.get('sale_last_order_id')
         if sale_order_id:
             order = request.env['sale.order'].sudo().browse(sale_order_id)
+            if order.partner_id.available_credit < order.amount_total:
+                tag_id = request.env['crm.tag'].sudo().search([('name', '=', 'B2B')])
+                order.tag_ids = [(4, tag_id.id)]
+                tag_id = request.env['crm.tag'].sudo().search([('name', '=', 'Not Enough Credit')])
+                order.tag_ids = [(4, tag_id.id)]
+                order.sudo().action_confirm()
+                wiz = request.env['sale.advance.payment.inv'].sudo().with_context(active_ids=order.ids, open_invoices=True).create({})
+                wiz.sudo().create_invoices()
+                _logger.info("Creating Invoice for Sale Order-{}".format(order))
+                move_id = request.env['account.move'].sudo().search(
+                    [('invoice_origin', '=', order.name), ('move_type', "=", "out_invoice")])
+                move_id.message_post(body=_(
+                    "Customer does not have enough credit"))
             return request.render("syncoria_resolvepay.confirmation", {
                 'order': order,
             })
@@ -46,6 +59,17 @@ class ResolvepayController(http.Controller):
         except Exception as e:
             _logger.warning("Exception-{}".format(e))
 
+    @http.route(['/resolvepay/pre_confirmation'], type='http', auth="public", website=True, sitemap=False, save_session=False)
+    def pre_confirmation(self, **post):
+        sale_order_id = request.session.get('sale_last_order_id')
+        if sale_order_id:
+            order = request.env['sale.order'].sudo().browse(sale_order_id)
+            return request.render("syncoria_resolvepay.pre_confirmation", {
+                'order': order,
+            })
+        else:
+            return request.redirect('/shop')
+
     @http.route('/shop/resolvepay/get_sale_order', type='json', auth="public", website=True, save_session=False)
     def sale_order_info(self):
         order = request.website.sale_get_order()
@@ -56,21 +80,20 @@ class ResolvepayController(http.Controller):
         customer_fname, customer_lname = self.name_split(order.partner_id.name)
         invoice_fname, invoice_lname = self.name_split(order.partner_invoice_id.name)
         item_list = []
-        order.sudo().action_confirm()
-        tag_id = request.env['crm.tag'].sudo().search([('name', '=', 'B2B')])
-        order.tag_ids = [(4, tag_id.id)]
-        _logger.info("Creating Invoice for Sale Order-{}".format(order))
-        wiz = request.env['sale.advance.payment.inv'].sudo().with_context(
-            active_ids=order.ids,
-            open_invoices=True).create({})
-        wiz.sudo().create_invoices()
-        move_id = request.env['account.move'].sudo().search(
-            [('invoice_origin', '=', order.name), ('move_type', "=", "out_invoice")])
+
         if order.partner_id.available_credit < order.amount_total:
-            move_id.message_post(body=_(
-                "Customer does not have enough credit"))
             return False
         else:
+            tag_id = request.env['crm.tag'].sudo().search([('name', '=', 'B2B')])
+            order.tag_ids = [(4, tag_id.id)]
+            order.sudo().action_confirm()
+            wiz = request.env['sale.advance.payment.inv'].sudo().with_context(
+                active_ids=order.ids,
+                open_invoices=True).create({})
+            wiz.sudo().create_invoices()
+            _logger.info("Creating Invoice for Sale Order-{}".format(order))
+            move_id = request.env['account.move'].sudo().search(
+                [('invoice_origin', '=', order.name), ('move_type', "=", "out_invoice")])
             if move_id and move_id.state != 'posted':
                 move_id.sudo().action_post()
                 for item in order.order_line:

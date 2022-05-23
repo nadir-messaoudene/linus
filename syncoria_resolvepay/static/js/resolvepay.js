@@ -28,17 +28,17 @@ odoo.define('syncoria_resolvepay.payment_checkout', require => {
         console.log("flow ===>>>>", flow);
         console.log("--------------------------------------");
 
-        if (paymentOptionId != 15) {
+        if (paymentOptionId != 16) {
           return this._super(...arguments);
         }
 
-        if (paymentOptionId == 15) {
+        if (paymentOptionId == 16) {
           return this._rpc({
                 route: "/shop/resolvepay/get_sale_order",
             })
             .then((orderInfo) => {
                 if (!orderInfo) {
-                    window.location.replace('/resolvepay/success');
+                    window.location.replace('/resolvepay/pre_confirmation');
                 } else {
                     resolve.checkout({
                     sandbox: true, // INCLUDE ONLY IF USING SANDBOX ENVIRONMENT (default is production)
@@ -125,10 +125,10 @@ odoo.define('syncoria_resolvepay.payment_checkout', require => {
 //                       ...orderInfo.billing
 //                     },
 //                     items: orderInfo.items,
-          
+
 //                     order_number: orderInfo.order_number, // (optional) merchant order number
 //                     po_number:    '', // (optional) buyer purchase order number if required
-          
+
 //                     shipping_amount:  0.00,
 //                     tax_amount:       orderInfo.tax_amount,
 //                     total_amount:     orderInfo.total_amount,
