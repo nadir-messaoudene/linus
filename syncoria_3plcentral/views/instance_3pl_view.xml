@@ -41,6 +41,17 @@
                             <field name="customerName" readonly="1"/>
                             <field name="company_id"/>
                         </group>
+                        <group name="facilities" string="Facilities">
+                            <div>
+                                <field name="facilities_ids" no_label="1">
+                                    <tree editable="top" create="0" delete="0">
+                                        <field name="facilityId" readonly="1"/>
+                                        <field name="name" readonly="1"/>
+                                        <field name="warehouse_id"/>
+                                    </tree>
+                                </field>
+                            </div>
+                        </group>
                     </sheet>
                 </form>
             </field>

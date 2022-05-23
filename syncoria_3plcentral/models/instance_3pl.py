@@ -1,7 +1,23 @@
+from pyexpat import model
 from odoo import models, fields
 import requests, json
 from requests.auth import HTTPBasicAuth
 from odoo.exceptions import UserError
+
+class Facilities3PL(models.Model):
+    _name = 'facilities.3pl'
+
+    name = fields.Char(string='Name', required=True)
+    facilityId = fields.Integer(string="Facility ID")
+    instance_3pl_id = fields.Many2one('instance.3pl', 'Instance')
+    warehouse_id = fields.Many2one('stock.warehouse', 'Warehouse')
+    _sql_constraints = [
+        (
+            'unique_warehouse_byfacility',
+            'UNIQUE(facilityId, warehouse_id)',
+            'Only one warehouse assigned by one facility',
+        ),
+    ]
 
 class Instance3PL(models.Model):
     _name = 'instance.3pl'
@@ -14,13 +30,13 @@ class Instance3PL(models.Model):
     customerId = fields.Integer(string="Customer ID")
     customerName = fields.Char(string="Customer Name")
     company_id = fields.Many2one('res.company', string='Company', required=True, default=lambda self: self.env.company)
+    facilities_ids = fields.One2many('facilities.3pl', 'instance_3pl_id', string='Facilities')
 
     _sql_constraints = [
-        ('instance_name_uniq', 'unique (name)', 'Instance name must be unique.')
+        ('instance_name_uniq', 'unique(name)', 'Instance name must be unique.')
     ]
 
     def action_connect(self):
-        #Get CustomerId
         url = "https://secure-wms.com/customers"
         headers = {
             'Accept-Language': 'en-US,en;q=0.8',
@@ -32,11 +48,22 @@ class Instance3PL(models.Model):
         response = requests.request('GET', url, headers=headers, data={})
         if response.status_code == 200:
             response = json.loads(response.text)
+            print(response)
             try:
                 customerId = response.get('_embedded').get('http://api.3plCentral.com/rels/customers/customer')[0].get('readOnly').get('customerId')
                 self.customerId = customerId
                 companyName = response.get('_embedded').get('http://api.3plCentral.com/rels/customers/customer')[0].get('companyInfo').get('companyName')
                 self.customerName = companyName
+                #Facilities
+                facilities = response.get('_embedded').get('http://api.3plCentral.com/rels/customers/customer')[0].get('facilities')
+                print(facilities)
+                facilities_ids = (5, 0)
+                for facility in facilities:
+                    self.env['facilities.3pl'].create({
+                        'name': facility.get('name'),
+                        'facilityId' : facility.get('id'),
+                        'instance_3pl_id' : self.id
+                    })
             except:
                 raise UserError("Can not connect 3PL Centrla server.")
 
