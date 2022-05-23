@@ -34,7 +34,7 @@
                             <field name="name"/>
                             <field name="username"/>
                             <field name="password" password="True"/>
-                            <field name="access_token" invisible="1"/>
+                            <field name="access_token" invisible="0"/>
                             <field name="customerId"/>
                             <field name="company_id"/>
                         </group>
