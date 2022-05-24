@@ -710,7 +710,7 @@ class ResCompany(models.Model):
             _logger.info("Data for importing customer payments in odoo is ---> {}".format(data.text))
             payment = self.env['account.payment'].create_payment(data, is_customer=True)
             if payment:
-                company.last_imported_payment_id = payment.qbo_payment_id
+                company.last_imported_payment_id = payment
         else:
             _logger.warning(_('Empty data'))
             raise UserError("Response Code: {} \nResponse Text:  {}".format(data.code, data.text))
@@ -731,7 +731,7 @@ class ResCompany(models.Model):
         if data.status_code == 200:
             payment = self.env['account.payment'].create_payment(data, is_vendor=True)
             if payment:
-                company.last_imported_bill_payment_id = payment.qbo_payment_id
+                company.last_imported_bill_payment_id = payment
         else:
             raise UserError("Empty data")
             _logger.warning(_('Empty data'))

@@ -892,7 +892,7 @@ class AccountJournal(models.Model):
         account = self.env['account.account'].browse(account_id)
         journal_id = self.search([('type', 'in', ['bank', 'cash']), ('default_account_id', '=', account_id)], limit=1)
         if not journal_id:
-            raise ValidationError(_("Please, define payment journal for Account Name : %s " % (account.name)))
+            raise ValidationError(_("Please, define payment journal for Account Name : %s. Account ID: %s. Account Code: %s" % (account.name, account_id, account.code)))
         
         return journal_id.id
 
