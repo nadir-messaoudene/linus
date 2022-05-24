@@ -1,6 +1,9 @@
 from odoo import models, fields
 import requests, json
 from requests.auth import HTTPBasicAuth
+from odoo.exceptions import UserError
+import logging
+_logger = logging.getLogger(__name__)
 
 class ProductProduct(models.Model):
     _inherit = "product.product"
@@ -12,6 +15,8 @@ class ProductProduct(models.Model):
     is_haz_mat = fields.Boolean('Is Haz Mat')
     haz_mat_id = fields.Char('Haz Mat ID')
     haz_mat_shipping_name = fields.Char('Haz Mat Shipping Name')
+
+    product_3pl_id = fields.Char('3PL Item ID')
 
     def export_product_to_3pl(self):
         instance = self.env['instance.3pl'].search([], limit=1)
@@ -31,7 +36,7 @@ class ProductProduct(models.Model):
                 "options": {
                     "inventoryUnit": {
                         "unitIdentifier": {
-                            "name": "test"
+                            "Id": 1
                         }
                     }
                 }
@@ -39,7 +44,20 @@ class ProductProduct(models.Model):
             if record.barcode:
                 payload["upc"] = record.barcode
             if record.is_haz_mat:
-
+                payload["options"]["hazMat"] = dict(
+                    isHazMat=str(True),
+                    id=record.haz_mat_id,
+                    shippingName=record.haz_mat_shipping_name
+                )
+            payload = str(payload)
             response = requests.request("POST", url, headers=headers, data=payload)
-
-            print(response.text)
+            if response.status_code == 201:
+                response = json.loads(response.text)
+                try:
+                    record.product_3pl_id = response["itemId"]
+                except Exception as e:
+                    _logger.info(e)
+                    raise UserError(e)
+            else:
+                _logger.info(response.text)
+                raise UserError(response.text)
