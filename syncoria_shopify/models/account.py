@@ -17,6 +17,33 @@ class AccountInvoice(models.Model):
         comodel_name='product.pricelist', string='Pricelist',
         readonly=True)
 
+    def fetch_shopify_payments(self):
+        SaleOrder = self.env['sale.order'].sudo()
+        sp_order_obj = SaleOrder.search([('name', '=', self.ref)], limit=1)
+        sp_order_obj.fetch_shopify_payments()
+    def fetch_shopify_refunds(self):
+        SaleOrder = self.env['sale.order'].sudo()
+        sp_order_obj = SaleOrder.search([('name', '=', self.ref)], limit=1)
+        sp_order_obj.fetch_shopify_refunds()
+    def process_shopify_invoice(self):
+        SaleOrder = self.env['sale.order'].sudo()
+        sp_order_obj = SaleOrder.search([('name', '=', self.ref)], limit=1)
+        sp_order_obj.process_shopify_invoice()
+    def shopify_invoice_register_payments(self):
+        SaleOrder = self.env['sale.order'].sudo()
+        sp_order_obj = SaleOrder.search([('name', '=', self.ref)], limit=1)
+        sp_order_obj.shopify_invoice_register_payments()
+    def process_shopify_credit_note(self):
+        SaleOrder = self.env['sale.order'].sudo()
+        sp_order_obj = SaleOrder.search([('name', '=', self.ref)], limit=1)
+        sp_order_obj.process_shopify_credit_note()
+    def shopify_credit_note_register_payments(self):
+        SaleOrder = self.env['sale.order'].sudo()
+        sp_order_obj = SaleOrder.search([('name', '=', self.ref)], limit=1)
+        sp_order_obj.shopify_credit_note_register_payments()
+    
+    
+
 
 class AccountTax(models.Model):
     _inherit = 'account.tax'

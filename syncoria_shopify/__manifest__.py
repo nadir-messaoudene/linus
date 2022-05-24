@@ -26,7 +26,7 @@
         'views/product_template.xml',
         'views/marketplace_instance.xml',
         'views/sale_order.xml',
-        'views/account.xml',
+        # 'views/account.xml',
         'views/stock.xml',
         'views/shopify_warehouse_views.xml',
         'views/shopify_fulfilment.xml',

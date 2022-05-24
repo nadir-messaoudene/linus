@@ -219,35 +219,44 @@ class StockPicking(models.Model):
             else:
                 _logger.info("\nSuccess---->")
 
+    # def get_order_fullfillments(self):
+    #     marketplace_instance_id = get_marketplace(self)
+        # SaleOrder = self.env['sale.order'].sudo()
+        # sp_order_id = SaleOrder.search([('name', '=', self.origin)], limit=1)
+
+    #     if sp_order_id and sp_order_id.marketplace_type == 'shopify':
+    #         version = marketplace_instance_id.marketplace_api_version or '2022-01'
+    #         url = marketplace_instance_id.marketplace_host + \
+    #             '/admin/api/%s/fulfillment_orders/%s/fulfillments.json' % (
+    #                 version, sp_order_id.shopify_id)
+    #         headers = {
+    #             'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password,
+    #             'Content-Type': 'application/json'
+    #         }
+    #         type_req = 'GET'
+    #         fullfillment,next_link = self.env[
+    #             'marketplace.connector'].shopify_api_call(
+    #             headers=headers,
+    #             url=url,
+    #             type=type_req,
+    #             marketplace_instance_id=marketplace_instance_id,
+    #             data={}
+    #         )
+    #         _logger.info("\nfullfillment---->" + str(fullfillment))
+
+    #         if fullfillment.get('errors'):
+    #             raise exceptions.UserError(_(fullfillment.get('errors')))
+    #         else:
+    #             _logger.info("\nSuccess---->")
     def get_order_fullfillments(self):
-        marketplace_instance_id = get_marketplace(self)
         SaleOrder = self.env['sale.order'].sudo()
-        sp_order_id = SaleOrder.search([('name', '=', self.origin)], limit=1)
+        sp_order_obj = SaleOrder.search([('name', '=', self.origin)], limit=1)
+        sp_order_obj.get_order_fullfillments()
 
-        if sp_order_id and sp_order_id.marketplace_type == 'shopify':
-            version = marketplace_instance_id.marketplace_api_version or '2022-01'
-            url = marketplace_instance_id.marketplace_host + \
-                '/admin/api/%s/fulfillment_orders/%s/fulfillments.json' % (
-                    version, sp_order_id.shopify_id)
-            headers = {
-                'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password,
-                'Content-Type': 'application/json'
-            }
-            type_req = 'GET'
-            fullfillment,next_link = self.env[
-                'marketplace.connector'].shopify_api_call(
-                headers=headers,
-                url=url,
-                type=type_req,
-                marketplace_instance_id=marketplace_instance_id,
-                data={}
-            )
-            _logger.info("\nfullfillment---->" + str(fullfillment))
-
-            if fullfillment.get('errors'):
-                raise exceptions.UserError(_(fullfillment.get('errors')))
-            else:
-                _logger.info("\nSuccess---->")
+    def process_shopify_fulfilment(self):
+        SaleOrder = self.env['sale.order'].sudo()
+        sp_order_obj = SaleOrder.search([('name', '=', self.origin)], limit=1)
+        sp_order_obj.process_shopify_fulfilment()
 
 class  InheritedStockwarehouse(models.Model):
     _inherit = 'stock.warehouse'

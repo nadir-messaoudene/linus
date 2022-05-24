@@ -8,17 +8,6 @@
             <field name="inherit_id" ref="sale.view_order_form" />
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <xpath expr="//header" position="inside">
-                    <button name="fetch_shopify_payments" string="Fetch Shopify Payments" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
-                    <button name="fetch_shopify_refunds" string="Fetch Shopify Refunds" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
-                    <button name="process_shopify_invoice" string="Process Shopify Invoice" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
-                    <button name="shopify_invoice_register_payments" string="Invoice Register Payments" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
-                    <button name="process_shopify_credit_note" string="Process Shopify Credit" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
-                    <button name="shopify_credit_note_register_payments" string="Register Credit" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
-                    <button name="get_order_fullfillments" string="Fetch Fulfilment" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
-                    <button name="process_shopify_fulfilment" string="Process Fulfilment" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
-
-                </xpath>
                 <xpath expr="//notebook" position="inside">
                     <page string="Shopify">
                         <group>
