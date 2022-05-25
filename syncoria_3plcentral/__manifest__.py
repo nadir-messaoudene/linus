@@ -13,7 +13,8 @@
         'views/res_partner.xml',
         'views/menu.xml',
         'views/refresh_access_token.xml',
-        'views/stock_picking_view.xml'
+        'views/stock_picking_view.xml',
+        'views/product_product.xml'
     ],
     'license': 'OPL-1',
     'support': "support@syncoria.com"

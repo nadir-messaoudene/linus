@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    <data>
+        <record id="product_normal_form_view_inherit_3pl" model="ir.ui.view">
+            <field name="name">product.product.form.inherit.3pl</field>
+            <field name="model">product.product</field>
+            <field name="inherit_id" ref="product.product_normal_form_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//notebook" position="inside">
+                    <page string="3PL Central">
+                        <group>
+                            <field name="length" />
+                            <field name="width" />
+                            <field name="height" />
+                            <field name="product_3pl_id"/>
+                        </group>
+                        <group>
+                            <field name="is_haz_mat" />
+                            <field name="haz_mat_id" attrs="{'invisible':[('is_haz_mat','=',False)]}"/>
+                            <field name="haz_mat_shipping_name" attrs="{'invisible':[('is_haz_mat','=',False)]}"/>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+	    </record>
+
+        <record model="ir.actions.server" id="export_product_to_3pl">
+            <field name="name">Export to 3PL Central</field>
+            <field name="model_id" ref="product.model_product_product"/>
+            <field name="binding_model_id" ref="product.model_product_product"/>
+            <field name="state">code</field>
+            <field name="code">if records:
+                   action = records.export_product_to_3pl()
+            </field>
+        </record>
+    </data>
+</odoo>

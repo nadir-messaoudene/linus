@@ -24,6 +24,7 @@ class Instance3PL(models.Model):
     _description = '3PL Instance'
 
     name = fields.Char(string='Instance Name', required=True)
+    user_login_id = fields.Char(string='User Login ID', required=True)
     username = fields.Char(string='Username', required=True)
     password = fields.Char(string='Password', required=True)
     access_token = fields.Char(string='Access Token')
@@ -65,13 +66,14 @@ class Instance3PL(models.Model):
                         'instance_3pl_id' : self.id
                     })
             except:
-                raise UserError("Can not connect 3PL Centrla server.")
+                raise UserError("Can not connect 3PL Central server.")
 
 
     def upsert_access_token(self):
         get_access_token_url = 'https://secure-wms.com/AuthServer/api/Token'
         payload = json.dumps({
             "grant_type": "client_credentials",
+            "user_login": self.user_login_id,
             })
         headers = {
             'Host': 'secure-wms.com',
@@ -86,6 +88,8 @@ class Instance3PL(models.Model):
         if response.status_code == 200:
             response = json.loads(response.text)
             self.access_token = response.get('access_token')
+        else:
+            raise UserError(response.text)
             
     def refresh_access_token(self):
         to_refresh = self.env['instance.3pl'].search([])

@@ -1,13 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
+        <record model="ir.actions.server" id="export_picking_to_3pl">
+            <field name="name">Export to 3PL Central</field>
+            <field name="model_id" ref="stock.model_stock_picking"/>
+            <field name="binding_model_id" ref="stock.model_stock_picking"/>
+            <field name="state">code</field>
+            <field name="code">if records:
+                   action = records.export_picking_to_3pl()
+            </field>
+        </record>
+        <record model="ir.actions.server" id="update_picking_from_3pl">
+            <field name="name">Update from 3PL Central</field>
+            <field name="model_id" ref="stock.model_stock_picking"/>
+            <field name="binding_model_id" ref="stock.model_stock_picking"/>
+            <field name="state">code</field>
+            <field name="code">if records:
+                   action = records.update_picking_from_3pl()
+            </field>
+        </record>
+
         <record id="view_picking_form_inherit_3pl" model="ir.ui.view">
             <field name="name">view.picking.form.inherit.3pl</field>
             <field name="model">stock.picking</field>
             <field name="inherit_id" ref="stock.view_picking_form"/>
             <field name="arch" type="xml">
+                <xpath expr="//header" position="inside">
+                    <button name="action_push_to_3pl" string="Push to 3PL" />
+                    <!-- <button name="action_push_to_3pl" string="Push to 3PL" 
+                    attrs="{ 'invisible' :[('state','in',['done', 'assigned', 'cancel'])] }"
+                    /> -->
+                </xpath>
                 <xpath expr="//field[@name='origin']" position="after">
-                    <field name="threeplId"/>
+                    <field name="threeplId" readonly="1"/>
                 </xpath>
             </field>
         </record>
