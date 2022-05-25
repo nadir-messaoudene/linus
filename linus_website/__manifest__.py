@@ -11,7 +11,7 @@
     'images': [
     ],
     'data': [
-
+        'views/portal_templates.xml',
     ],
     'license': 'OPL-1',
     'support': "support@syncoria.com",
