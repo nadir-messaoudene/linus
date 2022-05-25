@@ -242,7 +242,9 @@ header#top .navbar a.js_change_lang span, header#top .navbar a.o_add_language {
   letter-spacing: .1rem; }
 header#top .navbar {
   padding-top: .9rem;
-  padding-bottom: .9rem; }
+  padding-bottom: .9rem;
+  padding-right: 0;
+  padding-left: 0; }
 
 .navbar-light .navbar-nav .nav-link {
   color: #000 !important; }
@@ -426,9 +428,29 @@ footer .s_share {
   footer .s_share i.fa {
     box-shadow: none !important; }
 
+@media (min-width: 1200px) {
+  .container, .o_container_small {
+    max-width: 100%; } }
 @media (min-width: 992px) {
+  .container, .o_container_small {
+    max-width: 100%; }
+
   .navbar-expand-lg .navbar-nav .nav-link {
     padding-right: 0.6rem;
     padding-left: 0.6rem; } }
+/*
+
+@media (min-width: 768px) {
+  .container, .o_container_small {
+    max-width: 100%;
+  }
+}
+
+@media (min-width: 576px) {
+  .container, .o_container_small {
+    max-width: 100%;
+  }
+}
+*/
 
 /*# sourceMappingURL=style.css.map */
