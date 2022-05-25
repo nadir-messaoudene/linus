@@ -8,6 +8,11 @@
             <field name="inherit_id" ref="sale.view_order_form" />
             <field name="type">form</field>
             <field name="arch" type="xml">
+                <xpath expr="//header" position="inside">
+                    <button name="get_order_fullfillments" string="Fetch Fulfilment" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
+                    <button name="process_shopify_fulfilment" string="Process Fulfilment" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
+
+                </xpath>
                 <xpath expr="//notebook" position="inside">
                     <page string="Shopify">
                         <group>
