@@ -183,7 +183,7 @@ class AccountInvoice(models.Model):
                 if cust.get('CurrencyRef').get('value'):
                     curr = cust.get('CurrencyRef').get('value')
                     _logger.info("Currency Value for invoice import ------> %s"%(curr))
-                    currency = self.env['res.currency'].search([('name', '=', cust.get('CurrencyRef').get('value'))],
+                    currency = self.env['res.currency'].search([('name', '=', curr)],
                                                                limit=1)
                     if not currency:
                         raise UserError(_("Please activate the currency %s") % (cust.get('CurrencyRef').get('value')))
@@ -233,8 +233,9 @@ class AccountInvoice(models.Model):
         return dict_i
 
     def import_invoice(self):
-        # company = self.env['res.users'].search([('id', '=', 2)]).company_id
-        company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
+        company = self.env['res.users'].search([('id', '=', 2)]).company_id
+        company = self.env['res.company'].browse(1)
+        # company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
         if company.access_token:
             headers = {}
             headers['Authorization'] = 'Bearer ' + company.access_token
@@ -250,7 +251,7 @@ class AccountInvoice(models.Model):
 
     def import_credit_memo(self):
         # company = self.env['res.users'].search([('id', '=', 2)]).company_id
-        company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
+        company = self.env['res.company'].browse(1)
         if company.access_token:
             headers = {}
             headers['Authorization'] = 'Bearer ' + company.access_token
@@ -274,7 +275,7 @@ class AccountInvoice(models.Model):
         company = self.env['res.users'].search([('id', '=', 2)]).company_id
 
         _logger.info("inside vendor bill ****************************")
-        company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
+        company = self.env['res.company'].browse(1)
         if company.access_token:
             headers = {}
             headers['Authorization'] = 'Bearer ' + company.access_token
@@ -297,7 +298,8 @@ class AccountInvoice(models.Model):
     def create_invoice(self, data, type='out_invoice'):
 
         # print ("\n\n------------------------------------------------------------------------1111111111111111111",data,data.text,type)
-        company = self.env['res.users'].search([('id', '=', 2)]).company_id
+        company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
+        company = self.env['res.company'].browse(1)
         if data:
             recs = []
             parsed_data = json.loads(str(data.text))

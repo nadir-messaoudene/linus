@@ -226,7 +226,6 @@ class AccountPayment(models.Model):
         _logger.info(_('Inside Create Payment<------xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx0---->'))
 
         company = self.env['res.company'].search([('id', '=', 1)], limit=1)
-
         res = json.loads(str(data.text))
 
         if is_customer:

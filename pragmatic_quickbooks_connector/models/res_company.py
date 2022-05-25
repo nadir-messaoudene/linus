@@ -695,7 +695,7 @@ class ResCompany(models.Model):
 
     def import_payment(self):
         company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
-
+        company = self.env['res.company'].browse(1)
         #         self.ensure_one()
         # query = "select * From Payment WHERE Id > '%s' order by Id" % (company.last_imported_payment_id)
         query = "select * from Payment WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
@@ -718,7 +718,7 @@ class ResCompany(models.Model):
     # @api.multi
     def import_bill_payment(self):
         company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
-
+        company = self.env['res.company'].browse(1)
         #         self.ensure_one()
         # query = "select * From billpayment WHERE Id > '%s' order by Id" % (company.last_imported_bill_payment_id)
         query = "select * from billpayment WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
@@ -738,7 +738,7 @@ class ResCompany(models.Model):
 
     def import_payment_term_from_quickbooks(self):
         company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
-
+        company = self.env['res.company'].browse(1)
         payment_term = self.env['account.payment.term']
 
         payment_term_line = self.env['account.payment.term.line']
@@ -1439,6 +1439,7 @@ class ResCompany(models.Model):
     def import_sale_order(self):
         _logger.info("Sale order")
         company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
+        company = self.env['res.company'].browse(1)
         _logger.info("Company is-> {}".format(company))
         if company.access_token:
             _logger.info("Access token is ---> {}".format(company.access_token))
@@ -1865,6 +1866,7 @@ class ResCompany(models.Model):
     def import_purchase_order(self):
         _logger.info("inside purchase order *********************")
         company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
+        company = self.env['res.company'].browse(1)
         if company.access_token:
             headers = {}
             headers['Authorization'] = 'Bearer ' + company.access_token
@@ -3201,6 +3203,7 @@ class ResCompany(models.Model):
     def journal_main_function(self):
         _logger.info("Inside journal_main_function ****************************")
         company = self
+        company = self.env['res.company'].browse(1)
         if company.access_token:
             headers = {}
             headers['Authorization'] = 'Bearer ' + self.access_token
@@ -3241,7 +3244,7 @@ class ResCompany(models.Model):
         journal_entry['journal_id'] = journal_id.id
 
         journal_object = self.env['account.move'].search([('qbo_invoice_id', '=', rec.get('Id')),
-                                                          ('company_id', '=', self.id),
+                                                          ('company_id', '=', self._uid.company_id.id),
                                                           ('move_type', '=', 'entry')
                                                           ], limit=1)
         _logger.info('Journal Object : %s %s %s' % (journal_object, rec, rec.get('Id')))
@@ -3278,11 +3281,12 @@ class ResCompany(models.Model):
                             line_ids['debit'] = balance > 0 and balance or 0.0
                             line_ids['credit'] = balance < 0 and -balance or 0.0
                         journal_entry['line_ids'].append((0, 0, line_ids))
-
+                journal_entry['company_id'] = self._uid.company_id.id
                 account_journal_id = self.env['account.move'].create(journal_entry)
                 account_journal_id.action_post()
                 self._cr.commit()
-                self.quickbooks_last_journal_entry_imported_id = account_journal_id.qbo_invoice_id
+                company = self.env['res.company'].browse(1)
+                company.quickbooks_last_journal_entry_imported_id = account_journal_id.qbo_invoice_id
                 _logger.info('%s Journal Imported Successfully....' % rec.get('ID'))
         else:
             _logger.info('%s Journal Already Imported ....' % rec.get('ID'))
