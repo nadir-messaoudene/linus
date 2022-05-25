@@ -3242,9 +3242,9 @@ class ResCompany(models.Model):
 
         journal_id = self.journal_entry
         journal_entry['journal_id'] = journal_id.id
-
+        company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
         journal_object = self.env['account.move'].search([('qbo_invoice_id', '=', rec.get('Id')),
-                                                          ('company_id', '=', self._uid.company_id.id),
+                                                          ('company_id', '=', company.id),
                                                           ('move_type', '=', 'entry')
                                                           ], limit=1)
         _logger.info('Journal Object : %s %s %s' % (journal_object, rec, rec.get('Id')))
@@ -3281,7 +3281,7 @@ class ResCompany(models.Model):
                             line_ids['debit'] = balance > 0 and balance or 0.0
                             line_ids['credit'] = balance < 0 and -balance or 0.0
                         journal_entry['line_ids'].append((0, 0, line_ids))
-                journal_entry['company_id'] = self._uid.company_id.id
+                journal_entry['company_id'] = company.id
                 account_journal_id = self.env['account.move'].create(journal_entry)
                 account_journal_id.action_post()
                 self._cr.commit()
@@ -3333,11 +3333,11 @@ class ResCompany(models.Model):
             if line_ids.get('debit'):
                 del line_ids['debit']
         if account_id is None:
-            account_id = account_obj.search([('qbo_id', '=', line.get(
-                'JournalEntryLineDetail').get('AccountRef').get('value'))])
+            # account_id = account_obj.search([('qbo_id', '=', line.get('JournalEntryLineDetail').get('AccountRef').get('value'))])
+            account_id = account_obj.get_account_ref(line.get('JournalEntryLineDetail').get('AccountRef').get('value'))
 
         if account_id:
-            line_ids['account_id'] = account_id.id
+            line_ids['account_id'] = account_id
 
         return line_ids
 
