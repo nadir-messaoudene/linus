@@ -3298,8 +3298,8 @@ class ResCompany(models.Model):
 
         if line.get('Description'):
             line_ids['name'] = line.get('Description')
-        else:
-            raise ValidationError('Description missing at line level for line {}'.format(line))
+        # else:
+        #     raise ValidationError('Description missing at line level for line {}'.format(line))
 
         if is_tax == 0:
             if lineAmountType == "Inclusive":
