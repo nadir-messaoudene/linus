@@ -623,7 +623,12 @@ address {
   border: 0 !important;
   border-radius: 0 !important;
 }
-
+.custom-control-label{
+  font-family: $font3;
+  line-height: 20px;
+  font-size: 14px;
+  color: $black;
+}
 footer {
   &#bottom {
     margin-top: 50px;
@@ -656,6 +661,7 @@ footer {
     width: 100%;
     margin: auto;
   }
+  .col-12.profile-breadcrumb .breadcrumb,
   .table, .navbar.o_portal_navbar,
   .profile-wrapper {
     max-width: 980px;
@@ -671,11 +677,24 @@ footer {
   .container, .o_container_small {
     max-width: 1500px;
   }
+  .col-12.profile-breadcrumb .breadcrumb,
   .table, .navbar.o_portal_navbar,
   .profile-wrapper {
     max-width: 1200px;
     padding: 0 15px;
     width: 100%;
     margin: auto;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .navbar.navbar-expand-lg > .container,
+  .navbar.navbar-expand-lg > .o_container_small,
+  .navbar.navbar-expand-lg > .container-fluid {
+    padding-right: 15px;
+    padding-left: 15px;
+  }
+  .navbar #top_menu {
+    margin-top: 10px;
   }
 }
