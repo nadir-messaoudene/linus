@@ -253,9 +253,6 @@ header#top .navbar {
 .navbar-light .navbar-nav .nav-link.show, .navbar-light .navbar-nav .nav-link.active {
   color: rgba(0, 0, 0, 0.5) !important; }
 
-@media (min-width: 1200px) {
-  #top_menu_container {
-    max-width: 100% !important; } }
 #top_menu_container .btn.flat.btn-lg,
 #top_menu_container .btn-group-lg > .btn.flat {
   padding: 7px 15px !important;
@@ -428,29 +425,35 @@ footer .s_share {
   footer .s_share i.fa {
     box-shadow: none !important; }
 
-@media (min-width: 1200px) {
-  .container, .o_container_small {
-    max-width: 100%; } }
 @media (min-width: 992px) {
-  .container, .o_container_small {
-    max-width: 100%; }
-
   .navbar-expand-lg .navbar-nav .nav-link {
     padding-right: 0.6rem;
     padding-left: 0.6rem; } }
-/*
-
-@media (min-width: 768px) {
-  .container, .o_container_small {
+@media (min-width: 1200px) {
+  .container, .o_container_small, #top_menu_container {
     max-width: 100%;
-  }
-}
+    padding-left: 40px;
+    padding-right: 40px;
+    width: 100%;
+    margin: auto; }
 
-@media (min-width: 576px) {
+  .table, .navbar.o_portal_navbar,
+  .profile-wrapper {
+    max-width: 980px;
+    padding-left: 40px;
+    padding-right: 40px;
+    width: 100%;
+    margin: auto; } }
+@media (min-width: 1600px) {
+  #top_menu_container,
   .container, .o_container_small {
-    max-width: 100%;
-  }
-}
-*/
+    max-width: 1500px; }
+
+  .table, .navbar.o_portal_navbar,
+  .profile-wrapper {
+    max-width: 1200px;
+    padding: 0 15px;
+    width: 100%;
+    margin: auto; } }
 
 /*# sourceMappingURL=style.css.map */
