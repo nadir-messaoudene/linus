@@ -25,12 +25,6 @@
             <field name="model">stock.picking</field>
             <field name="inherit_id" ref="stock.view_picking_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//header" position="inside">
-                    <button name="action_push_to_3pl" string="Push to 3PL" />
-                    <!-- <button name="action_push_to_3pl" string="Push to 3PL" 
-                    attrs="{ 'invisible' :[('state','in',['done', 'assigned', 'cancel'])] }"
-                    /> -->
-                </xpath>
                 <xpath expr="//field[@name='origin']" position="after">
                     <field name="threeplId" readonly="1"/>
                 </xpath>

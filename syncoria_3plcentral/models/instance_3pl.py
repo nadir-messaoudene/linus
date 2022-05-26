@@ -61,7 +61,8 @@ class Instance3PL(models.Model):
                 #Facilities
                 facilities = response.get('_embedded').get('http://api.3plCentral.com/rels/customers/customer')[0].get('facilities')
                 print(facilities)
-                facilities_ids = (5, 0)
+                if self.facilities_ids:
+                    self.facilities_ids = [(5,0,0)]
                 for facility in facilities:
                     self.env['facilities.3pl'].create({
                         'name': facility.get('name'),
@@ -86,15 +87,13 @@ class Instance3PL(models.Model):
             response = json.loads(response.text)
             try:
                 carriers = response.get('_embedded').get('http://api.3plCentral.com/rels/properties/carrier')
-                self.carriers_ids = [(5, 0, 0)]
+                if self.carriers_ids:
+                    self.carriers_ids = [(5,0,0)]
                 for carrier in carriers:
-                    print(carrier)
                     service_ids = []
                     value = { 'name': carrier.get('name'),
                                 'instance_3pl_id' : self.id
                             }
-                    # carrier = self.env['carriers.3pl'].create(value)
-
                     for service in carrier.get('shipmentServices'):
                         temp = {'name': service.get('description'),
                                 'code': service.get('code'), 

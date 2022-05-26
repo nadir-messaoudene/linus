@@ -17,9 +17,9 @@ class StockPicking(models.Model):
     state = fields.Selection([
         ('draft', 'Draft'),
         ('waiting', 'Waiting Another Operation'),
-        ('push_3pl', 'Pushed to 3PL'),
         ('confirmed', 'Waiting'),
         ('assigned', 'Ready'),
+        ('push_3pl', 'Pushed to 3PL'),
         ('done', 'Done'),
         ('cancel', 'Cancelled'),
     ], string='Status', compute='_compute_state',
@@ -44,84 +44,79 @@ class StockPicking(models.Model):
         return False
 
     def action_push_to_3pl(self):
-        print("action_push_to_3pl")
-        try:
-            source_warehouse = self.get_3pl_warehouse_from_locations(self.location_id, self.location_dest_id)
-            print(source_warehouse)
-            if source_warehouse:
-                self.export_picking_to_3pl(source_warehouse)
-                self.state = 'push_3pl'
-        except:
-            raise ValidationError("Can not push to 3PL.")
+        source_warehouse = self.get_3pl_warehouse_from_locations(self.location_id, self.location_dest_id)
+        if source_warehouse:
+            self.export_picking_to_3pl(source_warehouse)
+            self.state = 'push_3pl'
         
     def export_picking_to_3pl(self, source_warehouse):
         print("export_picking_to_3pl")
-        instance = self.env['instance.3pl'].search([], limit=1)
-        url = "https://secure-wms.com/orders"
-        #orderItems
-        orderItems = []
-        for line in self.move_ids_without_package:
-            orderItems.append(
-                    {
-                    "itemIdentifier": {
-                        "sku": line.product_id.default_code
-                    },
-                    "qty": line.product_uom_qty
-                    }
-            )
-        #END orderItems
+        if self.state in ('waiting', 'confirmed', 'assigned'):
+            instance = self.env['instance.3pl'].search([], limit=1)
+            url = "https://secure-wms.com/orders"
+            #orderItems
+            orderItems = []
+            for line in self.move_ids_without_package:
+                orderItems.append(
+                        {
+                        "itemIdentifier": {
+                            "sku": line.product_id.default_code
+                        },
+                        "qty": line.quantity_done
+                        }
+                )
+            #END orderItems
 
-        payload = json.dumps({
-            "customerIdentifier": {
-                "id": instance.customerId
-            },
-            "facilityIdentifier": {
-                "id": source_warehouse
-            },
-            "referenceNum": self.name,
-            "notes": '',
-            "shippingNotes": '',
-            "billingCode": "Prepaid",
-            "routingInfo": {
-                "carrier": self.carrier_id.name,
-                # "mode": "92",
-                # "scacCode": "UPGN",
-                # "account": "12345z"
-            },
-            "shipTo": {
-                "companyName": self.partner_id.name,
-                "name": self.partner_id.name,
-                "address1": self.partner_id.street,
-                "address2": self.partner_id.street2,
-                "city": self.partner_id.city,
-                "state": self.partner_id.state_id.name,
-                "zip": self.partner_id.zip,
-                "country": self.partner_id.country_id.code
-            },
-            'soldTo': {
-                'sameAs': 0
-            },
-            "orderItems": orderItems
-            })
-        headers = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/hal+json',
-            'Authorization': 'Bearer ' + str(instance.access_token)
-            }
-        print(payload)
-        # response = requests.request("POST", url, headers=headers, data=payload)
-        
-        # print(response.status_code)
-        # if response.status_code == 200:
-        #     response = json.loads(response.text)
-        # else:
-        #     raise UserError(response.text)
-
+            payload = json.dumps({
+                "customerIdentifier": {
+                    "id": instance.customerId
+                },
+                "facilityIdentifier": {
+                    "id": source_warehouse
+                },
+                "referenceNum": self.name,
+                "notes": '',
+                "shippingNotes": '',
+                "billingCode": "Prepaid",
+                "routingInfo": {
+                    "carrier": "UPS",
+                    "mode": "92"
+                },
+                "shipTo": {
+                    "companyName": self.partner_id.name,
+                    "name": self.partner_id.name,
+                    "address1": self.partner_id.street,
+                    "address2": self.partner_id.street2,
+                    "city": self.partner_id.city,
+                    "state": self.partner_id.state_id.name,
+                    "zip": self.partner_id.zip,
+                    "country": self.partner_id.country_id.code
+                },
+                'soldTo': {
+                    'sameAs': 0
+                },
+                "orderItems": orderItems
+                })
+            
+            headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/hal+json',
+                'Authorization': 'Bearer ' + str(instance.access_token)
+                }
+            response = requests.request("POST", url, headers=headers, data=payload)
+            if response.status_code == 201:
+                response = json.loads(response.text)
+                self.threeplId = response.get('readOnly').get('orderId')
+            else:
+                raise UserError(response.text)
+        else:
+            raise UserError("Only Order in Waiting and Ready state can be pushed to 3PL.")
 
     def update_picking_from_3pl(self):
+        #TODO: Cancel
         print("update_picking_from_3pl")
         instance = self.env['instance.3pl'].search([], limit=1)
-        url = "https://secure-wms.com/customers/{}/items".format(instance.customerId)
+        url = "https://secure-wms.com/orders/{}".format(self.threeplId)
 
         headers = {
             'Host': 'secure-wms.com',
@@ -130,3 +125,9 @@ class StockPicking(models.Model):
             'Accept': 'application/hal+json',
             'Authorization': 'Bearer ' + str(instance.access_token)
         }
+        response = requests.request("POST", url, headers=headers, data={})
+        if response.status_code == 201:
+            response = json.loads(response.text)
+            print(response)
+        else:
+            raise UserError(response.text)

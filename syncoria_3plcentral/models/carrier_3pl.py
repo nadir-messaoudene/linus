@@ -18,4 +18,4 @@ class CarrierServices3PL(models.Model):
     name = fields.Char(string='Description', required=True)
     code = fields.Char(string='Code', required=True)
     shipEngineId = fields.Char(string='Ship Engine Id')
-    carrier_3pl_id = fields.Many2one('carriers.3pl', 'Carrier')
+    carrier_3pl_id = fields.Many2one('carriers.3pl', 'Carrier', ondelete='cascade')
