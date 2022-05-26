@@ -3292,7 +3292,8 @@ class ResCompany(models.Model):
             _logger.info('%s Journal Already Imported ....' % rec.get('ID'))
 
     def create_journal_line_entries(self, line, rec={}, lineAmountType=None, account_id=None, is_tax=0):
-
+        if line.get('Id') == '0' and 'JournalEntryLineDetail' not in line:
+            return False
         line_ids = {}
         account_obj = self.env['account.account']
 
