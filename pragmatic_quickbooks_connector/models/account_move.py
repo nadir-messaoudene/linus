@@ -101,6 +101,7 @@ class AccountInvoice(models.Model):
 
     def single_import_partner(self, qbo_id):
         company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
+        company = self.env['res.company'].browse(1)
         _logger.info("Company is   :-> {} ".format(company))
         query = "select * from Customer WHERE Id = '%s'" % (qbo_id)
         url_str = company.get_import_query_url()
@@ -118,6 +119,7 @@ class AccountInvoice(models.Model):
 
     def single_import_vendor(self, qbo_id):
         company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
+        company = self.env['res.company'].browse(1)
         _logger.info("Company is   :-> {} ".format(company))
         query = "select * from Vendor WHERE Id = '%s'" % (qbo_id)
         url_str = company.get_import_query_url()
@@ -191,7 +193,7 @@ class AccountInvoice(models.Model):
                     dict_i['currency_id'] = currency.id
 
             if res_partner.customer_rank:
-                sale = self.env['account.journal'].search([('type', '=', 'sale')], limit=1)
+                sale = self.env['account.journal'].sudo().search([('type', '=', 'sale'), ('company_id', '=', self.env.user.company_id.id)], limit=1)
                 if sale:
                     dict_i['journal_id'] = sale.id
                 else:
@@ -201,7 +203,7 @@ class AccountInvoice(models.Model):
 #                         dict_i['journal_id'] = sale.id
 
             if res_partner.supplier_rank:
-                purchase = self.env['account.journal'].search([('type', '=', 'purchase')], limit=1)
+                purchase = self.env['account.journal'].sudo().search([('type', '=', 'purchase'), ('company_id', '=', self.env.user.company_id.id)], limit=1)
                 if purchase:
                     dict_i['journal_id'] = purchase.id
                 else:
