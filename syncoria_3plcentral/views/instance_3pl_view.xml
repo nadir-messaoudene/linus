@@ -42,17 +42,27 @@
                             <field name="customerName" readonly="1"/>
                             <field name="company_id"/>
                         </group>
-                        <group name="facilities" string="Facilities">
-                            <div>
-                                <field name="facilities_ids" no_label="1">
-                                    <tree editable="top" create="0" delete="0">
-                                        <field name="facilityId" readonly="1"/>
-                                        <field name="name" readonly="1"/>
-                                        <field name="warehouse_id"/>
+                        <notebook>
+                            <page name="facilities" string="Facilities">
+                                <div>
+                                    <field name="facilities_ids" no_label="1">
+                                        <tree editable="top" create="0" delete="0">
+                                            <field name="facilityId" readonly="1"/>
+                                            <field name="name" readonly="1"/>
+                                            <field name="warehouse_id"/>
+                                        </tree>
+                                    </field>
+                                </div>
+                            </page>
+                            <page name="carriers" string="Carriers">
+                                <field name="carriers_ids">
+                                    <tree>
+                                        <field name="name"></field>
+                                        <field name="service_ids"></field>
                                     </tree>
                                 </field>
-                            </div>
-                        </group>
+                            </page>
+                        </notebook>
                     </sheet>
                 </form>
             </field>

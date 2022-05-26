@@ -1,3 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_instance_3pl,access.instance.3pl,model_instance_3pl,base.group_user,1,1,1,1
 access_facilities_3pl,access.facilities.3pl,model_facilities_3pl,base.group_user,1,1,1,1
+access_carriers_3pl,access.carriers.3pl,model_carriers_3pl,base.group_user,1,1,1,1
+access_carrier_services_3pl,access.carrier.services.3pl,model_carrier_services_3pl,base.group_user,1,1,1,1

@@ -7,7 +7,7 @@
             <field name="binding_model_id" ref="stock.model_stock_picking"/>
             <field name="state">code</field>
             <field name="code">if records:
-                   action = records.export_picking_to_3pl()
+                   action = records.action_push_to_3pl()
             </field>
         </record>
         <record model="ir.actions.server" id="update_picking_from_3pl">

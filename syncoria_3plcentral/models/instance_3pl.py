@@ -1,3 +1,4 @@
+from importlib import resources
 from pyexpat import model
 from odoo import models, fields
 import requests, json
@@ -32,12 +33,14 @@ class Instance3PL(models.Model):
     customerName = fields.Char(string="Customer Name")
     company_id = fields.Many2one('res.company', string='Company', required=True, default=lambda self: self.env.company)
     facilities_ids = fields.One2many('facilities.3pl', 'instance_3pl_id', string='Facilities')
+    carriers_ids = fields.One2many('carriers.3pl', 'instance_3pl_id', string='Carriers')
 
     _sql_constraints = [
         ('instance_name_uniq', 'unique(name)', 'Instance name must be unique.')
     ]
 
-    def action_connect(self):
+    def fetch_customers(self):
+        print("fetch_customers#@@@#@#@#")
         url = "https://secure-wms.com/customers"
         headers = {
             'Accept-Language': 'en-US,en;q=0.8',
@@ -68,6 +71,45 @@ class Instance3PL(models.Model):
             except:
                 raise UserError("Can not connect 3PL Central server.")
 
+    def fetch_carriers(self):
+        #Carriers
+        url = "https://secure-wms.com/properties/carriers"
+        headers = {
+            'Accept-Language': 'en-US,en;q=0.8',
+            'Host': 'secure-wms.com',
+            'Content-Type': 'application/json; charset=utf-8',
+            'Accept': 'application/hal+json'
+            }
+        headers['Authorization'] = 'Bearer ' + str(self.access_token)
+        response = requests.request('GET', url, headers=headers, data={})
+        if response.status_code == 200:
+            response = json.loads(response.text)
+            try:
+                carriers = response.get('_embedded').get('http://api.3plCentral.com/rels/properties/carrier')
+                self.carriers_ids = [(5, 0, 0)]
+                for carrier in carriers:
+                    print(carrier)
+                    service_ids = []
+                    value = { 'name': carrier.get('name'),
+                                'instance_3pl_id' : self.id
+                            }
+                    # carrier = self.env['carriers.3pl'].create(value)
+
+                    for service in carrier.get('shipmentServices'):
+                        temp = {'name': service.get('description'),
+                                'code': service.get('code'), 
+                                'shipEngineId': service.get('shipEngineId')
+                            }
+                        service_ids.append((0, 0, temp))
+                    if len(service_ids) > 0:
+                        value['service_ids'] = service_ids
+                    self.env['carriers.3pl'].create(value)
+            except:
+                raise UserError("Can not connect 3PL Central server.")
+
+    def action_connect(self):
+        self.fetch_customers()
+        self.fetch_carriers()
 
     def upsert_access_token(self):
         get_access_token_url = 'https://secure-wms.com/AuthServer/api/Token'

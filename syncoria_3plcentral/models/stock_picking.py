@@ -33,19 +33,31 @@ class StockPicking(models.Model):
              " * Cancelled: The transfer has been cancelled.")
     threeplId = fields.Integer(string="3PL ID")
 
+    def get_3pl_warehouse_from_locations(self, source_location_obj, dest_location_obj):
+        warehouse_ids = []
+        warehouse_ids.append(source_location_obj.warehouse_id.id)
+        warehouse_ids.append(dest_location_obj.warehouse_id.id)
+        instance = self.env['instance.3pl'].search([], limit=1)
+        for facility in instance.facilities_ids:
+            if facility.warehouse_id.id in warehouse_ids:
+                return facility.facilityId
+        return False
+
     def action_push_to_3pl(self):
         print("action_push_to_3pl")
         try:
-            self.export_picking_to_3pl()
-            self.state = 'push_3pl'
+            source_warehouse = self.get_3pl_warehouse_from_locations(self.location_id, self.location_dest_id)
+            print(source_warehouse)
+            if source_warehouse:
+                self.export_picking_to_3pl(source_warehouse)
+                self.state = 'push_3pl'
         except:
             raise ValidationError("Can not push to 3PL.")
         
-    def export_picking_to_3pl(self):
+    def export_picking_to_3pl(self, source_warehouse):
         print("export_picking_to_3pl")
         instance = self.env['instance.3pl'].search([], limit=1)
         url = "https://secure-wms.com/orders"
-
         #orderItems
         orderItems = []
         for line in self.move_ids_without_package:
@@ -64,7 +76,7 @@ class StockPicking(models.Model):
                 "id": instance.customerId
             },
             "facilityIdentifier": {
-                "id": 657
+                "id": source_warehouse
             },
             "referenceNum": self.name,
             "notes": '',
@@ -97,13 +109,13 @@ class StockPicking(models.Model):
             'Authorization': 'Bearer ' + str(instance.access_token)
             }
         print(payload)
-        response = requests.request("POST", url, headers=headers, data=payload)
+        # response = requests.request("POST", url, headers=headers, data=payload)
         
-        print(response.status_code)
-        if response.status_code == 200:
-            response = json.loads(response.text)
-        else:
-            raise UserError(response.text)
+        # print(response.status_code)
+        # if response.status_code == 200:
+        #     response = json.loads(response.text)
+        # else:
+        #     raise UserError(response.text)
 
 
     def update_picking_from_3pl(self):
