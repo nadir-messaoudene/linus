@@ -2,6 +2,12 @@
 
 <odoo>
     <data>
+        <template id="inherited_portal_portal_layout" inherit_id="portal.portal_layout" name="Change To col-12">
+            <xpath expr="//div[hasclass('col-10')]" position="attributes">
+                <attribute name="class">col-12 profile-breadcrumb</attribute>
+            </xpath>
+        </template>
+
         <template id="inherited_portal_my_details" inherit_id="portal.portal_my_details" name="Hide Confirm Button">
 <!--            <xpath expr="//button[hasclass('btn','btn-primary','float-right','mb32')]" position="replace">-->
 <!--            </xpath>-->
