@@ -736,11 +736,23 @@ class AccountInvoice(models.Model):
                         if invoice_obj.property_account_payable_id:
                             dict_col['account_id'] = invoice_obj.property_account_payable_id.id
                             dict_tol['account_id'] = invoice_obj.property_account_payable_id.id
+                            company = self.env['res.users'].search([('id', '=', 2)]).company_id
+                            if invoice_obj.property_account_payable_id.company_id != company:
+                                account_company = self.env['account.account'].sudo().search([('code', '=', invoice_obj.property_account_payable_id.code), ('company_id', '=', company.id)])
+                                dict_col['account_id'] = account_company.id
+                                dict_tol['account_id'] = account_company.id
 
                     if type=="out_invoice" or type=="out_refund":
                         if invoice_obj.property_account_receivable_id:
                             dict_col['account_id'] = invoice_obj.property_account_receivable_id.id
                             dict_tol['account_id'] = invoice_obj.property_account_receivable_id.id
+                            company = self.env['res.users'].search([('id', '=', 2)]).company_id
+                            if invoice_obj.property_account_receivable_id.company_id != company:
+                                account_company = self.env['account.account'].sudo().search(
+                                    [('code', '=', invoice_obj.property_account_receivable_id.code),
+                                     ('company_id', '=', company.id)])
+                                dict_col['account_id'] = account_company.id
+                                dict_tol['account_id'] = account_company.id
                     # if invoice_obj.property_account_receivable_id:
                     #     dict_col['account_id'] = invoice_obj.property_account_receivable_id.id
                     #     dict_tol['account_id'] = invoice_obj.property_account_receivable_id.id
@@ -912,9 +924,21 @@ class AccountInvoice(models.Model):
 
                     if res_product.property_account_income_id:
                         dict_ol['account_id'] = res_product.property_account_income_id.id
+                        company = self.env['res.users'].search([('id', '=', 2)]).company_id
+                        if res_product.property_account_income_id.company_id != company:
+                            account_company = self.env['account.account'].sudo().search(
+                                [('code', '=', res_product.property_account_income_id.code),
+                                 ('company_id', '=', company.id)])
+                            dict_ol['account_id'] = account_company.id
                         _logger.info("PRODUCT has income account set")
                     else:
                         dict_ol['account_id'] = res_product.categ_id.property_account_income_categ_id.id
+                        company = self.env['res.users'].search([('id', '=', 2)]).company_id
+                        if res_product.categ_id.property_account_income_categ_id.company_id != company:
+                            account_company = self.env['account.account'].sudo().search(
+                                [('code', '=', res_product.categ_id.property_account_income_categ_id.code),
+                                 ('company_id', '=', company.id)])
+                            dict_ol['account_id'] = account_company.id
                         _logger.info("No Income account was set, taking from product category..")
                     #
                     # if invoice_obj.property_account_receivable_id:
@@ -924,11 +948,25 @@ class AccountInvoice(models.Model):
                         if invoice_obj.property_account_payable_id:
                             dict_col['account_id'] = invoice_obj.property_account_payable_id.id
                             dict_tol['account_id'] = invoice_obj.property_account_payable_id.id
+                            company = self.env['res.users'].search([('id', '=', 2)]).company_id
+                            if invoice_obj.property_account_payable_id.company_id != company:
+                                account_company = self.env['account.account'].sudo().search(
+                                    [('code', '=', invoice_obj.property_account_payable_id.code),
+                                     ('company_id', '=', company.id)])
+                                dict_col['account_id'] = account_company.id
+                                dict_tol['account_id'] = account_company.id
 
                     if type=="out_invoice" or type=="out_refund":
                         if invoice_obj.property_account_receivable_id:
                             dict_col['account_id'] = invoice_obj.property_account_receivable_id.id
                             dict_tol['account_id'] = invoice_obj.property_account_receivable_id.id
+                            company = self.env['res.users'].search([('id', '=', 2)]).company_id
+                            if invoice_obj.property_account_receivable_id.company_id != company:
+                                account_company = self.env['account.account'].sudo().search(
+                                    [('code', '=', invoice_obj.property_account_receivable_id.code),
+                                     ('company_id', '=', company.id)])
+                                dict_col['account_id'] = account_company.id
+                                dict_tol['account_id'] = account_company.id
                     # else:
                     #     raise UserError("Accounts Receivable/Payable not set for Customer ---> {}".format(invoice_obj.name))
                     #     _logger.info("No Property Account Receivable Set!")

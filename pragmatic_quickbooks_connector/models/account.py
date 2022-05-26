@@ -33,10 +33,10 @@ class AccountAccount(models.Model):
         if data.status_code == 200:
             res = json.loads(str(data.text))
             account_name = res.get('Account').get('FullyQualifiedName')
-            account = self.search([('name', '=', account_name)], limit=1)
+            account = self.sudo().search([('name', '=', account_name), ('company_id', '=', company.id)], limit=1)
             if not account:
                 account_name = res.get('Account').get('Name')
-                account = self.search([('name', '=', account_name)], limit=1)
+                account = self.sudo().search([('name', '=', account_name), ('company_id', '=', company.id)], limit=1)
             if not account:
                 url_str = company.get_import_query_url()
                 url = url_str.get('url') + '/account/' + qbo_account_id
