@@ -10,15 +10,38 @@
                 <xpath expr="//notebook" position="inside">
                     <page string="3PL Central">
                         <group>
-                            <field name="length" />
-                            <field name="width" />
-                            <field name="height" />
+                            <label for="length"/>
+                            <div class="o_row" name="length">
+                                <field name="length"/>
+                                <span>inch</span>
+                            </div>
+                            <label for="width"/>
+                            <div class="o_row" name="width">
+                                <field name="width"/>
+                                <span>inch</span>
+                            </div>
+                            <label for="height"/>
+                            <div class="o_row" name="height">
+                                <field name="height"/>
+                                <span>inch</span>
+                            </div>
+                            <label for="weight" string="3PL Weight"/>
+                            <div class="o_row" name="weight">
+                                <field name="weight"/>
+                                <span><field name="weight_uom_name"/></span>
+                            </div>
                             <field name="product_3pl_id"/>
                         </group>
                         <group>
                             <field name="is_haz_mat" />
                             <field name="haz_mat_id" attrs="{'invisible':[('is_haz_mat','=',False)]}"/>
                             <field name="haz_mat_shipping_name" attrs="{'invisible':[('is_haz_mat','=',False)]}"/>
+                        </group>
+                        <group name="packaging" string="Packaging"
+                            colspan="4"
+                            attrs="{'invisible':['|', ('type', 'not in', ['product', 'consu']), ('product_variant_count', '>', 1), ('is_product_variant', '=', False)]}"
+                            groups="product.group_stock_packaging">
+                            <field name="packaging_ids" nolabel="1" context="{'tree_view_ref':'product.product_packaging_tree_view2'}"/>
                         </group>
                     </page>
                 </xpath>

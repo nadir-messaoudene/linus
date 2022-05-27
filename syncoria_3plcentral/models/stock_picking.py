@@ -125,8 +125,9 @@ class StockPicking(models.Model):
             'Accept': 'application/hal+json',
             'Authorization': 'Bearer ' + str(instance.access_token)
         }
-        response = requests.request("POST", url, headers=headers, data={})
-        if response.status_code == 201:
+        response = requests.request("GET", url, headers=headers, data={})
+        print(response.status_code)
+        if response.status_code == 200:
             response = json.loads(response.text)
             print(response)
         else:

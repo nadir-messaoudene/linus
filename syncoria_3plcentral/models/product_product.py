@@ -8,15 +8,27 @@ _logger = logging.getLogger(__name__)
 class ProductProduct(models.Model):
     _inherit = "product.product"
 
-    length = fields.Float('Length', tracking=True)
-    width = fields.Float('Width', tracking=True)
-    height = fields.Float('Height', tracking=True)
+    length = fields.Float('3PL Length', tracking=True)
+    width = fields.Float('3PL Width', tracking=True)
+    height = fields.Float('3PL Height', tracking=True)
 
     is_haz_mat = fields.Boolean('Is Haz Mat')
     haz_mat_id = fields.Char('Haz Mat ID')
     haz_mat_shipping_name = fields.Char('Haz Mat Shipping Name')
 
     product_3pl_id = fields.Char('3PL Item ID')
+
+    def get_root_category_name(self):
+        if self.categ_id.parent_id:
+            return self.categ_id.parent_id.name
+        else:
+            return self.categ_id.name
+
+    def get_first_package(self):
+        if self.packaging_ids:
+            return [self.packaging_ids[0].name, self.packaging_ids[0].qty]
+        else:
+            return ['','']
 
     def export_product_to_3pl(self):
         instance = self.env['instance.3pl'].search([], limit=1)
@@ -33,13 +45,26 @@ class ProductProduct(models.Model):
             payload = {
                 "sku": record.default_code,
                 "description": record.display_name,
+                "description2": record.get_root_category_name(),
                 "options": {
                     "inventoryUnit": {
                         "unitIdentifier": {
                             "Id": 1
                         }
                     }
-                }
+                },
+                "packageUnit":{
+                    "imperial": {
+                        "length": record.length,
+                        "width": record.width,
+                        "height": record.height,
+                        "weight": record.weight
+                    },
+                    "unitIdentifier": {
+                        "name": record.get_first_package()[0],
+                    },
+                    "inventoryUnitsPerUnit": record.get_first_package()[1]
+                },
             }
             if record.barcode:
                 payload["upc"] = record.barcode
@@ -50,6 +75,7 @@ class ProductProduct(models.Model):
                     shippingName=record.haz_mat_shipping_name
                 )
             payload = str(payload)
+            print(payload)
             response = requests.request("POST", url, headers=headers, data=payload)
             if response.status_code == 201:
                 response = json.loads(response.text)
