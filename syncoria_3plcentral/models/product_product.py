@@ -63,7 +63,7 @@ class ProductProduct(models.Model):
                     "unitIdentifier": {
                         "name": record.get_first_package()[0],
                     },
-                    "inventoryUnitsPerUnit": record.get_first_package()[1]
+                    "inventoryUnitsPerUnit": record.get_first_package()[1],
                 },
             }
             if record.barcode:
