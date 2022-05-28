@@ -7,6 +7,7 @@ from odoo.exceptions import UserError
 
 class Facilities3PL(models.Model):
     _name = 'facilities.3pl'
+    _description = "Facilities 3PL"
 
     name = fields.Char(string='Name', required=True)
     facilityId = fields.Integer(string="Facility ID")

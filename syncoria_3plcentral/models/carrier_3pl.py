@@ -1,4 +1,3 @@
-from pyexpat import model
 from odoo import models, fields
 import requests, json
 from requests.auth import HTTPBasicAuth
@@ -6,6 +5,7 @@ from odoo.exceptions import UserError
 
 class Carrier3PL(models.Model):
     _name = 'carriers.3pl'
+    _description = "Carrier 3PL"
 
     name = fields.Char(string='Name', required=True)
     instance_3pl_id = fields.Many2one('instance.3pl', 'Instance')
