@@ -44,27 +44,27 @@ class ProductProduct(models.Model):
         for record in self:
             payload = {
                 "sku": record.default_code,
-                "description": record.display_name,
+                "description": record.display_name.replace('[{}] '.format(record.default_code), ''),
                 "description2": record.get_root_category_name(),
                 "options": {
                     "inventoryUnit": {
                         "unitIdentifier": {
                             "Id": 1
                         }
-                    }
-                },
-                "packageUnit":{
-                    "imperial": {
-                        "length": record.length,
-                        "width": record.width,
-                        "height": record.height,
-                        "weight": record.weight
                     },
-                    "unitIdentifier": {
-                        "name": record.get_first_package()[0],
+                    "PackageUnit": {
+                        "Imperial": {
+                            "Length": record.length,
+                            "Width": record.width,
+                            "Height": record.height,
+                            "Weight": record.weight
+                        },
+                        "UnitIdentifier": {
+                            "name": record.get_first_package()[0],
+                        },
+                        "InventoryUnitsPerUnit": record.get_first_package()[1]
                     },
-                    "inventoryUnitsPerUnit": record.get_first_package()[1]
-                },
+                }
             }
             if record.barcode:
                 payload["upc"] = record.barcode
@@ -74,9 +74,8 @@ class ProductProduct(models.Model):
                     id=record.haz_mat_id,
                     shippingName=record.haz_mat_shipping_name
                 )
-            payload = str(payload)
             print(payload)
-            response = requests.request("POST", url, headers=headers, data=payload)
+            response = requests.request("POST", url, headers=headers, data=json.dumps(payload))
             if response.status_code == 201:
                 response = json.loads(response.text)
                 try:
