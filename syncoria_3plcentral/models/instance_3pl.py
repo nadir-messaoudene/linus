@@ -41,7 +41,6 @@ class Instance3PL(models.Model):
     ]
 
     def fetch_customers(self):
-        print("fetch_customers#@@@#@#@#")
         url = "https://secure-wms.com/customers"
         headers = {
             'Accept-Language': 'en-US,en;q=0.8',
@@ -114,8 +113,8 @@ class Instance3PL(models.Model):
     def upsert_access_token(self):
         get_access_token_url = 'https://secure-wms.com/AuthServer/api/Token'
         payload = json.dumps({
-            "grant_type": "client_credentials",
-            "user_login": self.user_login_id,
+                "grant_type": "client_credentials",
+                "user_login": self.user_login_id,
             })
         headers = {
             'Host': 'secure-wms.com',

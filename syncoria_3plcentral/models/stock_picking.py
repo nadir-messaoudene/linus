@@ -113,7 +113,6 @@ class StockPicking(models.Model):
             raise UserError("Only Order in Waiting and Ready state can be pushed to 3PL.")
 
     def update_picking_from_3pl(self):
-        #TODO: Cancel
         print("update_picking_from_3pl")
         instance = self.env['instance.3pl'].search([], limit=1)
         url = "https://secure-wms.com/orders/{}".format(self.threeplId)
@@ -130,5 +129,29 @@ class StockPicking(models.Model):
         if response.status_code == 200:
             response = json.loads(response.text)
             print(response)
+            #Is Closed 
+            is_closed = response.get('readOnly').get('isClosed')
+            status = response.get('readOnly').get('status')
+            print(is_closed)
+            print(status)
+
+            #CANCEL ORDER
+            if is_closed and status == 2:
+                if self.state == 'push_3pl':
+                    self.action_cancel()
+
+            #CLOSED ORDER        
+            # if is_closed and status == 0:
+            #TODO: Replace this line by above line once going live
+            # if not is_closed and status == 0:
+                #TODO: Closed (Complete) -> Validate and Create BackOrder (If remain)
+
+            
+            
+            
+
+
+
+
         else:
             raise UserError(response.text)
