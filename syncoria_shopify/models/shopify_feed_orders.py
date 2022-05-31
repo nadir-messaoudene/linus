@@ -394,21 +394,21 @@ class ShopifyFeedOrders(models.Model):
                         # if not str(line['sku']) =='':
                         if line.get('variant_id'):
                             product_product = self.env['product.product'].sudo()
-                            prod_dom = [('shopify_instance_id','=',marketplace_instance_id.id)]
+                            # prod_dom = [('shopify_instance_id','=',marketplace_instance_id.id)]
                             # if line.get("sku"):
                                 # prod_dom += ['|']
                             # prod_dom += [('shopify_id', '=', str(line['variant_id']))]
-                            prod_dom += [('default_code', '=', str(line['sku']))]
+                            prod_dom = [('default_code', '=', str(line['sku']))]
                             # else:
                             #     prod_dom += [('shopify_id', '=', str(line['variant_id']))]
                             prod_rec = product_product.search(prod_dom, limit=1)
                         else:
                             product_product = self.env['product.product'].sudo()
-                            prod_dom = [('shopify_instance_id','=',marketplace_instance_id.id)]
+                            # prod_dom = [('shopify_instance_id','=',marketplace_instance_id.id)]
                             # if line.get("sku"):
                             #     prod_dom += ['|']
                             # prod_dom += [('shopify_id', '=', str(line['product_id']))]
-                            prod_dom += [('default_code', '=', str(line['sku']))]
+                            prod_dom = [('default_code', '=', str(line['sku']))]
                             # else:
                             #     prod_dom += [('shopify_id', '=', str(line['variant_id']))]
                             prod_rec = product_product.search(prod_dom, limit=1)

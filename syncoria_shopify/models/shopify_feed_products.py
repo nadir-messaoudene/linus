@@ -193,6 +193,19 @@ class ShopifyFeedProducts(models.Model):
         return
 
 
+    def _get_product_id(self,shopify_product_val):
+            product_sku = shopify_product_val.get("variants")[0].get('sku')
+            if product_sku != '':
+                product_tmpl_id = self.env['product.product'].search([
+                    ('default_code', '=', product_sku),
+                ]).product_tmpl_id
+            else:
+                product_tmpl_id = None
+
+            return  product_tmpl_id
+
+
+
     def _shopify_import_products_list(self,
                                       config_products,
                                       existing_prod_ids,
@@ -261,84 +274,93 @@ class ShopifyFeedProducts(models.Model):
 
         # now the attributes list should be a dictionary with all the attributes
         # with their id and values both in odoo and shopify+++++
-        
+        marketplace_instance_id = self.instance_id
         _logger.info("START===>>>")
         for product in config_products:
             _logger.info("product===>>>{}".format(product.get('id')))
             if str(product['id']) not in existing_prod_ids:
                 try:
-                    product_categ_ids = []
-                    if product.get('product_type'):
-                        product_categ_ids = [product.get('product_type')] or []
-
-                    # getting odoo's category id from the shopify categ id
-                    # (which is already created)
-                    c_ids = []
-                    if product_categ_ids:
-                        cr.execute("select name from product_category "
-                                   "where name in %s",
-                                   (tuple(product_categ_ids),))
-                        c_ids = cr.fetchall()
-
-                    template['name'] = product['title']
-                    template['shopify_id'] = str(product['id'])
-                    template['shopify_instance_id'] = instance_id.id
-                    #Product Type
-                    #[consu] Consumable
-                    #[service] Service
-                    #[product] Storable
-                    template['detailed_type'] = 'product'
-                    template['active'] = True if product.get(
-                        'status') == 'active' else False
-                    template['active'] = True
-                    template['sale_ok'] = True
-                    template['purchase_ok'] = True
-                    template['marketplace_type'] = 'shopify'
-                    template['default_code'] = product.get('sku')
-                    template['shopify_published_scope'] = product.get(
-                        'published_scope')
-                    template['shopify_tags'] = product.get('tags')
-                    template['shopify_template_suffix'] = product.get(
-                        'template_suffix')
-                    template['shopify_variants'] = str(
-                        len(product.get('variants')))
-                    template['shopify_vendor'] = product.get("vendor")
-                    template['shopify_product_status'] = product.get('status')
-                    # -------------------------------------Invoice Policy------------------------------------------------
-                    marketplace_instance_id = self.instance_id
-                    if marketplace_instance_id.default_invoice_policy:
-                        template['invoice_policy'] = marketplace_instance_id.default_invoice_policy
-                    # if marketplace_instance_id.sync_price == True:
-                    #     template['list_price'] = product.get('price') or 0
-                    # ---------------------------------------------------------------------------------------------------
-
-                    if len(product.get('variants')) > 1:
-                        template['shopify_type'] = 'config'
-                    else:
-                        template['shopify_type'] = 'simple'
-                        template['default_code'] = product.get('variants')[
-                            0].get('sku')
-
-                    template['custom_option'] = False
-                    # New addition
-                    template['weight'] = product.get('weight') or 0
-                    if product.get('product_type'):
-                        categ_id = self.env['product.category'].search([
-                            ('name', '=', product.get('product_type'))
-                        ], limit=1)
-                        if len(categ_id) > 0:
-                            template['categ_id'] = categ_id.id
-
                     # creating products
-                    product_tmpl_id = self.env['product.template'].sudo().search(
-                        [('shopify_id', '=', str(product['id'])),('shopify_instance_id','=',marketplace_instance_id.id)])
-                    if product_tmpl_id:
-                        pro_tmpl = self.env['product.template'].browse(
-                            product_tmpl_id.id)
-                        pro_tmpl.write({"shopify_instance_id":instance_id.id,"shopify_vendor":product.get("vendor"),"shopify_product_status":product.get("status")})
-                        product_tmpl_id = [product_tmpl_id.id]
 
+                    product_tmpl_id = self._get_product_id(product)
+
+                    if product_tmpl_id:
+                        # pro_tmpl = self.env['product.template'].browse(
+                        #     product_tmpl_id.id)
+                        pro_tmpl = product_tmpl_id
+
+                        pro_tmpl.write({
+                            "shopify_instance_id":instance_id.id,
+                            "shopify_vendor":product.get("vendor"),
+                            "shopify_product_status":product.get("status"),
+                            "marketplace_type": 'shopify',
+                            "default_code": product.get('sku'),
+                            "shopify_id": str(product['id']),
+                        })
+                        product_tmpl_id = [product_tmpl_id.id]
                     else:
+                        product_categ_ids = []
+                        if product.get('product_type'):
+                            product_categ_ids = [product.get('product_type')] or []
+
+                        # getting odoo's category id from the shopify categ id
+                        # (which is already created)
+                        c_ids = []
+                        if product_categ_ids:
+                            cr.execute("select name from product_category "
+                                       "where name in %s",
+                                       (tuple(product_categ_ids),))
+                            c_ids = cr.fetchall()
+
+                        template['name'] = product['title']
+                        template['shopify_id'] = str(product['id'])
+                        template['shopify_instance_id'] = instance_id.id
+                        # Product Type
+                        # [consu] Consumable
+                        # [service] Service
+                        # [product] Storable
+                        template['detailed_type'] = 'product'
+                        template['active'] = True if product.get(
+                            'status') == 'active' else False
+                        template['active'] = True
+                        template['sale_ok'] = True
+                        template['purchase_ok'] = True
+                        template['marketplace_type'] = 'shopify'
+                        template['default_code'] = product.get('sku')
+                        template['shopify_published_scope'] = product.get(
+                            'published_scope')
+                        template['shopify_tags'] = product.get('tags')
+                        template['shopify_template_suffix'] = product.get(
+                            'template_suffix')
+                        template['shopify_variants'] = str(
+                            len(product.get('variants')))
+                        template['shopify_vendor'] = product.get("vendor")
+                        template['shopify_product_status'] = product.get('status')
+                        # -------------------------------------Invoice Policy------------------------------------------------
+
+                        if marketplace_instance_id.default_invoice_policy:
+                            template['invoice_policy'] = marketplace_instance_id.default_invoice_policy
+                        # if marketplace_instance_id.sync_price == True:
+                        #     template['list_price'] = product.get('price') or 0
+                        # ---------------------------------------------------------------------------------------------------
+
+                        if len(product.get('variants')) > 1:
+                            template['shopify_type'] = 'config'
+                        else:
+                            template['shopify_type'] = 'simple'
+                            template['default_code'] = product.get('variants')[
+                                0].get('sku')
+
+                        template['custom_option'] = False
+                        # New addition
+                        template['weight'] = product.get('weight') or 0
+                        if product.get('product_type'):
+                            categ_id = self.env['product.category'].search([
+                                ('name', '=', product.get('product_type'))
+                            ], limit=1)
+                            if len(categ_id) > 0:
+                                template['categ_id'] = categ_id.id
+
                         template = self.shopify_process_options(product, template)
                         pro_tmpl = self.env['product.template'].sudo().create(template)
                         product_tmpl_id = [pro_tmpl.id]
