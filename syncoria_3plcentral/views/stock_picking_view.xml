@@ -27,6 +27,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='origin']" position="after">
                     <field name="threeplId" readonly="1"/>
+                    <field name="tracking_3pl" readonly="1"/>
                 </xpath>
             </field>
         </record>
