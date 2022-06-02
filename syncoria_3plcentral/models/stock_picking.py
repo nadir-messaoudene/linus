@@ -32,8 +32,8 @@ class StockPicking(models.Model):
              " * Ready: The transfer is ready to be processed.\n(a) The shipping policy is \"As soon as possible\": at least one product has been reserved.\n(b) The shipping policy is \"When all products are ready\": all product have been reserved.\n"
              " * Done: The transfer has been processed.\n"
              " * Cancelled: The transfer has been cancelled.")
-    threeplId = fields.Integer(string="3PL ID")
-    tracking_3pl = fields.Char(string="Tracking Number 3PL")
+    threeplId = fields.Integer(string="3PL ID", copy=False)
+    tracking_3pl = fields.Char(string="Tracking Number 3PL",copy=False)
 
     def get_3pl_warehouse_from_locations(self, source_location_obj, dest_location_obj):
         warehouse_ids = []
@@ -165,6 +165,7 @@ class StockPicking(models.Model):
                 if dict_item_to_create_backorder_lines:
                     new_backorder = self.copy()
                     new_backorder.threeplId = ''
+                    new_backorder.tracking_3pl = ''
                     list_product = list(dict_item_to_create_backorder_lines.keys())
                     for line in new_backorder.move_ids_without_package:
                         if line.product_id.id not in list_product:

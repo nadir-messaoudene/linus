@@ -29,6 +29,9 @@
                     <field name="threeplId" readonly="1"/>
                     <field name="tracking_3pl" readonly="1"/>
                 </xpath>
+                <xpath expr="//field[@name='state']" position="replace">
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,assigned,done,push_3pl"/>
+                </xpath>
             </field>
         </record>
     </data>
