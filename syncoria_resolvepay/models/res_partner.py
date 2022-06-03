@@ -63,3 +63,20 @@ class ResPartner(models.Model):
                         self.credit_status = data.get('credit_status').capitalize() if data.get('credit_status') else data.get('credit_status')
                 else:
                     raise UserError('There is no ResolvePay instance')
+
+    def fetch_customer_resolvepay(self):
+        resolvepay_instance = self.env['resolvepay.instance'].search([('name', '=', 'ResolvePay')])
+        url = resolvepay_instance.instance_baseurl + 'customers/' + self.resolvepay_customer_id
+        res = resolvepay_instance.get_data(url)
+        if res.get('data'):
+            data = res.get('data')
+            _logger.info("Customer info =====> %s", data)
+            self.available_credit = data.get('amount_available')
+            self.advance_rate = data.get('advance_rate') * 100 if data.get(
+                'advance_rate') else data.get('advance_rate')
+            self.terms = data.get('default_terms').capitalize() if data.get(
+                'default_terms') else data.get('default_terms')
+            self.net_terms_status = data.get('net_terms_status').capitalize() if data.get(
+                'net_terms_status') else data.get('net_terms_status')
+            self.credit_status = data.get('credit_status').capitalize() if data.get(
+                'credit_status') else data.get('credit_status')

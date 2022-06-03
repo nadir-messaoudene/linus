@@ -19,7 +19,7 @@
 	    </record>
 
         <record id="resolvepay_fetch_invoice" model="ir.actions.server">
-            <field name="name">Resolve Pay update invoice</field>
+            <field name="name">Update from Resolve Pay</field>
             <field name="model_id" ref="account.model_account_move"/>
             <field name="binding_model_id" ref="account.model_account_move"/>
             <field name="binding_view_types">list,tree,form</field>
@@ -28,7 +28,7 @@
         </record>
 
         <record id="resolvepay_export_invoice" model="ir.actions.server">
-            <field name="name">Resolve Pay export invoice</field>
+            <field name="name">Export to Resolve Pay</field>
             <field name="model_id" ref="account.model_account_move"/>
             <field name="binding_model_id" ref="account.model_account_move"/>
             <field name="binding_view_types">list,tree,form</field>
