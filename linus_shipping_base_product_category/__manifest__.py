@@ -12,6 +12,7 @@
     ],
     'data': [
         'views/delivery_view.xml',
+        'views/delivery_grid_view.xml',
     ],
     'license': 'OPL-1',
     'support': "support@syncoria.com",
