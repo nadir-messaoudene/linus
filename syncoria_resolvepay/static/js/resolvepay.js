@@ -20,7 +20,7 @@ odoo.define('syncoria_resolvepay.payment_checkout', require => {
          * @param {string} flow - The online payment flow of the transaction
          * @return {Promise}
          */
-       _processPayment: function(provider, paymentOptionId, flow) {
+      _processPayment: function(provider, paymentOptionId, flow) {
         console.log("--------------------------------------");
         console.log("Resolve Pay ==>>>_processPayment ===>>>>");
         console.log("provider ===>>>>", provider);

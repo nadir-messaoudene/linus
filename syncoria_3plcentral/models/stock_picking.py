@@ -35,10 +35,8 @@ class StockPicking(models.Model):
     threeplId = fields.Integer(string="3PL ID", copy=False)
     tracking_3pl = fields.Char(string="Tracking Number 3PL",copy=False)
 
-    def get_3pl_warehouse_from_locations(self, source_location_obj, dest_location_obj):
-        warehouse_ids = []
-        warehouse_ids.append(source_location_obj.warehouse_id.id)
-        warehouse_ids.append(dest_location_obj.warehouse_id.id)
+    def get_3pl_warehouse_from_locations(self, location_obj):
+        warehouse_ids = [location_obj.warehouse_id.id]
         instance = self.env['instance.3pl'].search([], limit=1)
         for facility in instance.facilities_ids:
             if facility.warehouse_id.id in warehouse_ids:
@@ -46,10 +44,17 @@ class StockPicking(models.Model):
         return False
 
     def action_push_to_3pl(self):
-        source_warehouse = self.get_3pl_warehouse_from_locations(self.location_id, self.location_dest_id)
-        if source_warehouse:
-            self.export_picking_to_3pl(source_warehouse)
-            self.state = 'push_3pl'
+        if self.picking_type_id.code == 'outgoing':
+            source_warehouse = self.get_3pl_warehouse_from_locations(self.location_id)
+            if source_warehouse:
+                self.export_picking_to_3pl(source_warehouse)
+                self.state = 'push_3pl'
+        elif self.picking_type_id.code == 'incoming':
+            source_warehouse = self.get_3pl_warehouse_from_locations(self.location_dest_id)
+            if source_warehouse:
+                self.export_picking_to_3pl_purchase_order(source_warehouse)
+                self.state = 'push_3pl'
+
         
     def export_picking_to_3pl(self, source_warehouse):
         print("export_picking_to_3pl")
@@ -76,7 +81,7 @@ class StockPicking(models.Model):
                 "facilityIdentifier": {
                     "id": source_warehouse
                 },
-                "referenceNum": self.name + str(randrange(10)),
+                "referenceNum": self.name,
                 "notes": '',
                 "shippingNotes": '',
                 "billingCode": "Prepaid",
@@ -106,10 +111,10 @@ class StockPicking(models.Model):
                 'Authorization': 'Bearer ' + str(instance.access_token)
                 }
             response = requests.request("POST", url, headers=headers, data=payload)
-            res_dict = self.button_validate()
-            if type(res_dict) != bool:
-                self.env['stock.backorder.confirmation'].with_context(res_dict['context']).process()
             if response.status_code == 201:
+                res_dict = self.button_validate()
+                if type(res_dict) != bool:
+                    self.env['stock.backorder.confirmation'].with_context(res_dict['context']).process()
                 response = json.loads(response.text)
                 self.threeplId = response.get('readOnly').get('orderId')
             else:
@@ -120,6 +125,8 @@ class StockPicking(models.Model):
     def update_picking_from_3pl(self):
         print("update_picking_from_3pl")
         instance = self.env['instance.3pl'].search([], limit=1)
+        if self.picking_type_id.code == 'incoming':
+            return
         url = "https://secure-wms.com/orders/{}".format(self.threeplId)
 
         headers = {
@@ -198,3 +205,58 @@ class StockPicking(models.Model):
             return response.get('_embedded').get('http://api.3plCentral.com/rels/orders/item')
         else:
             raise UserError(response.text)
+
+    def export_picking_to_3pl_purchase_order(self, source_warehouse):
+        print("export_picking_to_3pl")
+        if self.state in ('waiting', 'confirmed', 'assigned'):
+            instance = self.env['instance.3pl'].search([], limit=1)
+            url = "https://secure-wms.com/inventory/pos"
+            orderItems = []
+            for line in self.move_ids_without_package:
+                orderItems.append(
+                    {
+                        "itemIdentifier": {
+                            "sku": line.product_id.default_code
+                        },
+                        "quantity": line.quantity_done,
+                        "expectedFacility": {
+                            "id": source_warehouse
+                        }
+                    }
+                )
+            payload = json.dumps({
+                "customerIdentifier": {
+                    "id": instance.customerId
+                },
+                "purchaseOrderNumber": self.name,
+                "notes": '',
+                "supplier": {
+                    "companyName": self.partner_id.name,
+                    "name": self.partner_id.name,
+                    "address1": self.partner_id.street,
+                    "address2": self.partner_id.street2,
+                    "city": self.partner_id.city,
+                    "state": self.partner_id.state_id.name,
+                    "zip": self.partner_id.zip,
+                    "country": self.partner_id.country_id.code
+                },
+                "lineItems": orderItems
+            })
+
+            headers = {
+                'Host': 'secure-wms.com',
+                'Content-Type': 'application/hal+json; charset=utf-8',
+                'Accept': 'application/hal+json',
+                'Authorization': 'Bearer ' + str(instance.access_token)
+            }
+            response = requests.request("POST", url, headers=headers, data=payload)
+            if response.status_code == 201:
+                res_dict = self.button_validate()
+                if type(res_dict) != bool:
+                    self.env['stock.immediate.transfer'].with_context(res_dict['context']).process()
+                response = json.loads(response.text)
+                self.threeplId = response.get('readOnly').get('purchaseOrderId')
+            else:
+                raise UserError(response.text)
+        else:
+            raise UserError("Only Order in Waiting and Ready state can be pushed to 3PL.")
