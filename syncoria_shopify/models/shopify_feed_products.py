@@ -292,6 +292,7 @@ class ShopifyFeedProducts(models.Model):
                         pro_tmpl.write({
                             "shopify_instance_id":instance_id.id,
                             "shopify_vendor":product.get("vendor"),
+                            "website_description": product.get("body_html"),
                             "shopify_product_status":product.get("status"),
                             "marketplace_type": 'shopify',
                             "default_code": product.get('sku'),

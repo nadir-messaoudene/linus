@@ -7,7 +7,7 @@
     'website': "http://www.syncoria.com",
     'category': 'Uncategorized',
     'version': '15.5.0.0.0',
-    'depends': ['base', 'mail', 'syncoria_base_marketplace', 'sale','sale_management', 'stock','sale_stock','delivery','product'],
+    'depends': ['base', 'mail', 'syncoria_base_marketplace', 'sale','sale_management', 'stock','sale_stock','delivery','product','website'],
     'images': [
         'static/description/banner.gif',
     ],
