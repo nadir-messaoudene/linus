@@ -316,6 +316,7 @@ class ShopifyFeedProducts(models.Model):
                         template['name'] = product['title']
                         template['shopify_id'] = str(product['id'])
                         template['shopify_instance_id'] = instance_id.id
+                        template['website_description'] = product.get("body_html")
                         # Product Type
                         # [consu] Consumable
                         # [service] Service
