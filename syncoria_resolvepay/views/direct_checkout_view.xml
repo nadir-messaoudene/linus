@@ -14,18 +14,24 @@
 <!--            </t>-->
 <!--        </xpath>-->
 <!--    </template>-->
-        <template inherit_id="payment.checkout" id="payment_checkout_form_inherit_po">
-            <xpath expr="//div[hasclass('card')]" position="before">
-                <div>
-                    <label for="po_number">PO Number</label>
-                    <input type="text" id="customer_reference" class="form-control" name="po_number" required="required"/>
-                    <label for="order_type">Order Type</label>
-                    <select name="order_type" class="form-control">
-                        <option value="preorder">PREORDER</option>
-                        <option value="immediate">IMMEDIATE</option>
-                    </select>
-                </div>
-            </xpath>
-        </template>
+    <template inherit_id="payment.checkout" id="payment_checkout_form_inherit_po">
+        <xpath expr="//div[hasclass('card')]" position="before">
+            <div>
+                <label for="po_number">PO Number</label>
+                <input type="text" id="customer_reference" class="form-control" name="po_number" required="required"/>
+                <label for="order_type">Order Type</label>
+                <select name="order_type" class="form-control">
+                    <option value="preorder">PREORDER</option>
+                    <option value="immediate">IMMEDIATE</option>
+                </select>
+            </div>
+            <h3 class="mb24">Pay with</h3>
+        </xpath>
+    </template>
+
+    <template inherit_id="website_sale.payment" id="inherit_website_sale_payment">
+        <xpath expr="//div[@id='payment_method']//h3" position="replace">
+        </xpath>
+    </template>
 
 </odoo>
