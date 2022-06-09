@@ -17,6 +17,7 @@ class ProductProduct(models.Model):
     haz_mat_shipping_name = fields.Char('Haz Mat Shipping Name')
 
     product_3pl_id = fields.Char('3PL Item ID')
+    measure_type_id = fields.Many2one('measure.types', 'Measure Type')
 
     def get_root_category_name(self):
         if self.categ_id.parent_id:
@@ -60,7 +61,7 @@ class ProductProduct(models.Model):
                             "Weight": record.weight
                         },
                         "UnitIdentifier": {
-                            "name": record.get_first_package()[0],
+                            "name": record.measure_type_id.name,
                         },
                         "InventoryUnitsPerUnit": record.get_first_package()[1]
                     },
@@ -83,6 +84,68 @@ class ProductProduct(models.Model):
                 except Exception as e:
                     _logger.info(e)
                     raise UserError(e)
+            else:
+                _logger.info(response.text)
+                raise UserError(response.text)
+
+    def update_product_to_3pl(self):
+        instance = self.env['instance.3pl'].search([], limit=1)
+
+        for record in self:
+            url = "https://secure-wms.com/customers/{}/items/{}".format(instance.customerId, record.product_3pl_id)
+            # GET Item to get Etag
+            payload = {}
+            headers = {
+                'Host': 'secure-wms.com',
+                'Content-Type': 'application/json',
+                'Accept': 'application/hal+json',
+                'Authorization': 'Bearer ' + str(instance.access_token)
+            }
+
+            response = requests.request("GET", url, headers=headers, data=payload)
+            if response.status_code == 200:
+                etag = response.headers['ETag']
+                res_dict = json.loads(response.text)
+            else:
+                _logger.info(response.text)
+                raise UserError(response.text)
+            ##########################################
+            headers = {
+                'Host': 'secure-wms.com',
+                'Content-Type': 'application/json',
+                'Accept': 'application/hal+json',
+                'Authorization': 'Bearer ' + str(instance.access_token),
+                'If-Match': etag
+            }
+            res_dict["sku"] = record.default_code
+            res_dict["description"] = record.display_name.replace('[{}] '.format(record.default_code), '')
+            res_dict["description2"] = record.get_root_category_name()
+            res_dict["options"]['packageUnit'] = {
+                "imperial": {
+                    "Length": record.length,
+                    "Width": record.width,
+                    "Height": record.height,
+                    "Weight": record.weight
+                },
+                "unitIdentifier": {
+                    "name": record.measure_type_id.name,
+                },
+                "inventoryUnitsPerUnit": record.get_first_package()[1]
+            }
+            res_dict.pop('_links')
+            res_dict.pop('_embedded')
+            if record.barcode:
+                res_dict["upc"] = record.barcode
+            if record.is_haz_mat:
+                res_dict["options"]["hazMat"] = dict(
+                    isHazMat=str(True),
+                    id=record.haz_mat_id,
+                    shippingName=record.haz_mat_shipping_name
+                )
+            print(res_dict)
+            response = requests.request("PUT", url, headers=headers, data=json.dumps(res_dict))
+            if response.status_code == 200:
+                print(response)
             else:
                 _logger.info(response.text)
                 raise UserError(response.text)

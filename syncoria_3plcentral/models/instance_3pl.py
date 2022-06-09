@@ -4,6 +4,8 @@ from odoo import models, fields
 import requests, json
 from requests.auth import HTTPBasicAuth
 from odoo.exceptions import UserError
+import logging
+_logger = logging.getLogger(__name__)
 
 class Facilities3PL(models.Model):
     _name = 'facilities.3pl'
@@ -35,6 +37,7 @@ class Instance3PL(models.Model):
     company_id = fields.Many2one('res.company', string='Company', required=True, default=lambda self: self.env.company)
     facilities_ids = fields.One2many('facilities.3pl', 'instance_3pl_id', string='Facilities')
     carriers_ids = fields.One2many('carriers.3pl', 'instance_3pl_id', string='Carriers')
+    measure_type_ids = fields.One2many('measure.types', 'instance_3pl_id', string='Measure Types')
 
     _sql_constraints = [
         ('instance_name_uniq', 'unique(name)', 'Instance name must be unique.')
@@ -71,6 +74,26 @@ class Instance3PL(models.Model):
                     })
             except:
                 raise UserError("Can not connect 3PL Central server.")
+
+    def fetch_unit_of_measurements(self):
+        url = "https://secure-wms.com/properties/unitofmeasuretypes"
+        headers = {'Accept-Language': 'en-US,en;q=0.8', 'Host': 'secure-wms.com',
+                   'Content-Type': 'application/json; charset=utf-8', 'Accept': 'application/hal+json',
+                   'Authorization': 'Bearer ' + str(self.access_token)}
+        response = requests.request('GET', url, headers=headers, data={})
+        if response.status_code == 200:
+            response = json.loads(response.text)
+            try:
+                measurements = response.get('_embedded').get('http://api.3plCentral.com/rels/properties/unitofmeasuretype')
+                if self.measure_type_ids:
+                    self.measure_type_ids = [(5, 0, 0)]
+                for unit in measurements:
+                    value = {'name': unit.get('name'),
+                             'instance_3pl_id': self.id
+                             }
+                    self.env['measure.types'].create(value)
+            except Exception as e:
+                raise UserError(e)
 
     def fetch_carriers(self):
         #Carriers
@@ -109,6 +132,7 @@ class Instance3PL(models.Model):
     def action_connect(self):
         self.fetch_customers()
         self.fetch_carriers()
+        self.fetch_unit_of_measurements()
 
     def upsert_access_token(self):
         get_access_token_url = 'https://secure-wms.com/AuthServer/api/Token'
@@ -138,3 +162,34 @@ class Instance3PL(models.Model):
             return
         for instance in to_refresh:
             instance.upsert_access_token()
+
+    def map_products(self):
+        pgsiz = 10
+        url = "https://secure-wms.com/customers/{}/items?pgsiz={}".format(self.customerId, pgsiz)
+        payload = {}
+        headers = {
+            'Host': 'secure-wms.com',
+            'Content-Type': 'application/json',
+            'Accept': 'application/hal+json',
+            'Authorization': 'Bearer ' + str(self.access_token)
+        }
+        next_page = True
+        while next_page:
+            response = requests.request("GET", url, headers=headers, data=payload)
+            if response.status_code == 200:
+                res = json.loads(response.text)
+                next_page = res.get('_links').get('next', False)
+                if next_page:
+                    next_page = True
+                    url = 'https://secure-wms.com' + res.get('_links').get('next').get('href')
+                response_dict = json.loads(response.text).get('_embedded').get('http://api.3plCentral.com/rels/customers/item')
+                print(response_dict)
+                for product in response_dict:
+                    prod_res = self.env['product.product'].search([('default_code', '=', product['sku'])])
+                    if prod_res:
+                        prod_res.product_3pl_id = product['itemId']
+                    else:
+                        _logger.info('Product does not exist in Odoo. Product SKU: {}'.format(product['sku']))
+            else:
+                _logger.info(response.text)
+                raise UserError(response.text)
