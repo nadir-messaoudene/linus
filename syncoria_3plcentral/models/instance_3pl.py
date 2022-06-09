@@ -164,7 +164,7 @@ class Instance3PL(models.Model):
             instance.upsert_access_token()
 
     def map_products(self):
-        pgsiz = 10
+        pgsiz = 100
         url = "https://secure-wms.com/customers/{}/items?pgsiz={}".format(self.customerId, pgsiz)
         payload = {}
         headers = {
@@ -188,6 +188,17 @@ class Instance3PL(models.Model):
                     prod_res = self.env['product.product'].search([('default_code', '=', product['sku'])])
                     if prod_res:
                         prod_res.product_3pl_id = product['itemId']
+                        package_unit = product.get('options').get('packageUnit', False)
+                        if package_unit:
+                            prod_res.length = package_unit.get('imperial').get('length')
+                            prod_res.width = package_unit.get('imperial').get('width')
+                            prod_res.height = package_unit.get('imperial').get('height')
+                            prod_res.weight = package_unit.get('imperial').get('weight')
+                        hazmat = product.get('options').get('hazMat').get('isHazMat')
+                        if hazmat:
+                            prod_res.is_haz_mat = hazmat
+                            prod_res.haz_mat_id = product.get('options').get('hazMat').get('id')
+                            prod_res.haz_mat_shipping_name = product.get('options').get('hazMat').get('shippingName')
                     else:
                         _logger.info('Product does not exist in Odoo. Product SKU: {}'.format(product['sku']))
             else:
