@@ -32,9 +32,10 @@ class ProductProduct(models.Model):
 
     @api.depends('product_warehouse_3pl_ids')
     def _compute_total_qty(self):
-        self.product_warehouse_3pl_count = 0
-        for each_warehouse in self.product_warehouse_3pl_ids:
-            self.product_warehouse_3pl_count += each_warehouse.quantity
+        for record in self:
+            record.product_warehouse_3pl_count = 0
+            for each_warehouse in record.product_warehouse_3pl_ids:
+                record.product_warehouse_3pl_count += each_warehouse.quantity
 
     def get_root_category_name(self):
         if self.categ_id.parent_id:
