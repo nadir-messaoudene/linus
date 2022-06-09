@@ -5,6 +5,13 @@ from odoo.exceptions import UserError
 import logging
 _logger = logging.getLogger(__name__)
 
+class ProductWarehouse3PL(models.Model):
+    _name = "product.warehouse.3pl"
+
+    product_id = fields.Many2one('product.product', 'Product')
+    stock_id = fields.Many2one('stock.warehouse', 'Warehouse')
+    quantity = fields.Integer('Quantity')
+
 class ProductProduct(models.Model):
     _inherit = "product.product"
 
@@ -18,6 +25,8 @@ class ProductProduct(models.Model):
 
     product_3pl_id = fields.Char('3PL Item ID')
     measure_type_id = fields.Many2one('measure.types', 'Measure Type')
+    product_warehouse_3pl_ids = fields.One2many('product.warehouse.3pl', 'product_id', 'Product Warehouse 3PL')
+    product_warehouse_3pl_count = fields.Integer('Product Warehouse 3PL Count')
 
     def get_root_category_name(self):
         if self.categ_id.parent_id:

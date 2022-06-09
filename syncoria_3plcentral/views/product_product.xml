@@ -48,6 +48,15 @@
                         </group>
                     </page>
                 </xpath>
+                <xpath expr="header" position="inside">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_value" widget="statinfo">
+                            <field name="product_warehouse_3pl_count" widget="statinfo" nolabel="1" class="mr4"/>
+                            <field name="uom_name"/>
+                        </span>
+                        <span class="o_stat_text">On Hand (3PL)</span>
+                    </div>
+                </xpath>
             </field>
 	    </record>
 
