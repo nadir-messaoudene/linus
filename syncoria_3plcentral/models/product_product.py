@@ -1,4 +1,4 @@
-from odoo import models, fields
+from odoo import models, fields, api, _
 import requests, json
 from requests.auth import HTTPBasicAuth
 from odoo.exceptions import UserError
@@ -8,6 +8,7 @@ _logger = logging.getLogger(__name__)
 class ProductWarehouse3PL(models.Model):
     _name = "product.warehouse.3pl"
 
+    name = fields.Char('Name')
     product_id = fields.Many2one('product.product', 'Product')
     stock_id = fields.Many2one('stock.warehouse', 'Warehouse')
     quantity = fields.Integer('Quantity')
@@ -27,7 +28,13 @@ class ProductProduct(models.Model):
     measure_type_id = fields.Many2one('measure.types', 'Packaging Unit')
     unit_qty = fields.Integer('Packing UOM Qty')
     product_warehouse_3pl_ids = fields.One2many('product.warehouse.3pl', 'product_id', 'Product Warehouse 3PL')
-    product_warehouse_3pl_count = fields.Integer('Product Warehouse 3PL Count')
+    product_warehouse_3pl_count = fields.Integer('Product Warehouse 3PL Count', compute='_compute_total_qty')
+
+    @api.depends('product_warehouse_3pl_ids')
+    def _compute_total_qty(self):
+        self.product_warehouse_3pl_count = 0
+        for each_warehouse in self.product_warehouse_3pl_ids:
+            self.product_warehouse_3pl_count += each_warehouse.quantity
 
     def get_root_category_name(self):
         if self.categ_id.parent_id:
@@ -159,3 +166,45 @@ class ProductProduct(models.Model):
             else:
                 _logger.info(response.text)
                 raise UserError(response.text)
+
+    def action_open_3pl_quants(self):
+        return {
+            'name': 'Warehouse 3PL Stock: %s' % self.name,
+            'type': 'ir.actions.act_window',
+            'view_mode': 'tree',
+            'res_model': 'product.warehouse.3pl',
+            'domain': [('product_id', '=', self.id)],
+        }
+
+    def update_product_qty_from_3pl(self):
+        instance = self.env['instance.3pl'].search([], limit=1)
+        url = "https://secure-wms.com/inventory/stocksummaries?pgsiz=500&pgnum=1&rql=ItemId=={}".format(self.product_3pl_id)
+
+        headers = {
+            'Host': 'secure-wms.com',
+            'Accept-Language': 'en-US,en;q=0.8',
+            'Content-Type': 'application/json; charset=utf-8',
+            'Accept': 'application/hal+json',
+            'Authorization': 'Bearer ' + str(instance.access_token)
+        }
+
+        response = requests.request("GET", url, headers=headers)
+        if response.status_code == 200:
+            response = json.loads(response.text)
+            summaries = response.get('summaries')
+            if self.product_warehouse_3pl_ids:
+                self.product_warehouse_3pl_ids = [(5,0,0)]
+            for each_warehouse in summaries:
+                print(each_warehouse)
+                fac = self.env['facilities.3pl'].search([('facilityId', '=', each_warehouse.get('facilityId')), ('instance_3pl_id', '=', instance.id)])
+                if not fac.warehouse_id:
+                    raise UserError('There is no warehouse mapping for facilityId: {}'.format(each_warehouse.get('facilityId')))
+                self.env['product.warehouse.3pl'].create({
+                    'name': each_warehouse.get('facilityId'),
+                    'stock_id': fac.warehouse_id.id,
+                    'product_id': self.id,
+                    'quantity': each_warehouse.get('onHand')
+                })
+        else:
+            _logger.info(response.text)
+            raise UserError(response.text)

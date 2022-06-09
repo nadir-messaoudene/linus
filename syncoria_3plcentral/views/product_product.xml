@@ -41,17 +41,28 @@
                             <field name="measure_type_id"/>
                             <field name="unit_qty"/>
                         </group>
+<!--                        <group string="Warehouse Stock">-->
+<!--                            <field name="product_warehouse_3pl_ids" no_label="1">-->
+<!--                                <tree editable="top" create="0" delete="0">-->
+<!--                                    <field name="product_id" readonly="1"/>-->
+<!--                                    <field name="stock_id" readonly="1"/>-->
+<!--                                    <field name="quantity" readonly="1"/>-->
+<!--                                </tree>-->
+<!--                            </field>-->
+<!--                        </group>-->
                     </page>
                 </xpath>
-                <xpath expr="header" position="inside">
-                    <div class="o_field_widget o_stat_info">
-                        <span class="o_stat_value" widget="statinfo">
-                            <field name="product_warehouse_3pl_count" widget="statinfo" nolabel="1" class="mr4"/>
-                            <field name="uom_name"/>
-                        </span>
-                        <span class="o_stat_text">On Hand (3PL)</span>
-                    </div>
-                </xpath>
+                <div name="button_box" position="inside">
+                    <button class="oe_stat_button" name="action_open_3pl_quants" icon="fa-cubes" type="object">
+                        <div class="o_field_widget o_stat_info">
+                            <span class="o_stat_value">
+                                <field name="product_warehouse_3pl_count" widget="statinfo" nolabel="1" class="mr4"/>
+                                <field name="uom_name"/>
+                            </span>
+                            <span class="o_stat_text">On Hand</span>
+                        </div>
+                    </button>
+                </div>
             </field>
 	    </record>
 
@@ -75,14 +86,32 @@
             </field>
         </record>
 
-<!--        <record model="ir.actions.server" id="update_product_qty_to_3pl">-->
-<!--            <field name="name">Update Product Onhand Quantity from 3PL Central</field>-->
-<!--            <field name="model_id" ref="product.model_product_product"/>-->
-<!--            <field name="binding_model_id" ref="product.model_product_product"/>-->
-<!--            <field name="state">code</field>-->
-<!--            <field name="code">if records:-->
-<!--                   action = records.update_product_to_3pl()-->
-<!--            </field>-->
-<!--        </record>-->
+        <record model="ir.actions.server" id="update_product_qty_from_3pl">
+            <field name="name">Update Product On Hand Quantity from 3PL Central</field>
+            <field name="model_id" ref="product.model_product_product"/>
+            <field name="binding_model_id" ref="product.model_product_product"/>
+            <field name="state">code</field>
+            <field name="code">if records:
+                   action = records.update_product_qty_from_3pl()
+            </field>
+        </record>
+
+        <record id="product_warehouse_3pl_action" model="ir.actions.act_window">
+            <field name="name">Product Warehouse 3PL</field>
+            <field name="res_model">product.warehouse.3pl</field>
+            <field name="view_mode">tree</field>
+        </record>
+
+        <record id="view_product_warehouse_3pl_tree" model="ir.ui.view">
+            <field name="name">product.warehouse.3pl.tree</field>
+            <field name="model">product.warehouse.3pl</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="stock_id" />
+                    <field name="quantity" />
+                </tree>
+            </field>
+        </record>
+
     </data>
 </odoo>
