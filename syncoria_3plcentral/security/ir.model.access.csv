@@ -5,3 +5,4 @@ access_carriers_3pl,access.carriers.3pl,model_carriers_3pl,base.group_user,1,1,1
 access_carrier_services_3pl,access.carrier.services.3pl,model_carrier_services_3pl,base.group_user,1,1,1,1
 access_mapping_carrier_service_3pl,access.mapping.carrier.service.3pl,model_mapping_carrier_service_3pl,base.group_user,1,1,1,1
 access_measure_types,access.measure.types,model_measure_types,base.group_user,1,1,1,1
+access_product_warehouse_3pl,access.product.warehouse.3pl,model_product_warehouse_3pl,base.group_user,1,1,1,1
