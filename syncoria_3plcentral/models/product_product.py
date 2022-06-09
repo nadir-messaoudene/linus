@@ -17,7 +17,8 @@ class ProductProduct(models.Model):
     haz_mat_shipping_name = fields.Char('Haz Mat Shipping Name')
 
     product_3pl_id = fields.Char('3PL Item ID')
-    measure_type_id = fields.Many2one('measure.types', 'Measure Type')
+    measure_type_id = fields.Many2one('measure.types', 'Packaging Unit')
+    unit_qty = fields.Integer('Packing UOM Qty')
 
     def get_root_category_name(self):
         if self.categ_id.parent_id:
@@ -63,7 +64,7 @@ class ProductProduct(models.Model):
                         "UnitIdentifier": {
                             "name": record.measure_type_id.name,
                         },
-                        "InventoryUnitsPerUnit": record.get_first_package()[1]
+                        "InventoryUnitsPerUnit": record.unit_qty
                     },
                 }
             }
@@ -130,7 +131,7 @@ class ProductProduct(models.Model):
                 "unitIdentifier": {
                     "name": record.measure_type_id.name,
                 },
-                "inventoryUnitsPerUnit": record.get_first_package()[1]
+                "inventoryUnitsPerUnit": record.unit_qty
             }
             res_dict.pop('_links')
             res_dict.pop('_embedded')
