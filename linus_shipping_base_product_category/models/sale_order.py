@@ -14,4 +14,7 @@ class SaleOrder(models.Model):
         address = self.partner_shipping_id
         # searching on website_published will also search for available website (_search method on computed field)
         category_ids = self.order_line.mapped('product_id.categ_id.id') or False
+        print("category_ids >>>>>>>>>>>>>>>>>", category_ids)
+        delivery_carriers = self.env['delivery.carrier'].sudo().search([('website_published', '=', True), ('categ_ids', 'in', category_ids)])
+        print("delivery_carriers >>>>>>>>>>>>>>>>>>>", delivery_carriers)
         return self.env['delivery.carrier'].sudo().search([('website_published', '=', True), ('categ_ids', 'in', category_ids)]).with_context(category_ids=category_ids).available_carriers(address)

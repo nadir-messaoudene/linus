@@ -20,6 +20,7 @@ class DeliveryCarrier(models.Model):
     def _get_price_available(self, order):
         self.ensure_one()
         self = self.sudo()
+        delivery_carrier_price = 0
         order = order.sudo()
         total = weight = volume = quantity = 0
         categ_ids = self.env['product.category']
@@ -34,15 +35,15 @@ class DeliveryCarrier(models.Model):
             if line.product_id.type == "service":
                 continue
             qty = line.product_uom._compute_quantity(line.product_uom_qty, line.product_id.uom_id)
-            weight += (line.product_id.weight or 0.0) * qty
-            volume += (line.product_id.volume or 0.0) * qty
-            quantity += qty
-            categ_ids |= line.product_id.categ_id
-        total = (order.amount_total or 0.0) - total_delivery
-
-        total = self._compute_currency(order, total, 'pricelist_to_company')
-
-        return self._get_price_from_order_picking(total, weight, volume, quantity, categ_ids)
+            weight = (line.product_id.weight or 0.0) * qty
+            volume = (line.product_id.volume or 0.0) * qty
+            quantity = qty
+            categ_ids = line.product_id.categ_id
+            total = (line.price_subtotal + line.price_tax or 0.0) - total_delivery
+            total = self._compute_currency(order, total, 'pricelist_to_company')
+            delivery_carrier_price += self._get_price_from_order_picking(total, weight, volume, quantity, categ_ids)
+        print("delivery_carrier_price >>>>>>>>>>>>>>>>>>>", delivery_carrier_price)
+        return delivery_carrier_price
 
     def _get_price_dict(self, total, weight, volume, quantity):
         '''Hook allowing to retrieve dict to be used in _get_price_from_picking() function.
@@ -71,9 +72,9 @@ class DeliveryCarrier(models.Model):
                 if test:
                     price = line.list_base_price + line.list_price * price_dict[line.variable_factor]
                     print("price >>>>>>>>>>>>>", price)
-                    print("(1.0 + (line.margin / 100.0)) >>>>", (1.0 + (line.margin / 100.0)))
-                    if line.margin:
-                        price = price * (line.margin / 100.0)
+                    # print("(1.0 + (line.margin / 100.0)) >>>>", (1.0 + (line.margin / 100.0)))
+                    # if line.margin:
+                    #     price = price * (line.margin / 100.0)
                     criteria_found = True
                     break
         if not criteria_found:
