@@ -799,7 +799,9 @@ class ResCompany(models.Model):
                                 company.x_quickbooks_last_paymentterm_imported_id = max(recs)
                     else:
                         raise UserError("It seems that all of the Payment Trems are already imported.")
-
+            else:
+                _logger.info(data.text)
+                raise UserError(data.text)
                         #     def createOdooParentId(self, quickbook_id):
 
     # if quickbook_id:
