@@ -107,7 +107,7 @@
             <field name="model">product.warehouse.3pl</field>
             <field name="arch" type="xml">
                 <tree>
-                    <field name="stock_id" />
+                    <field name="warehouse_name" />
                     <field name="quantity" />
                 </tree>
             </field>

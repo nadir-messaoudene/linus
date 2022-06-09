@@ -10,7 +10,7 @@ class ProductWarehouse3PL(models.Model):
 
     name = fields.Char('Name')
     product_id = fields.Many2one('product.product', 'Product')
-    stock_id = fields.Many2one('stock.warehouse', 'Warehouse')
+    warehouse_name = fields.Char('Warehouse Name')
     quantity = fields.Integer('Quantity')
 
 class ProductProduct(models.Model):
@@ -198,11 +198,11 @@ class ProductProduct(models.Model):
             for each_warehouse in summaries:
                 print(each_warehouse)
                 fac = self.env['facilities.3pl'].search([('facilityId', '=', each_warehouse.get('facilityId')), ('instance_3pl_id', '=', instance.id)])
-                if not fac.warehouse_id:
-                    raise UserError('There is no warehouse mapping for facilityId: {}'.format(each_warehouse.get('facilityId')))
+                # if not fac.warehouse_id:
+                #     raise UserError('There is no warehouse mapping for facilityId: {}'.format(each_warehouse.get('facilityId')))
                 self.env['product.warehouse.3pl'].create({
                     'name': each_warehouse.get('facilityId'),
-                    'stock_id': fac.warehouse_id.id,
+                    'warehouse_name': fac.name,
                     'product_id': self.id,
                     'quantity': each_warehouse.get('onHand')
                 })
