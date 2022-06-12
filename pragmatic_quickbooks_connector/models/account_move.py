@@ -105,8 +105,9 @@ class AccountInvoice(models.Model):
         _logger.info("Company is   :-> {} ".format(company))
         query = "select * from Customer WHERE Id = '%s'" % (qbo_id)
         url_str = company.get_import_query_url()
-        url = url_str.get('url') + '/query?%squery=%s' % (
-            'minorversion=' + url_str.get('minorversion') + '&' if url_str.get('minorversion') else '', query)
+        # url = url_str.get('url') + '/query?%squery=%s' % (
+        #     'minorversion=' + url_str.get('minorversion') + '&' if url_str.get('minorversion') else '', query)
+        url = url_str.get('url') + '/customer/%s' % (qbo_id)
         data = requests.request('GET', url, headers=url_str.get('headers'), verify=False)
         _logger.info(url)
         _logger.info("Customer data is *************** {}".format(data.text))
