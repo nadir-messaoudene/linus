@@ -29,6 +29,7 @@ class ProductProduct(models.Model):
     unit_qty = fields.Integer('Packing UOM Qty')
     product_warehouse_3pl_ids = fields.One2many('product.warehouse.3pl', 'product_id', 'Product Warehouse 3PL')
     product_warehouse_3pl_count = fields.Integer('Product Warehouse 3PL Count', compute='_compute_total_qty')
+    primary_unit_measure = fields.Many2one('measure.types', 'Primary Unit of Measure')
 
     @api.depends('product_warehouse_3pl_ids')
     def _compute_total_qty(self):
@@ -68,7 +69,7 @@ class ProductProduct(models.Model):
                 "options": {
                     "inventoryUnit": {
                         "unitIdentifier": {
-                            "Id": 1
+                            "Name": record.primary_unit_measure.name
                         }
                     },
                     "PackageUnit": {
@@ -149,6 +150,9 @@ class ProductProduct(models.Model):
                     "name": record.measure_type_id.name,
                 },
                 "inventoryUnitsPerUnit": record.unit_qty
+            }
+            res_dict["options"]['inventoryUnit']['unitIdentifier'] = {
+                "name": record.measure_type_id.name
             }
             res_dict.pop('_links')
             res_dict.pop('_embedded')

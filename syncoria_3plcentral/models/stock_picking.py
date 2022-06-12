@@ -34,6 +34,9 @@ class StockPicking(models.Model):
              " * Cancelled: The transfer has been cancelled.")
     threeplId = fields.Integer(string="3PL ID", copy=False)
     tracking_3pl = fields.Char(string="Tracking Number 3PL",copy=False)
+    container_ref = fields.Char(string="Container Reference",copy=False)
+    warehouse_instruction = fields.Char(string="Warehouse Instruction",copy=False)
+    carrier_instruction = fields.Char(string="Carrier Instruction",copy=False)
 
     def get_3pl_warehouse_from_locations(self, location_obj):
         warehouse_ids = [location_obj.warehouse_id.id]
@@ -58,6 +61,10 @@ class StockPicking(models.Model):
         
     def export_picking_to_3pl(self, source_warehouse):
         print("export_picking_to_3pl")
+        try:
+            res_dict = self.button_validate()
+        except Exception as e:
+            raise UserError(e)
         if self.state in ('waiting', 'confirmed', 'assigned'):
             instance = self.env['instance.3pl'].search([], limit=1)
             url = "https://secure-wms.com/orders"
@@ -82,8 +89,8 @@ class StockPicking(models.Model):
                     "id": source_warehouse
                 },
                 "referenceNum": self.name,
-                "notes": '',
-                "shippingNotes": '',
+                "notes": self.warehouse_instruction if self.warehouse_instruction else "",
+                "shippingNotes": self.carrier_instruction if self.carrier_instruction else "",
                 "billingCode": "Prepaid",
                 "routingInfo": {
                     "carrier": "UPS",
@@ -93,7 +100,7 @@ class StockPicking(models.Model):
                     "companyName": self.partner_id.name,
                     "name": self.partner_id.name,
                     "address1": self.partner_id.street,
-                    "address2": self.partner_id.street2,
+                    "address2": self.partner_id.street2 if self.partner_id.street2 else "",
                     "city": self.partner_id.city,
                     "state": self.partner_id.state_id.name,
                     "zip": self.partner_id.zip,
@@ -112,7 +119,6 @@ class StockPicking(models.Model):
                 }
             response = requests.request("POST", url, headers=headers, data=payload)
             if response.status_code == 201:
-                res_dict = self.button_validate()
                 if type(res_dict) != bool:
                     self.env['stock.backorder.confirmation'].with_context(res_dict['context']).process()
                 response = json.loads(response.text)
@@ -286,11 +292,12 @@ class StockPicking(models.Model):
                 "facilityIdentifier": {
                     "id": source_warehouse
                 },
-                "referenceNum": self.name,
+                "referenceNum": self.container_ref,
+                "receiptAdviceNumber": self.name,
                 "poNum": self.origin,
                 "arrivalDate": str(self.scheduled_date),
                 "expectedDate": str(self.scheduled_date),
-                "notes": '',
+                "notes": "",
                 "shipTo": {
                     "sameAs": 0,
                     "companyName": self.partner_id.name,
