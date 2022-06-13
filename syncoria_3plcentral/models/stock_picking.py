@@ -63,11 +63,13 @@ class StockPicking(models.Model):
         if self.picking_type_id.code == 'outgoing':
             source_warehouse = self.get_3pl_warehouse_from_locations(self.location_id)
             if source_warehouse:
+                # To Create 3PL Order
                 self.export_picking_to_3pl(source_warehouse)
                 self.state = 'push_3pl'
         elif self.picking_type_id.code == 'incoming':
             source_warehouse = self.get_3pl_warehouse_from_locations(self.location_dest_id)
             if source_warehouse:
+                # To Create 3PL Receipt
                 self.export_picking_to_3pl_purchase_order(source_warehouse)
                 self.state = 'push_3pl'
 
@@ -76,10 +78,10 @@ class StockPicking(models.Model):
         if not self.carrier_services_3pl_id:
             raise UserError("Please select 3PL Carrier and Service.")
         print("export_picking_to_3pl")
-        try:
-            res_dict = self.button_validate()
-        except Exception as e:
-            raise UserError(e)
+        # try:
+        #     res_dict = self.button_validate()
+        # except Exception as e:
+        #     raise UserError(e)
         if self.state in ('waiting', 'confirmed', 'assigned'):
             instance = self.env['instance.3pl'].search([], limit=1)
             url = "https://secure-wms.com/orders"
@@ -134,8 +136,24 @@ class StockPicking(models.Model):
                 }
             response = requests.request("POST", url, headers=headers, data=payload)
             if response.status_code == 201:
-                if type(res_dict) != bool:
-                    self.env['stock.backorder.confirmation'].with_context(res_dict['context']).process()
+                # if type(res_dict) != bool:
+                #     self.env['stock.backorder.confirmation'].with_context(res_dict['context']).process()
+                pickings_to_backorder = self._check_backorder()
+                if pickings_to_backorder:
+                    # START processing back order
+                    quantity_todo = {}
+                    quantity_done = {}
+                    for move in self.mapped('move_lines').filtered(lambda m: m.state != "cancel"):
+                        quantity_todo.setdefault(move.product_id.id, 0)
+                        quantity_done.setdefault(move.product_id.id, 0)
+                        quantity_todo[move.product_id.id] += move.product_uom._compute_quantity(move.product_uom_qty,
+                                                                                                move.product_id.uom_id,
+                                                                                                rounding_method='HALF-UP')
+                        quantity_done[move.product_id.id] += move.product_uom._compute_quantity(move.quantity_done,
+                                                                                                move.product_id.uom_id,
+                                                                                                rounding_method='HALF-UP')
+
+                    back_order = self.copy()
                 response = json.loads(response.text)
                 self.threeplId = response.get('readOnly').get('orderId')
             else:
