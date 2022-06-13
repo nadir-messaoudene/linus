@@ -32,6 +32,12 @@
                 <xpath expr="//field[@name='state']" position="replace">
                     <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,assigned,done,push_3pl"/>
                 </xpath>
+                <xpath expr="//group[@name='other_infos']" position="after">
+                    <group string="3PL Shipping Information" name="3pl_carrier_data">
+                        <field name="carriers_3pl_id" attrs="{'readonly': [('state', 'in', ('done', 'cancel'))]}" options="{'no_create': True, 'no_open': True}"/>
+                        <field name="carrier_services_3pl_id" attrs="{'readonly': [('state', 'in', ('done', 'cancel'))]}" options="{'no_create': True, 'no_open': True}"/>
+                    </group>
+                </xpath>
             </field>
         </record>
     </data>

@@ -35,6 +35,9 @@ class StockPicking(models.Model):
     threeplId = fields.Integer(string="3PL ID", copy=False)
     tracking_3pl = fields.Char(string="Tracking Number 3PL",copy=False)
 
+    carriers_3pl_id = fields.Many2one('carriers.3pl', 'Carrier', domain="[('instance_3pl_id', '=', 1)]")
+    carrier_services_3pl_id = fields.Many2one('carrier.services.3pl', 'Service', domain="[('carrier_3pl_id', '=', carriers_3pl_id)]")
+
     def get_3pl_warehouse_from_locations(self, location_obj):
         warehouse_ids = [location_obj.warehouse_id.id]
         instance = self.env['instance.3pl'].search([], limit=1)
@@ -57,6 +60,8 @@ class StockPicking(models.Model):
 
         
     def export_picking_to_3pl(self, source_warehouse):
+        if not self.carrier_services_3pl_id:
+            raise UserError("Please select 3PL Carrier and Service.")
         print("export_picking_to_3pl")
         if self.state in ('waiting', 'confirmed', 'assigned'):
             instance = self.env['instance.3pl'].search([], limit=1)
@@ -86,8 +91,8 @@ class StockPicking(models.Model):
                 "shippingNotes": '',
                 "billingCode": "Prepaid",
                 "routingInfo": {
-                    "carrier": "UPS",
-                    "mode": "92"
+                    "carrier": self.carrier_services_3pl_id.carrier_3pl_id.name,
+                    "mode": self.carrier_services_3pl_id.code
                 },
                 "shipTo": {
                     "companyName": self.partner_id.name,
