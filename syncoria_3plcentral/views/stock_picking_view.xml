@@ -28,12 +28,13 @@
                 <xpath expr="//field[@name='origin']" position="after">
                     <field name="threeplId" readonly="1"/>
                     <field name="tracking_3pl" readonly="1"/>
+                    <field name="ship_by_3pl" invisible="1"/>
                 </xpath>
                 <xpath expr="//field[@name='state']" position="replace">
                     <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,assigned,done,push_3pl"/>
                 </xpath>
                 <xpath expr="//group[@name='other_infos']" position="after">
-                    <group string="3PL Shipping Information" name="3pl_carrier_data">
+                    <group string="3PL Shipping Information" name="3pl_carrier_data" attrs="{'invisible':[('ship_by_3pl','=',False)]}">
                         <field name="carriers_3pl_id" attrs="{'readonly': [('state', 'in', ('done', 'cancel'))]}" options="{'no_create': True, 'no_open': True}"/>
                         <field name="carrier_services_3pl_id" attrs="{'readonly': [('state', 'in', ('done', 'cancel'))]}" options="{'no_create': True, 'no_open': True}"/>
                     </group>

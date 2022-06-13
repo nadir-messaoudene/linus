@@ -37,6 +37,16 @@ class StockPicking(models.Model):
 
     carriers_3pl_id = fields.Many2one('carriers.3pl', 'Carrier', domain="[('instance_3pl_id', '=', 1)]")
     carrier_services_3pl_id = fields.Many2one('carrier.services.3pl', 'Service', domain="[('carrier_3pl_id', '=', carriers_3pl_id)]")
+    ship_by_3pl = fields.Boolean("Ship by 3PL", compute="_compute_ship_by_3pl")
+
+    @api.depends('picking_type_id')
+    def _compute_ship_by_3pl(self):
+        instance = self.env['instance.3pl'].search([], limit=1)
+        for rec in self:
+            rec.ship_by_3pl = False
+            for facility in instance.facilities_ids:
+                if facility.warehouse_id.id == rec.picking_type_id.warehouse_id.id:
+                    rec.ship_by_3pl = True
 
     def get_3pl_warehouse_from_locations(self, location_obj):
         warehouse_ids = [location_obj.warehouse_id.id]
