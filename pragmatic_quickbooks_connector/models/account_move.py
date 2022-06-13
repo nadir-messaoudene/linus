@@ -251,6 +251,10 @@ class AccountInvoice(models.Model):
             data = requests.request('GET', company.url + str(company.realm_id) + "/query?query=" + query,headers=headers)
             if data.status_code == 200:
                 self.create_invoice(data, 'out_invoice')
+            else:
+                _logger.error(data)
+                raise UserError(data)
+
 
     def import_credit_memo(self):
         # company = self.env['res.users'].search([('id', '=', 2)]).company_id
