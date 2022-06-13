@@ -38,6 +38,19 @@ class StockPicking(models.Model):
     warehouse_instruction = fields.Char(string="Warehouse Instruction",copy=False)
     carrier_instruction = fields.Char(string="Carrier Instruction",copy=False)
 
+    carriers_3pl_id = fields.Many2one('carriers.3pl', 'Carrier', domain="[('instance_3pl_id', '=', 1)]")
+    carrier_services_3pl_id = fields.Many2one('carrier.services.3pl', 'Service', domain="[('carrier_3pl_id', '=', carriers_3pl_id)]")
+    ship_by_3pl = fields.Boolean("Ship by 3PL", compute="_compute_ship_by_3pl")
+
+    @api.depends('picking_type_id')
+    def _compute_ship_by_3pl(self):
+        instance = self.env['instance.3pl'].search([], limit=1)
+        for rec in self:
+            rec.ship_by_3pl = False
+            for facility in instance.facilities_ids:
+                if facility.warehouse_id.id == rec.picking_type_id.warehouse_id.id:
+                    rec.ship_by_3pl = True
+
     def get_3pl_warehouse_from_locations(self, location_obj):
         warehouse_ids = [location_obj.warehouse_id.id]
         instance = self.env['instance.3pl'].search([], limit=1)
@@ -60,6 +73,8 @@ class StockPicking(models.Model):
 
         
     def export_picking_to_3pl(self, source_warehouse):
+        if not self.carrier_services_3pl_id:
+            raise UserError("Please select 3PL Carrier and Service.")
         print("export_picking_to_3pl")
         try:
             res_dict = self.button_validate()
@@ -93,8 +108,8 @@ class StockPicking(models.Model):
                 "shippingNotes": self.carrier_instruction if self.carrier_instruction else "",
                 "billingCode": "Prepaid",
                 "routingInfo": {
-                    "carrier": "UPS",
-                    "mode": "92"
+                    "carrier": self.carrier_services_3pl_id.carrier_3pl_id.name,
+                    "mode": self.carrier_services_3pl_id.code
                 },
                 "shipTo": {
                     "companyName": self.partner_id.name,
