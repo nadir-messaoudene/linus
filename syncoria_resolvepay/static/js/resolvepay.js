@@ -20,14 +20,16 @@ odoo.define('syncoria_resolvepay.payment_checkout', require => {
          * @param {string} flow - The online payment flow of the transaction
          * @return {Promise}
          */
-       _processPayment: function(provider, paymentOptionId, flow) {
-        console.log("--------------------------------------");
-        console.log("Resolve Pay ==>>>_processPayment ===>>>>");
-        console.log("provider ===>>>>", provider);
-        console.log("paymentOptionId ===>>>>", paymentOptionId);
-        console.log("flow ===>>>>", flow);
-        console.log("--------------------------------------");
-
+      _processPayment: function(provider, paymentOptionId, flow) {
+//        console.log("--------------------------------------");
+//        console.log("Resolve Pay ==>>>_processPayment ===>>>>");
+//        console.log("provider ===>>>>", provider);
+//        console.log("paymentOptionId ===>>>>", paymentOptionId);
+//        console.log("flow ===>>>>", flow);
+//        console.log("--------------------------------------");
+        const po = document.querySelector('#customer_reference')
+        const order_type = document.querySelector('#order_type')
+        let result = this._rpc({route: "/shop/add_po_ordertype",  params: {po: po.value, order_type: order_type.value}})
         if (paymentOptionId != 16) {
           return this._super(...arguments);
         }

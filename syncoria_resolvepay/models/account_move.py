@@ -91,6 +91,7 @@ class Invoice(models.Model):
                                     print("===============>", payment)
                                     _logger.info(
                                         "Payment-{} Posted for Invoice-{}".format(payment, invoice))
+                                    invoice.partner_id.fetch_customer_resolvepay()
                     if data.get('amount_paid'):
                         move_id = self.env['account.move'].search(
                             [('invoice_origin', '=', data.get('order_number')), ('move_type', "=", "out_invoice")])
@@ -129,6 +130,7 @@ class Invoice(models.Model):
                                         print("===============>", payment)
                                         _logger.info(
                                             "Payment-{} Posted for Invoice-{}".format(payment, invoice))
+                                        invoice.partner_id.fetch_customer_resolvepay()
                                 else:
                                     pmt_wizard = self.env['account.payment.register'].with_context(
                                         active_model='account.move', active_ids=move_id.ids).create(payment_dict)
@@ -136,6 +138,7 @@ class Invoice(models.Model):
                                     print("===============>", payment)
                                     _logger.info(
                                         "Payment-{} Posted for Invoice-{}".format(payment, invoice))
+                                    invoice.partner_id.fetch_customer_resolvepay()
                     if data.get('amount_refunded'):
                         move_id = self.env['account.move'].search(
                             [('invoice_origin', '=', data.get('order_number')), ('move_type', "=", "out_invoice")])
