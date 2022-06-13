@@ -143,17 +143,41 @@ class StockPicking(models.Model):
                     # START processing back order
                     quantity_todo = {}
                     quantity_done = {}
+                    quantity_remaining = {}
+                    create_backorder = False
                     for move in self.mapped('move_lines').filtered(lambda m: m.state != "cancel"):
                         quantity_todo.setdefault(move.product_id.id, 0)
                         quantity_done.setdefault(move.product_id.id, 0)
+                        quantity_remaining.setdefault(move.product_id.id, 0)
                         quantity_todo[move.product_id.id] += move.product_uom._compute_quantity(move.product_uom_qty,
                                                                                                 move.product_id.uom_id,
                                                                                                 rounding_method='HALF-UP')
                         quantity_done[move.product_id.id] += move.product_uom._compute_quantity(move.quantity_done,
                                                                                                 move.product_id.uom_id,
                                                                                                 rounding_method='HALF-UP')
-
+                        quantity_remaining[move.product_id.id] += move.product_uom._compute_quantity(move.product_uom_qty,
+                                                                                                move.product_id.uom_id,
+                                                                                                rounding_method='HALF-UP') - \
+                                                                  move.product_uom._compute_quantity(move.quantity_done,
+                                                                                                move.product_id.uom_id,
+                                                                                                rounding_method='HALF-UP')
+                        if quantity_remaining[move.product_id.id] > 0:
+                            create_backorder = True
+                    print(quantity_todo)
+                    print(quantity_done)
+                if create_backorder:
                     back_order = self.copy()
+                    back_order.backorder_id = self
+                    # Process New Back Order Move Lines
+                    for move in back_order.mapped('move_lines').filtered(lambda m: m.state != "cancel"):
+                        if quantity_todo[move.product_id.id] - quantity_done[move.product_id.id] == 0:
+                            move.unlink()
+                        else:
+                            move.product_uom_qty = quantity_todo[move.product_id.id] - quantity_done[move.product_id.id]
+                    # Make demand qty = done qty so that when we call 'validate' button
+                    # when updating DO, we will not create another back order
+                    for move in self.mapped('move_lines').filtered(lambda m: m.state != "cancel"):
+                        move.product_uom_qty = quantity_done[move.product_id.id]
                 response = json.loads(response.text)
                 self.threeplId = response.get('readOnly').get('orderId')
             else:
