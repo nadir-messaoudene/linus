@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+
+        <record id="shopify_view_sale_order_inherited" model="ir.ui.view">
+            <field name="name">view.sale.order.form.inherited.shopify</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form" />
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <xpath expr="//header" position="inside">
+                    <button name="get_order_fullfillments" string="Fetch Fulfilment" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
+                    <button name="process_shopify_fulfilment" string="Process Fulfilment" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
+
+                </xpath>
+                <xpath expr="//notebook" position="inside">
+                    <page string="Shopify">
+                        <group>
+                            <group>
+                                <field name="marketplace_type"/>
+                                <field name="shopify_instance_id" options="{'no_open': True,'no_create': True}"/>
+                                <field name="shopify_id"/>
+                                <field name="shopify_order"/>
+                            </group>
+                            <group>
+                                <field name="shopify_is_invoice" readonly="1"/>
+                                <field name="shopify_is_refund" readonly="1"/>
+                            </group>
+                        </group>
+                    </page>
+                    <page string="Shopify Transaction">
+                        <field name="shopify_transaction_ids">
+                            <tree string="Transactions" create="false" delete="false" edit="false" editable="bottom">
+                                <field name="shopify_id"/>
+                                <field name="shopify_order_id"/>
+                                <field name="shopify_kind"/>
+                                <field name="shopify_gateway"/>
+                                <field name="shopify_status"/>
+                                <field name="shopify_message"/>
+                                <field name="shopify_test"/>
+                                <field name="shopify_authorization"/>
+                                <field name="shopify_location_id"/>
+                                <field name="shopify_source_name"/>
+                                <field name="shopify_amount"/>
+                                <field name="shopify_currency"/>
+                            </tree>
+                        </field>
+                    </page>
+<!--                    <page string="Shopify Refunds">-->
+<!--                        <field name="shopify_refund_ids">-->
+<!--                            <tree string="Refunds" create="false" delete="false" edit="false" editable="bottom">-->
+<!--                                <field name="name"/>-->
+<!--                                <field name="shopify_id"/>-->
+<!--                                <field name="shopify_order_id"/>-->
+<!--                                <field name="shopify_note"/>-->
+<!--                                <field name="shopify_user_id"/>-->
+<!--                                <field name="shopify_processed_at"/>-->
+<!--                                <field name="shopify_restock"/>-->
+<!--                                <field name="shopify_transaction_id"/>-->
+<!--                            </tree>-->
+<!--                        </field>-->
+<!--                    </page>-->
+                    <page string="Shopify Refunds Transaction">
+                        <field name="shopify_refund_transaction_ids">
+                            <tree string="Refunds Transaction" create="false" delete="false" edit="false" editable="bottom">
+                               <field name="shopify_refund_id"/>
+                                <field name="shopify_refund_order_id"/>
+                                <field name="shopify_refund_kind"/>
+                                <field name="shopify_refund_gateway"/>
+                                <field name="shopify_refund_status"/>
+                                <field name="shopify_refund_message"/>
+                                <field name="shopify_refund_test"/>
+                                <field name="shopify_refund_authorization"/>
+                                <field name="shopify_refund_location_id"/>
+                                <field name="shopify_refund_source_name"/>
+                                <field name="shopify_refund_amount"/>
+                                <field name="shopify_refund_currency"/>
+                            </tree>
+                        </field>
+                    </page>
+                    <page string="Shopify Fulfilment Line">
+                        <field name="shopify_fulfilment_ids"/>
+<!--                            <tree string="Fulfilment Lines">-->
+<!--                               <field name="sale_order_id"/>-->
+<!--                               <field name="name"/>-->
+<!--                            </tree>-->
+<!--                        </field>-->
+                    </page>
+                </xpath>
+            </field>
+
+        </record>
+
+
+        <record id="view_sale_order_inherited" model="ir.ui.view">
+            <field name="name">view.sale.order.tree.inherited</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_quotation_tree_with_onboarding" />
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+            
+                <xpath expr="//field[@name='name']" position="after">
+                    <field name="shopify_id"/>
+                    <field name="shopify_order"/>
+                    <field name="shopify_instance_id"/>
+                </xpath>
+            
+               
+            </field>
+
+        </record>
+
+
+        	
+
+    </data>
+</odoo>

@@ -1,0 +1,2 @@
+2022-01-29 18:50:50,419 89652 INFO thinkerp15 odoo.addons.syncoria_shopify.wizard.fetch_products_wiz: Exception occured: On the product Boheme Trench AW21 you cannot associate the value Wheat: M with the attribute Size because they do not match. 
+2022-01-29 18:50:50,421 89652 WARNING thinkerp15 odoo.http: Error Occured On the product Boheme Trench AW21 you cannot associate the value Wheat: M with the attribute Size because they do not match. 

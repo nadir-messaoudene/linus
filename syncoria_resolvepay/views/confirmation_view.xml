@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="confirmation">
+        <t t-call="website.layout">
+            <t t-set="additional_title">Shop - Confirmed</t>
+            <div id="wrap">
+                <div class="container oe_website_sale py-2">
+                    <h1><span>Order</span> <em t-field="order.name" /> <t t-if="order.state == 'sale'"><span>Confirmed</span></t></h1>
+
+                    <div class="row">
+                        <div class="col-12 col-xl">
+                            <div class="oe_cart">
+                                <div class="thanks_msg">
+                                    <h2>Thank you for your order.
+                                    </h2>
+                                </div>
+                                <div class="oe_structure clearfix mt-3" id="oe_structure_website_sale_confirmation_1"/>
+                                <h3 class="text-left mt-3">
+                                    <strong>Payment Information:</strong>
+                                </h3>
+                                <table class="table">
+                                    <tbody>
+                                        <tr>
+                                            <td class="text-right" width="100">
+                                                <strong>Total:</strong>
+                                            </td>
+                                            <td class="text-right" width="100">
+                                                <strong t-field="order.amount_total" t-options="{'widget': 'monetary', 'display_currency': order.pricelist_id.currency_id}" />
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <t t-if="order.amount_total &gt; order.partner_id.available_credit">
+                                    <div class="card bg-danger">
+                                        <div class="card-header">
+                                            <div>
+                                                <h3>You don't have enough credit for this order. Order is under reviewed.</h3>
+                                                <h4>Communication</h4>
+                                                <p>Please use the order name as communication reference.</p>
+                                            </div>
+                                        </div>
+                                        <div class="card-body">
+                                            <b>Communication: </b><span t-esc='order.name'/>
+                                        </div>
+                                    </div>
+                                </t>
+                                <div class="card mt-3">
+                                  <div class="card-body">
+                                    <t t-set="same_shipping" t-value="bool(order.partner_shipping_id==order.partner_id or only_services)" />
+                                    <div><b>Billing <t t-if="same_shipping and not only_services"> &amp; Shipping</t>: </b><span t-esc='order.partner_id' t-options="dict(widget='contact', fields=['address'], no_marker=True, separator=', ')" class="address-inline"/></div>
+                                    <div t-if="not same_shipping and not only_services" groups="sale.group_delivery_invoice_address"><b>Shipping: </b><span t-esc='order.partner_shipping_id' t-options="dict(widget='contact', fields=['address'], no_marker=True, separator=', ')"  class="address-inline"/></div>
+                                  </div>
+                                </div>
+                                <div class="oe_structure mt-3" id="oe_structure_website_sale_confirmation_2"/>
+                            </div>
+                        </div>
+                        <div class="col-12 col-xl-auto">
+                            <t t-set="website_sale_order" t-value="order"/>
+                            <t t-call="website_sale.cart_summary">
+                                <t t-set="hide_promotions" t-value="1"/>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+                <div class="oe_structure" id="oe_structure_website_sale_confirmation_3"/>
+            </div>
+        </t>
+    </template>
+
+    <template id="pre_confirmation">
+        <t t-call="website.layout">
+            <div align="center">
+                <h1 style="font-weight: bold; margin-top: 50px; margin-bottom: 10px;">WARNING</h1>
+                <h2>Your order exceeds the Resolve Pay credit on your account ($<t t-esc="order.partner_id.available_credit" />)</h2>
+                <h2>Are you sure you want to submit the order?</h2>
+                <button type="button" class="btn btn-primary" data-icon-class="fa-chevron-right">
+                    <a href="/shop/payment" style="color:white;">Cancel</a>
+                </button>
+                <button type="button" class="btn btn-primary" data-icon-class="fa-chevron-right">
+                    <a href="/resolvepay/success" style="color:white;">Submit</a>
+                </button>
+            </div>
+        </t>
+    </template>
+</odoo>

@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+
+        <record id="product_template_form_inherited" model="ir.ui.view">
+            <field name="name">product.template.form inherited</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_only_form_view"/>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <xpath expr="//header" position="inside">
+                    <button
+                            string="Create Product in Shopify"
+                            type="object"
+                            groups="base.group_erp_manager"
+                            name="action_create_shopify_product"
+                            attrs="{'invisible': ['|',('marketplace_type', '!=', 'shopify'),('shopify_id', '!=', False)]}"/>
+                    <button
+                            string="Update in Shopify"
+                            type="object"
+                            groups="base.group_erp_manager"
+                            name="action_update_shopify_product"
+                            attrs="{'invisible': [ '|', ('marketplace_type', '!=', 'shopify'),('shopify_id', '=', False) ]}"/>
+                </xpath>
+
+                <xpath expr="//notebook" position="inside">
+                    <page string="Shopify">
+                        <group>
+                            <group>
+                                <field name="shopify_id"/>
+                                <field name="marketplace_type"/>
+                                <field name="shopify_instance_id" options="{'no_open': True,'no_create': True}" attrs="{ 'required' : [('marketplace_type','==','shopify')] }"/>
+                                <field name="shopify_inventory_id"/>
+                                <field name="shopify_categ_ids"/>
+                                <field name="shopify_type" readonly="True"/>
+                                <field name="custom_option" readonly="True"/>
+                                <field name="shopify_vendor"/>
+                                <field name="shopify_published_scope" string="Published Scope" readonly="True"/>
+                                <field name="shopify_tags" string="Tags" readonly="True"/>
+                                <field name="shopify_template_suffix" string="Template Suffix" readonly="True"/>
+                                <field name="shopify_variants" string="Variants" readonly="True"/>
+                                <field name="company_id"/>
+                            </group>
+                            <group>
+                                <field name="shopify_compare_price"/>
+                                <field name="shopify_charge_tax"/>
+                                <field name="shopify_track_qty"/>
+                                <field name="shopify_product_status" widget="radio"/>
+                            </group>
+                            <group string="Currency Information">
+                                <field name="currency_id"/>
+                                <field name="shopify_currency_id"/>
+                                <field name="list_price"/>
+                                <field name="shopify_price"/>
+                                <field name="shopify_update_variants"/>
+                                <button name="compute_shopify_price"
+                                        string="Compute Shopify Price"
+                                        type="object"
+                                        class="btn btn-primary" />
+                            </group>
+                        </group>
+                    </page>
+                </xpath>
+
+                <xpath expr="//field[@name='hs_code']" position="after">
+                    <field name="shopify_origin_country_id"/>
+                    <field name="shopify_province_origin_id"/>
+                </xpath>
+
+            </field>
+        </record>
+
+        <record id="product_template_tree_inherited" model="ir.ui.view">
+            <field name="name">product.template.tree inherited</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_tree_view"/>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+
+
+                <xpath expr="//field[@name='name']" position="after">
+                    <field name="shopify_id"/>
+                    <field name="shopify_instance_id"/>
+
+                </xpath>
+
+            </field>
+        </record>
+
+        <record id="product_normal_form_view_shopify" model="ir.ui.view">
+            <field name="name">product.product.form shopify</field>
+            <field name="model">product.product</field>
+            <field name="inherit_id" ref="product.product_normal_form_view"/>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+               <xpath expr="//header" position="inside">
+                   <button
+                           string="Update Hscode and Cost to Shopify"
+                           type="object"
+                           groups="base.group_erp_manager"
+                           name="action_update_inventory_item"
+                           attrs="{'invisible': [('shopify_id', '=', False)]}"/>
+<!--                    <button-->
+<!--                            string="Create Product in Shopify"-->
+<!--                            type="object"-->
+<!--                            groups="base.group_erp_manager"-->
+<!--                            name="action_create_shopify_product"-->
+<!--                            attrs="{'invisible': [('shopify_id', '!=', False)]}"/>-->
+<!--                    <button-->
+<!--                            string="Update in Shopify"-->
+<!--                            type="object"-->
+<!--                            groups="base.group_erp_manager"-->
+<!--                            name="action_update_shopify_product"-->
+<!--                            attrs="{'invisible': [('marketplace_type', '!=', 'shopify'),('shopify_id', '=', False) ]}"/>-->
+               </xpath>
+                <xpath expr="//notebook" position="inside">
+                    <page string="Shopify">
+                        <group>
+                            <group>
+                                <field name="shopify_id"/>
+                                <field name="shopify_inventory_id"/>
+                                <field name="marketplace_type"/>
+                                <field name="shopify_instance_id" options="{'no_open': True,'no_create': True}" attrs="{ 'required' : [('marketplace_type','==','shopify')] }"/>
+                                <field name="shopify_categ_ids" readonly="True"/>
+                            </group>
+                            <group>
+                                <field name="shopify_type"/>
+                                <field name="custom_option"/>
+                                <field name="shopify_vendor"/>
+                            </group>
+                            <group>
+                                <field name="shopify_published_scope" string="Published Scope"/>
+                                <field name="shopify_tags" string="Tags"/>
+                                <field name="shopify_template_suffix" string="Template Suffix"/>
+                                <field name="shopify_variants" string="Variants"/>
+                                <field name="company_id"/>
+                            </group>
+                            <group string="Currency Information">
+                                <field name="currency_id"/>
+                                <field name="shopify_currency_id"/>
+                                <field name="list_price"/>
+                                <field name="shopify_price"/>
+                                <button name="compute_shopify_price"
+                                        string="Compute Shopify Price"
+                                        type="object"
+                                        class="btn btn-primary" />
+                            </group>
+                        </group>
+                    </page>
+                </xpath>
+                <xpath expr="//field[@name='hs_code']" position="after">
+                    <field name="shopify_origin_country_id"/>
+                    <field name="shopify_province_origin_id"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="product_normal_tree_view_shopify" model="ir.ui.view">
+            <field name="name">product.product.tree shopify</field>
+            <field name="model">product.product</field>
+            <field name="inherit_id" ref="product.product_product_tree_view"/>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+               <xpath expr="//field[@name='name']" position="after">
+                    <field name="shopify_id"/>
+                    <field name="shopify_instance_id"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="product_variant_easy" model="ir.ui.view">
+            <field name="name">product.product.view.form.inherit</field>
+            <field name="model">product.product</field>
+            <field name="inherit_id" ref="product.product_variant_easy_edit_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//header" position="inside">
+                   <button
+                           string="Update Hscode and Cost to Shopify"
+                           type="object"
+                           groups="base.group_erp_manager"
+                           name="action_update_inventory_item"
+                           attrs="{'invisible': [('shopify_id', '=', False)]}"/>
+                </xpath>
+                <xpath expr="//group[@name='weight']" position="after">
+                    <group string="Shopify">
+                        <field name="marketplace_type"/>
+                        <field name="shopify_instance_id" options="{'no_open': True,'no_create': True}" attrs="{ 'required' : [('marketplace_type','==','shopify')] }"/>
+                        <field name="shopify_id" readonly="True"/>
+                        <field name="shopify_inventory_id" readonly="True"/>
+                        <field name="shopify_image_id" readonly="True"/>
+                        <field name="shopify_origin_country_id"/>
+                        <field name="shopify_province_origin_id"/>
+                        <field name="currency_id"/>
+                        <field name="shopify_currency_id"/>
+                        <field name="list_price"/>
+                        <field name="shopify_price"/>
+                        <button name="compute_shopify_price"
+                                string="Compute Shopify Price"
+                                type="object"
+                                class="btn btn-primary" />
+                    </group>
+                </xpath>
+
+            </field>
+        </record>
+
+<!--    =============================== Server Actions ========================================-->
+        <record id="action_create_update_shopify_product" model="ir.actions.server">
+            <field name="name">Create or Update Product in Shopify</field>
+            <field name="model_id" ref="product.model_product_template" />
+            <field name="binding_model_id" ref="product.model_product_template" />
+            <field name="binding_view_types">list</field>
+            <field name="state">code</field>
+            <field name="code">
+                if records:
+                    action = records.server_action_shopify_create_update_product()
+            </field>
+        </record>
+
+<!--        <record id="action_stock_update" model="ir.actions.server">-->
+<!--            <field name="name">Update Odoo Stock</field>-->
+<!--            <field name="model_id" ref="product.model_product_template" />-->
+<!--            <field name="binding_model_id" ref="product.model_product_template" />-->
+<!--            <field name="binding_view_types">list</field>-->
+<!--            <field name="state">code</field>-->
+<!--            <field name="code">-->
+<!--                if records:-->
+<!--                    action = records.server_action_shopify_update_stock()-->
+<!--            </field>-->
+<!--        </record>-->
+
+
+    </data>
+</odoo>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    <data>
+
+        <record id="view_delivery_carrier_form_3pl" model="ir.ui.view">
+            <field name="name">view.delivery.carrier.form.3pl</field>
+            <field name="model">delivery.carrier</field>
+            <field name="inherit_id" ref="delivery.view_delivery_carrier_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//page[last()]" position="after">
+                    <page string="3PL Mapping" name="3pl_mappping">
+                        <field name="mapping_carrier_service_3pl_ids">
+                            <tree editable="top">
+                                <field name='delivery_type' invisible="1"/>
+                                <field name='fedex_service_type' attrs="{'invisible':[('delivery_type','!=','fedex')]}"/>
+                                <field name='usps_domestic_regular_container' attrs="{'invisible':[('delivery_type','!=','usps')]}"/>
+                                <field name='ups_default_service_type' attrs="{'invisible':[('delivery_type','!=','ups')]}"/>
+                                <field name='carrier_service_3pl_id' domain="[('carrier_3pl_id.name', '=', delivery_type)]" help="The Carrier name from 3PL must same technical name on Provider"/>
+                            </tree>
+                        </field>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

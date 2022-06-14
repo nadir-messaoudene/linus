@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record model="ir.actions.server" id="export_picking_to_3pl">
+            <field name="name">Export to 3PL Central</field>
+            <field name="model_id" ref="stock.model_stock_picking"/>
+            <field name="binding_model_id" ref="stock.model_stock_picking"/>
+            <field name="state">code</field>
+            <field name="code">if records:
+                   action = records.action_push_to_3pl()
+            </field>
+        </record>
+        <record model="ir.actions.server" id="update_picking_from_3pl">
+            <field name="name">Update from 3PL Central</field>
+            <field name="model_id" ref="stock.model_stock_picking"/>
+            <field name="binding_model_id" ref="stock.model_stock_picking"/>
+            <field name="state">code</field>
+            <field name="code">if records:
+                   action = records.update_picking_from_3pl()
+            </field>
+        </record>
+
+        <record id="view_picking_form_inherit_3pl" model="ir.ui.view">
+            <field name="name">view.picking.form.inherit.3pl</field>
+            <field name="model">stock.picking</field>
+            <field name="inherit_id" ref="stock.view_picking_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='origin']" position="after">
+                    <field name="threeplId" readonly="1"/>
+                    <field name="tracking_3pl" readonly="1"/>
+                </xpath>
+                <xpath expr="//field[@name='state']" position="replace">
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,assigned,done,push_3pl"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>
