@@ -247,20 +247,47 @@ header#top .navbar {
   padding-left: 0; }
 
 .navbar-light .navbar-nav .nav-link {
-  color: #000 !important; }
+  color: #000 !important;
+  text-transform: uppercase; }
 
 .navbar-light .navbar-nav .show > .nav-link, .navbar-light .navbar-nav .active > .nav-link,
 .navbar-light .navbar-nav .nav-link.show, .navbar-light .navbar-nav .nav-link.active {
   color: rgba(0, 0, 0, 0.5) !important; }
 
-#top_menu_container .btn.flat.btn-lg,
-#top_menu_container .btn-group-lg > .btn.flat {
-  padding: 7px 15px !important;
-  font-family: "Avenir Next", "Open Sans", Arial, HelveticaNeue, sans-serif;
-  font-weight: 500;
-  letter-spacing: .1rem; }
-#top_menu_container #top_menu li.nav-item.dropdown.ml-lg-auto.o_no_autohide_item a {
-  font-weight: 500 !important; }
+#top_menu_container {
+  position: relative; }
+  @media (min-width: 992px) {
+    #top_menu_container .ml-lg-4 {
+      margin-right: 100px;
+      margin-left: 0 !important;
+      text-transform: uppercase; } }
+  #top_menu_container .btn.flat.btn-lg,
+  #top_menu_container .btn-group-lg > .btn.flat {
+    padding: 7px 15px !important;
+    font-family: "Avenir Next", "Open Sans", Arial, HelveticaNeue, sans-serif;
+    font-weight: 500;
+    letter-spacing: .1rem; }
+  @media (min-width: 992px) {
+    #top_menu_container #top_menu li.nav-item.ml-lg-auto.o_no_autohide_item {
+      position: absolute;
+      right: 15px; } }
+  @media (min-width: 1320px) {
+    #top_menu_container #top_menu li.nav-item.ml-lg-auto.o_no_autohide_item {
+      position: absolute;
+      right: 40px; } }
+  #top_menu_container #top_menu li.nav-item.ml-lg-auto.o_no_autohide_item a {
+    font-weight: 500 !important; }
+    @media (min-width: 992px) {
+      #top_menu_container #top_menu li.nav-item.ml-lg-auto.o_no_autohide_item a span {
+        background: url("../images/user.png") no-repeat center;
+        width: 30px;
+        height: 24px;
+        text-indent: -9999999px;
+        display: inline-block; } }
+
+@media (min-width: 992px) {
+  .o_connected_user #top_menu_container .ml-lg-4 {
+    margin-right: 75px; } }
 
 .list-group-item {
   border: 0;
@@ -421,6 +448,10 @@ address {
   font-size: 14px;
   color: #000; }
 
+.btn-danger {
+  background: #000;
+  border-color: #000; }
+
 footer#bottom {
   margin-top: 50px;
   border-top: 1px solid #626262; }
@@ -434,7 +465,14 @@ footer .s_share {
 @media (min-width: 992px) {
   .navbar-expand-lg .navbar-nav .nav-link {
     padding-right: 0.6rem;
-    padding-left: 0.6rem; } }
+    padding-left: 0.6rem; }
+
+  .navbar.o_portal_navbar + p {
+    padding-top: 10%;
+    text-align: center; }
+
+  .oe_website_sale #products_grid_before {
+    border-right: 0 !important; } }
 @media (min-width: 1200px) {
   .container, .o_container_small, #top_menu_container {
     max-width: 100%;
