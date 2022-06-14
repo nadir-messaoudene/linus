@@ -6,3 +6,4 @@
 
 from . import product
 from . import report_stock_forecasted
+from . import stock_picking

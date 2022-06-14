@@ -11,7 +11,7 @@
     'images': [
     ],
     'data': [
-        
+        'views/stock_picking_view.xml'
     ],
     'license': 'OPL-1',
     'support': "support@syncoria.com",
