@@ -40,6 +40,7 @@
                         <group>
                             <field name="measure_type_id"/>
                             <field name="unit_qty"/>
+                            <field name="primary_unit_measure"/>
                         </group>
 <!--                        <group string="Warehouse Stock">-->
 <!--                            <field name="product_warehouse_3pl_ids" no_label="1">-->

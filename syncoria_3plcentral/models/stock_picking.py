@@ -9,6 +9,7 @@ from odoo.tools.float_utils import float_compare, float_is_zero, float_round
 from odoo.tools.misc import clean_context, OrderedSet
 import requests
 import json
+from odoo.tools.misc import format_date
 
 from random import randrange
 
@@ -34,6 +35,9 @@ class StockPicking(models.Model):
              " * Cancelled: The transfer has been cancelled.")
     threeplId = fields.Integer(string="3PL ID", copy=False)
     tracking_3pl = fields.Char(string="Tracking Number 3PL",copy=False)
+    container_ref = fields.Char(string="Container Reference",copy=False)
+    warehouse_instruction = fields.Char(string="Warehouse Instruction",copy=False)
+    carrier_instruction = fields.Char(string="Carrier Instruction",copy=False)
 
     carriers_3pl_id = fields.Many2one('carriers.3pl', 'Carrier', domain="[('instance_3pl_id', '=', 1)]")
     carrier_services_3pl_id = fields.Many2one('carrier.services.3pl', 'Service', domain="[('carrier_3pl_id', '=', carriers_3pl_id)]")
@@ -60,11 +64,13 @@ class StockPicking(models.Model):
         if self.picking_type_id.code == 'outgoing':
             source_warehouse = self.get_3pl_warehouse_from_locations(self.location_id)
             if source_warehouse:
+                # To Create 3PL Order
                 self.export_picking_to_3pl(source_warehouse)
                 # self.state = 'push_3pl'
         elif self.picking_type_id.code == 'incoming':
             source_warehouse = self.get_3pl_warehouse_from_locations(self.location_dest_id)
             if source_warehouse:
+                # To Create 3PL Receipt
                 self.export_picking_to_3pl_purchase_order(source_warehouse)
                 # self.state = 'push_3pl'
 
@@ -97,8 +103,8 @@ class StockPicking(models.Model):
                     "id": source_warehouse
                 },
                 "referenceNum": self.name,
-                "notes": '',
-                "shippingNotes": '',
+                "notes": self.warehouse_instruction if self.warehouse_instruction else "",
+                "shippingNotes": self.carrier_instruction if self.carrier_instruction else "",
                 "billingCode": "Prepaid",
                 "routingInfo": {
                     "carrier": self.carrier_services_3pl_id.carrier_3pl_id.name,
@@ -108,7 +114,7 @@ class StockPicking(models.Model):
                     "companyName": self.partner_id.name,
                     "name": self.partner_id.name,
                     "address1": self.partner_id.street,
-                    "address2": self.partner_id.street2,
+                    "address2": self.partner_id.street2 if self.partner_id.street2 else "",
                     "city": self.partner_id.city,
                     "state": self.partner_id.state_id.name,
                     "zip": self.partner_id.zip,
@@ -127,10 +133,29 @@ class StockPicking(models.Model):
                 }
             response = requests.request("POST", url, headers=headers, data=payload)
             if response.status_code == 201:
-                res_dict = self.button_validate()
-                # backorder = self._create_backorder()
-                if type(res_dict) != bool:
-                    self.env['stock.backorder.confirmation'].with_context(res_dict['context']).process()
+
+                pickings_to_backorder = self._check_backorder()
+                if pickings_to_backorder:
+                    # START processing back order
+                    moves_todo = self.mapped('move_lines').filtered(lambda self: self.state in ['draft', 'waiting', 'partially_available', 'assigned', 'confirmed'])
+                    backorder_moves_vals = []
+                    for move in moves_todo:
+                        # To know whether we need to create a backorder or not, round to the general product's
+                        # decimal precision and not the product's UOM.
+                        rounding = self.env['decimal.precision'].precision_get('Product Unit of Measure')
+                        if float_compare(move.quantity_done, move.product_uom_qty, precision_digits=rounding) < 0:
+                            # Need to do some kind of conversion here
+                            qty_split = move.product_uom._compute_quantity(move.product_uom_qty - move.quantity_done,
+                                                                           move.product_id.uom_id,
+                                                                           rounding_method='HALF-UP')
+                            new_move_vals = move._split(qty_split)
+                            backorder_moves_vals += new_move_vals
+                        move.move_line_ids.with_context(bypass_reservation_update=True).write({
+                            'product_uom_qty': move.quantity_done,
+                            'date': fields.Datetime.now(),
+                        })
+                    backorder_moves = self.env['stock.move'].create(backorder_moves_vals)
+                    self._create_backorder_custom(moves_todo.ids)
                 response = json.loads(response.text)
                 self.threeplId = response.get('readOnly').get('orderId')
             else:
@@ -185,21 +210,24 @@ class StockPicking(models.Model):
                     if res_item.qty_done != item_qty:
                         dict_item_to_create_backorder_lines[item_odoo_id.id] = res_item.qty_done - item_qty
                         res_item.write({'qty_done': item_qty})
-                if dict_item_to_create_backorder_lines:
-                    new_backorder = self.copy()
-                    new_backorder.threeplId = ''
-                    new_backorder.tracking_3pl = ''
-                    list_product = list(dict_item_to_create_backorder_lines.keys())
-                    for line in new_backorder.move_ids_without_package:
-                        if line.product_id.id not in list_product:
-                            line.unlink()
-                        else:
-                            line.product_uom_qty = dict_item_to_create_backorder_lines.get(line.product_id.id)
-                    self.message_post(
-                        body=_(
-                            'The backorder <a href=# data-oe-model=stock.picking data-oe-id=%d>%s</a> has been created.') % (
-                                 new_backorder.id, new_backorder.name))
-                self.state = 'done'
+                res_dict = self.button_validate()
+                if type(res_dict) != bool:
+                    self.env['stock.backorder.confirmation'].with_context(res_dict['context']).process()
+                # if dict_item_to_create_backorder_lines:
+                #     new_backorder = self.copy()
+                #     new_backorder.threeplId = ''
+                #     new_backorder.tracking_3pl = ''
+                #     list_product = list(dict_item_to_create_backorder_lines.keys())
+                #     for line in new_backorder.move_ids_without_package:
+                #         if line.product_id.id not in list_product:
+                #             line.unlink()
+                #         else:
+                #             line.product_uom_qty = dict_item_to_create_backorder_lines.get(line.product_id.id)
+                #     self.message_post(
+                #         body=_(
+                #             'The backorder <a href=# data-oe-model=stock.picking data-oe-id=%d>%s</a> has been created.') % (
+                #                  new_backorder.id, new_backorder.name))
+                # self.state = 'done'
         else:
             raise UserError(response.text)
 
@@ -245,11 +273,12 @@ class StockPicking(models.Model):
                 "facilityIdentifier": {
                     "id": source_warehouse
                 },
-                "referenceNum": self.name,
+                "referenceNum": self.container_ref,
+                "receiptAdviceNumber": self.name,
                 "poNum": self.origin,
                 "arrivalDate": str(self.scheduled_date),
                 "expectedDate": str(self.scheduled_date),
-                "notes": '',
+                "notes": "",
                 "shipTo": {
                     "sameAs": 0,
                     "companyName": self.partner_id.name,
@@ -283,3 +312,57 @@ class StockPicking(models.Model):
                 raise UserError(response.text)
         else:
             raise UserError("Only Order in Waiting and Ready state can be pushed to 3PL.")
+
+    def _create_backorder_custom(self, ids):
+        backorders = self.env['stock.picking']
+        bo_to_assign = self.env['stock.picking']
+        for picking in self:
+            moves_to_backorder = picking.move_lines.filtered(lambda x: x.id not in ids)
+            if moves_to_backorder:
+                backorder_picking = picking.copy({
+                    'name': '/',
+                    'move_lines': [],
+                    'move_line_ids': [],
+                    'backorder_id': picking.id
+                })
+                picking.message_post(
+                    body=_('The backorder <a href=# data-oe-model=stock.picking data-oe-id=%d>%s</a> has been created.') % (
+                        backorder_picking.id, backorder_picking.name))
+                moves_to_backorder.write({'picking_id': backorder_picking.id})
+                moves_to_backorder.move_line_ids.package_level_id.write({'picking_id':backorder_picking.id})
+                moves_to_backorder.mapped('move_line_ids').write({'picking_id': backorder_picking.id})
+                backorders |= backorder_picking
+                if backorder_picking.picking_type_id.reservation_method == 'at_confirm':
+                    bo_to_assign |= backorder_picking
+        if bo_to_assign:
+            bo_to_assign.action_assign()
+        return backorders
+
+    # @api.depends('state', 'picking_type_code', 'scheduled_date', 'move_lines', 'move_lines.forecast_availability',
+    #              'move_lines.forecast_expected_date')
+    # def _compute_products_availability(self):
+    #     pickings = self.filtered(lambda picking: picking.state in (
+    #     'waiting', 'confirmed', 'assigned', 'push_3pl') and picking.picking_type_code == 'outgoing')
+    #     pickings.products_availability_state = 'available'
+    #     pickings.products_availability = _('Available')
+    #     other_pickings = self - pickings
+    #     other_pickings.products_availability = False
+    #     other_pickings.products_availability_state = False
+    #
+    #     all_moves = pickings.move_lines
+    #     # Force to prefetch more than 1000 by 1000
+    #     all_moves._fields['forecast_availability'].compute_value(all_moves)
+    #     for picking in pickings:
+    #         # In case of draft the behavior of forecast_availability is different : if forecast_availability < 0 then there is a issue else not.
+    #         if any(float_compare(move.forecast_availability, 0 if move.state == 'draft' else move.product_qty,
+    #                              precision_rounding=move.product_id.uom_id.rounding) == -1 for move in
+    #                picking.move_lines):
+    #             picking.products_availability = _('Not Available')
+    #             picking.products_availability_state = 'late'
+    #         else:
+    #             forecast_date = max(
+    #                 picking.move_lines.filtered('forecast_expected_date').mapped('forecast_expected_date'),
+    #                 default=False)
+    #             if forecast_date:
+    #                 picking.products_availability = _('Exp %s', format_date(self.env, forecast_date))
+    #                 picking.products_availability_state = 'late' if picking.scheduled_date and picking.scheduled_date < forecast_date else 'expected'
