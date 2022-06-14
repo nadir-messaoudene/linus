@@ -24,15 +24,27 @@ class AccountAccount(models.Model):
 
     @api.model
     def get_account_ref(self, qbo_account_id):
-        company = self.env['res.users'].search([('id','=',2)]).company_id
-        account = self.search([('qbo_id', '=', qbo_account_id)], limit=1)
-        # If account is not created in odoo then import from QBO and create.
-        if not account:
-            url_str = company.get_import_query_url()
-            url = url_str.get('url') + '/account/' + qbo_account_id
-            data = requests.request('GET', url, headers=url_str.get('headers'))
-            if data.status_code == 200:
-                account = self.create_account_account(data)
+        # company = self.env['res.users'].search([('id','=',2)]).company_id
+        # account = self.search([('qbo_id', '=', qbo_account_id)], limit=1)
+        company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
+        url_str = company.get_import_query_url()
+        url = url_str.get('url') + '/account/' + qbo_account_id
+        data = requests.request('GET', url, headers=url_str.get('headers'))
+        if data.status_code == 200:
+            res = json.loads(str(data.text))
+            account_name = res.get('Account').get('FullyQualifiedName')
+            account = self.sudo().search([('name', '=', account_name), ('company_id', '=', company.id)], limit=1)
+            if not account:
+                account_name = res.get('Account').get('Name')
+                account = self.sudo().search([('name', '=', account_name), ('company_id', '=', company.id)], limit=1)
+            if not account:
+                url_str = company.get_import_query_url()
+                url = url_str.get('url') + '/account/' + qbo_account_id
+                data = requests.request('GET', url, headers=url_str.get('headers'))
+                if data.status_code == 200:
+                    account = self.create_account_account(data)
+        else:
+            raise UserError(data)
         return account.id
 
     @api.model
@@ -53,6 +65,8 @@ class AccountAccount(models.Model):
         if len(Account) >=1 :
             for account in Account:
                  if not 'AcctNum' in account:
+                    # _logger.info(_("Account created failed! Account: %s" % (account)))
+                    # return False
                     raise ValidationError(_("""
                         Account Number not set for {}
                         

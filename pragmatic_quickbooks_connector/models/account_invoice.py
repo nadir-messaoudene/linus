@@ -226,7 +226,6 @@ class AccountPayment(models.Model):
         _logger.info(_('Inside Create Payment<------xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx0---->'))
 
         company = self.env['res.company'].search([('id', '=', 1)], limit=1)
-
         res = json.loads(str(data.text))
 
         if is_customer:
@@ -892,7 +891,7 @@ class AccountJournal(models.Model):
         account = self.env['account.account'].browse(account_id)
         journal_id = self.search([('type', 'in', ['bank', 'cash']), ('default_account_id', '=', account_id)], limit=1)
         if not journal_id:
-            raise ValidationError(_("Please, define payment journal for Account Name : %s " % (account.name)))
+            raise ValidationError(_("Please, define payment journal for Account Name : %s. Account ID: %s. Account Code: %s" % (account.name, account_id, account.code)))
         
         return journal_id.id
 

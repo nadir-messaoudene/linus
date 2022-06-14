@@ -99,6 +99,60 @@ class AccountInvoice(models.Model):
         else:
             return False
 
+    def single_import_partner(self, qbo_id):
+        company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
+        company = self.env['res.company'].browse(1)
+        _logger.info("Company is   :-> {} ".format(company))
+        query = "select * from Customer WHERE Id = '%s'" % (qbo_id)
+        url_str = company.get_import_query_url()
+        # url = url_str.get('url') + '/query?%squery=%s' % (
+        #     'minorversion=' + url_str.get('minorversion') + '&' if url_str.get('minorversion') else '', query)
+        url = url_str.get('url') + '/customer/%s' % (qbo_id)
+        data = requests.request('GET', url, headers=url_str.get('headers'), verify=False)
+        _logger.info(url)
+        _logger.info("Customer data is *************** {}".format(data.text))
+        if data.status_code == 200:
+            partner = self.env['res.partner'].create_partner(data, is_customer=True)
+            return partner
+        else:
+            raise UserError("Empty Data")
+            _logger.warning(_('Empty data'))
+
+    def single_import_vendor(self, qbo_id):
+        company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
+        company = self.env['res.company'].browse(1)
+        _logger.info("Company is   :-> {} ".format(company))
+        query = "select * from Vendor WHERE Id = '%s'" % (qbo_id)
+        url_str = company.get_import_query_url()
+        url = url_str.get('url') + '/query?%squery=%s' % (
+            'minorversion=' + url_str.get('minorversion') + '&' if url_str.get('minorversion') else '', query)
+        data = requests.request('GET', url, headers=url_str.get('headers'), verify=False)
+        _logger.info(url)
+        _logger.info("Vendor data is *************** {}".format(data.text))
+        if data.status_code == 200:
+            partner = self.env['res.partner'].create_partner(data, is_vendor=True)
+            return partner
+        else:
+            raise UserError("Empty Data")
+            _logger.warning(_('Empty data'))
+
+    # def single_import_chart_of_account(self, qbo_id):
+    #     company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
+    #     _logger.info("Company is   :-> {} ".format(company))
+    #     query = "select * from Account WHERE Id = '%s'" % (qbo_id)
+    #     url_str = company.get_import_query_url()
+    #     url = url_str.get('url') + '/query?%squery=%s' % (
+    #         'minorversion=' + url_str.get('minorversion') + '&' if url_str.get('minorversion') else '', query)
+    #     data = requests.request('GET', url, headers=url_str.get('headers'), verify=False)
+    #     _logger.info(url)
+    #     _logger.info("Account data is *************** {}".format(data.text))
+    #     if data.status_code == 200:
+    #         acc = self.env['account.account'].create_account_account(data)
+    #         return acc
+    #     else:
+    #         raise UserError("Empty Data")
+    #         _logger.warning(_('Empty data'))
+
     def create_invoice_dict(self, cust, type):
         dict_i = {}
         if type == 'out_invoice' or type == 'out_refund':
@@ -108,8 +162,16 @@ class AccountInvoice(models.Model):
         # print ("assssssssssssssssssssssssssssssssssssss", cust.get(partner_type).get('value'))
         if type == 'in_invoice':
             res_partner = self.env['res.partner'].search([('qbo_vendor_id', '=', cust.get(partner_type).get('value'))], limit=1)
+            if not res_partner:
+                res_partner = self.single_import_vendor(cust.get(partner_type).get('value'))
         else:
             res_partner = self.env['res.partner'].search([('qbo_customer_id', '=', cust.get(partner_type).get('value'))], limit=1)
+            if not res_partner:
+                # if '(deleted)' in cust.get(partner_type).get('name'):
+                #     _logger.info("Partner is deleted ---> Id:{} Name: {}".format(cust.get(partner_type).get('value'), cust.get(partner_type).get('name')))
+                #     return False
+                # else:
+                res_partner = self.single_import_partner(cust.get(partner_type).get('value'))
 
         _logger.info("Partner is ---> {}".format(res_partner))
 
@@ -124,7 +186,7 @@ class AccountInvoice(models.Model):
                 if cust.get('CurrencyRef').get('value'):
                     curr = cust.get('CurrencyRef').get('value')
                     _logger.info("Currency Value for invoice import ------> %s"%(curr))
-                    currency = self.env['res.currency'].search([('name', '=', cust.get('CurrencyRef').get('value'))],
+                    currency = self.env['res.currency'].search([('name', '=', curr)],
                                                                limit=1)
                     if not currency:
                         raise UserError(_("Please activate the currency %s") % (cust.get('CurrencyRef').get('value')))
@@ -132,7 +194,7 @@ class AccountInvoice(models.Model):
                     dict_i['currency_id'] = currency.id
 
             if res_partner.customer_rank:
-                sale = self.env['account.journal'].search([('type', '=', 'sale')], limit=1)
+                sale = self.env['account.journal'].sudo().search([('type', '=', 'sale'), ('company_id', '=', self.env.user.company_id.id)], limit=1)
                 if sale:
                     dict_i['journal_id'] = sale.id
                 else:
@@ -142,7 +204,7 @@ class AccountInvoice(models.Model):
 #                         dict_i['journal_id'] = sale.id
 
             if res_partner.supplier_rank:
-                purchase = self.env['account.journal'].search([('type', '=', 'purchase')], limit=1)
+                purchase = self.env['account.journal'].sudo().search([('type', '=', 'purchase'), ('company_id', '=', self.env.user.company_id.id)], limit=1)
                 if purchase:
                     dict_i['journal_id'] = purchase.id
                 else:
@@ -175,59 +237,76 @@ class AccountInvoice(models.Model):
 
     def import_invoice(self):
         company = self.env['res.users'].search([('id', '=', 2)]).company_id
-
+        company = self.env['res.company'].browse(1)
+        # company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
         if company.access_token:
             headers = {}
             headers['Authorization'] = 'Bearer ' + company.access_token
             headers['accept'] = 'application/json'
             headers['Content-Type'] = 'text/plain'
 
-            query = "select * from invoice WHERE Id > '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (company.quickbooks_last_invoice_imported_id, company.start, company.limit)
+            query = "select * from invoice WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
+                company.quickbooks_last_invoice_imported_id, company.date_from, company.date_to, company.start, company.limit)
             # query = "select * from invoice WHERE Id = '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (119, company.start, company.limit)
             data = requests.request('GET', company.url + str(company.realm_id) + "/query?query=" + query,headers=headers)
             if data.status_code == 200:
                 self.create_invoice(data, 'out_invoice')
+            else:
+                _logger.error(data)
+                raise UserError(data)
+
 
     def import_credit_memo(self):
-        company = self.env['res.users'].search([('id', '=', 2)]).company_id
-
+        # company = self.env['res.users'].search([('id', '=', 2)]).company_id
+        company = self.env['res.company'].browse(1)
         if company.access_token:
             headers = {}
             headers['Authorization'] = 'Bearer ' + company.access_token
             headers['accept'] = 'application/json'
             headers['Content-Type'] = 'text/plain'
 
-            query = "select * from CreditMemo WHERE Id > '%s' order by Id" % (company.quickbooks_last_credit_note_imported_id)
-
+            # query = "select * from CreditMemo WHERE Id > '%s' order by Id" % (company.quickbooks_last_credit_note_imported_id)
+            query = "select * from CreditMemo WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
+                company.quickbooks_last_credit_note_imported_id, company.date_from, company.date_to, company.start,
+                company.limit)
             data = requests.request('GET', company.url + str(company.realm_id) + "/query?query=" + query,
                                     headers=headers)
             if data.status_code == 200:
                 self.create_invoice(data, 'out_refund')
             else:
-                _logger.error('Connection Error...!')
+                _logger.error(data)
+                raise UserError('Connection Error...!')
+
     def import_vendor_bill(self):
         # print ("------------------------------------------------------------------------000000000000000000000000")
         company = self.env['res.users'].search([('id', '=', 2)]).company_id
 
         _logger.info("inside vendor bill ****************************")
-        company = self.env['res.users'].search([('id', '=', 2)]).company_id
+        company = self.env['res.company'].browse(1)
         if company.access_token:
             headers = {}
             headers['Authorization'] = 'Bearer ' + company.access_token
             headers['accept'] = 'application/json'
             headers['Content-Type'] = 'text/plain'
 
-            query = "select * from Bill WHERE Id > '%s' order by Id" % (
-                company.quickbooks_last_vendor_bill_imported_id)
-
+            # query = "select * from Bill WHERE Id > '%s' order by Id" % (
+            #     company.quickbooks_last_vendor_bill_imported_id)
+            query = "select * from bill WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
+                company.quickbooks_last_vendor_bill_imported_id, company.date_from, company.date_to, company.start,
+                company.limit)
             data = requests.request('GET', company.url + str(company.realm_id) + "/query?query=" + query, headers=headers)
             if data.status_code == 200:
                 self.create_invoice(data, 'in_invoice')
+            else:
+                _logger.info(data)
+                raise UserError("Connection Error !!!")
+
 
     def create_invoice(self, data, type='out_invoice'):
 
         # print ("\n\n------------------------------------------------------------------------1111111111111111111",data,data.text,type)
-        company = self.env['res.users'].search([('id', '=', 2)]).company_id
+        company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
+        company = self.env['res.company'].browse(1)
         if data:
             recs = []
             parsed_data = json.loads(str(data.text))
@@ -266,10 +345,14 @@ class AccountInvoice(models.Model):
                             _logger.info("Attempting for Invoice Creation")
                             _logger.info("QBO obj is -----> {}".format(cust))
                             dict_i = self.create_invoice_dict(cust, type)
+                            # if not dict_i:
+                            #     continue
                             dict_i['invoice_line_ids'] = []
                             invoice_obj = self.env['res.partner'].search([('id', '=', dict_i.get('partner_id'))],
                                                                          limit=1)
                             invoice_line = self.odoo_create_invoice_line_dict(cust, invoice_obj, type,dict_i.get('qbo_invoice_id'))
+                            # if not invoice_line:
+                            #     continue
                             if invoice_line:
                                 for k in invoice_line:
                                     dict_i['invoice_line_ids'].append((0, 0, k))
@@ -506,9 +589,10 @@ class AccountInvoice(models.Model):
                     inv_line_data.append(dict_ol)
 
             if 'AccountBasedExpenseLineDetail' in i and i.get('AccountBasedExpenseLineDetail'):
-
-                res_account = self.env['account.account'].search(
-                    [('qbo_id', '=', i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value'))])
+                # res_account = self.env['account.account'].search(
+                #     [('name', '=', i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('name'))])
+                res_account_id = self.env['account.account'].get_account_ref(i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value'))
+                res_account = self.env['account.account'].browse(res_account_id)
                 _logger.info(_('\n\n=============== AccountBasedExpenseLineDetailAccountBasedExpenseLineDetailAccountBasedExpenseLineDetail %s'% res_account))
                 if not res_account:
                     raise UserError('Account QBO ID '+i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value')+' doesnot exists in Odoo. ')
@@ -659,11 +743,23 @@ class AccountInvoice(models.Model):
                         if invoice_obj.property_account_payable_id:
                             dict_col['account_id'] = invoice_obj.property_account_payable_id.id
                             dict_tol['account_id'] = invoice_obj.property_account_payable_id.id
+                            company = self.env['res.users'].search([('id', '=', 2)]).company_id
+                            if invoice_obj.property_account_payable_id.company_id != company:
+                                account_company = self.env['account.account'].sudo().search([('code', '=', invoice_obj.property_account_payable_id.code), ('company_id', '=', company.id)])
+                                dict_col['account_id'] = account_company.id
+                                dict_tol['account_id'] = account_company.id
 
                     if type=="out_invoice" or type=="out_refund":
                         if invoice_obj.property_account_receivable_id:
                             dict_col['account_id'] = invoice_obj.property_account_receivable_id.id
                             dict_tol['account_id'] = invoice_obj.property_account_receivable_id.id
+                            company = self.env['res.users'].search([('id', '=', 2)]).company_id
+                            if invoice_obj.property_account_receivable_id.company_id != company:
+                                account_company = self.env['account.account'].sudo().search(
+                                    [('code', '=', invoice_obj.property_account_receivable_id.code),
+                                     ('company_id', '=', company.id)])
+                                dict_col['account_id'] = account_company.id
+                                dict_tol['account_id'] = account_company.id
                     # if invoice_obj.property_account_receivable_id:
                     #     dict_col['account_id'] = invoice_obj.property_account_receivable_id.id
                     #     dict_tol['account_id'] = invoice_obj.property_account_receivable_id.id
@@ -835,9 +931,21 @@ class AccountInvoice(models.Model):
 
                     if res_product.property_account_income_id:
                         dict_ol['account_id'] = res_product.property_account_income_id.id
+                        company = self.env['res.users'].search([('id', '=', 2)]).company_id
+                        if res_product.property_account_income_id.company_id != company:
+                            account_company = self.env['account.account'].sudo().search(
+                                [('code', '=', res_product.property_account_income_id.code),
+                                 ('company_id', '=', company.id)])
+                            dict_ol['account_id'] = account_company.id
                         _logger.info("PRODUCT has income account set")
                     else:
                         dict_ol['account_id'] = res_product.categ_id.property_account_income_categ_id.id
+                        company = self.env['res.users'].search([('id', '=', 2)]).company_id
+                        if res_product.categ_id.property_account_income_categ_id.company_id != company:
+                            account_company = self.env['account.account'].sudo().search(
+                                [('code', '=', res_product.categ_id.property_account_income_categ_id.code),
+                                 ('company_id', '=', company.id)])
+                            dict_ol['account_id'] = account_company.id
                         _logger.info("No Income account was set, taking from product category..")
                     #
                     # if invoice_obj.property_account_receivable_id:
@@ -847,11 +955,25 @@ class AccountInvoice(models.Model):
                         if invoice_obj.property_account_payable_id:
                             dict_col['account_id'] = invoice_obj.property_account_payable_id.id
                             dict_tol['account_id'] = invoice_obj.property_account_payable_id.id
+                            company = self.env['res.users'].search([('id', '=', 2)]).company_id
+                            if invoice_obj.property_account_payable_id.company_id != company:
+                                account_company = self.env['account.account'].sudo().search(
+                                    [('code', '=', invoice_obj.property_account_payable_id.code),
+                                     ('company_id', '=', company.id)])
+                                dict_col['account_id'] = account_company.id
+                                dict_tol['account_id'] = account_company.id
 
                     if type=="out_invoice" or type=="out_refund":
                         if invoice_obj.property_account_receivable_id:
                             dict_col['account_id'] = invoice_obj.property_account_receivable_id.id
                             dict_tol['account_id'] = invoice_obj.property_account_receivable_id.id
+                            company = self.env['res.users'].search([('id', '=', 2)]).company_id
+                            if invoice_obj.property_account_receivable_id.company_id != company:
+                                account_company = self.env['account.account'].sudo().search(
+                                    [('code', '=', invoice_obj.property_account_receivable_id.code),
+                                     ('company_id', '=', company.id)])
+                                dict_col['account_id'] = account_company.id
+                                dict_tol['account_id'] = account_company.id
                     # else:
                     #     raise UserError("Accounts Receivable/Payable not set for Customer ---> {}".format(invoice_obj.name))
                     #     _logger.info("No Property Account Receivable Set!")
@@ -953,7 +1075,8 @@ class AccountInvoice(models.Model):
 
 
             if 'AccountBasedExpenseLineDetail' in i and i.get('AccountBasedExpenseLineDetail'):
-                res_account = self.env['account.account'].search([('qbo_id', '=', i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value'))])
+                res_account_id = self.env['account.account'].get_account_ref(i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value'))
+                res_account = self.env['account.account'].browse(res_account_id)
                 if not res_account:
                     raise UserError('Account QBO ID '+i.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value')+' doesnot exists in Odoo. ')
                 if res_account:

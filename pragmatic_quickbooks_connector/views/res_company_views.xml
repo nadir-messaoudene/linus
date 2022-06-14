@@ -26,6 +26,8 @@
 					<group>
 					<field name="start" required='1' style="width:20%%"/>
 					<field name="limit" required='1' style="width:20%%"/>
+					<field name="date_from"/>
+					<field name="date_to"/>
 					</group>
                     <group>
 						<group>
