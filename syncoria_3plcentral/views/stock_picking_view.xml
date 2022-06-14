@@ -48,6 +48,9 @@
                         <field name="carrier_services_3pl_id" attrs="{'readonly': [('state', 'in', ('done', 'cancel'))]}" options="{'no_create': True, 'no_open': True}"/>
                     </group>
                 </xpath>
+<!--                <xpath expr="//field[@name='products_availability']" position='attributes'>-->
+<!--                    <attribute name="attrs">{'invisible': ['|', ('picking_type_code', '!=', 'outgoing'), ('state', 'not in', ['confirmed', 'waiting', 'assigned', 'push_3pl'])]}</attribute>-->
+<!--                </xpath>-->
             </field>
         </record>
     </data>
