@@ -27,10 +27,14 @@ class SaleOrder(models.Model):
         ('cancel', 'Cancelled')
         ], string='Delivery Status', default='none', compute='_get_delivery_status', store=True)
 
+    last_carrier_tracking_ref = fields.Char(string='Tracking Reference',compute='_get_delivery_status', store=True)
+
     @api.depends('picking_ids')
     def _get_delivery_status(self):
         for order in self:
             if len(order.picking_ids) > 0:
                 order.delivery_status = order.picking_ids.sorted()[-1].state
+                order.last_carrier_tracking_ref = order.picking_ids.sorted()[-1].carrier_tracking_ref
             else: 
                 order.delivery_status = 'none'
+                order.last_carrier_tracking_ref = ''

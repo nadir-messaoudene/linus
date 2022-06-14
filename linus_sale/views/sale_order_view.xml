@@ -9,6 +9,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='invoice_status']" position="after">
                     <field name='delivery_status'/>
+                    <field name='last_carrier_tracking_ref'/>
                 </xpath>
             </field>
 	    </record>
@@ -19,6 +20,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='invoice_status']" position="after">
                     <field name='delivery_status' optional='hide'/>
+                    <field name='last_carrier_tracking_ref' optional='hide'/>
                 </xpath>
             </field>
 	    </record>
