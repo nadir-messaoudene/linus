@@ -9,6 +9,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='invoice_status']" position="after">
                     <field name='delivery_status'/>
+                    <field name='last_carrier_tracking_ref'/>
                 </xpath>
             </field>
 	    </record>
@@ -19,9 +20,26 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='invoice_status']" position="after">
                     <field name='delivery_status' optional='hide'/>
+                    <field name='last_carrier_tracking_ref' optional='hide'/>
                 </xpath>
             </field>
 	    </record>
         
+        <record id="sale_order_form_sale_linus" model="ir.ui.view">
+            <field name="name">sale.order.form.sale.linus</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//label[@for='commitment_date']" position="before">
+                    <field name='picking_ids' options="{'no_create': True, 'no_open': True, 'no_edit': True}">
+                        <tree>
+                            <field name="name"/>
+                            <field name="carrier_tracking_ref"/>
+                            <field name="state"/>
+                        </tree>
+                    </field>
+                </xpath>
+            </field>
+	    </record>
     </data>
 </odoo>
