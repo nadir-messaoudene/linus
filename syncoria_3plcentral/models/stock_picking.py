@@ -61,12 +61,12 @@ class StockPicking(models.Model):
             source_warehouse = self.get_3pl_warehouse_from_locations(self.location_id)
             if source_warehouse:
                 self.export_picking_to_3pl(source_warehouse)
-                self.state = 'push_3pl'
+                # self.state = 'push_3pl'
         elif self.picking_type_id.code == 'incoming':
             source_warehouse = self.get_3pl_warehouse_from_locations(self.location_dest_id)
             if source_warehouse:
                 self.export_picking_to_3pl_purchase_order(source_warehouse)
-                self.state = 'push_3pl'
+                # self.state = 'push_3pl'
 
         
     def export_picking_to_3pl(self, source_warehouse):
@@ -128,6 +128,7 @@ class StockPicking(models.Model):
             response = requests.request("POST", url, headers=headers, data=payload)
             if response.status_code == 201:
                 res_dict = self.button_validate()
+                # backorder = self._create_backorder()
                 if type(res_dict) != bool:
                     self.env['stock.backorder.confirmation'].with_context(res_dict['context']).process()
                 response = json.loads(response.text)
@@ -220,63 +221,6 @@ class StockPicking(models.Model):
             return response.get('_embedded').get('http://api.3plCentral.com/rels/orders/item')
         else:
             raise UserError(response.text)
-
-    # def export_picking_to_3pl_purchase_order(self, source_warehouse):
-    #     print("export_picking_to_3pl")
-    #     if self.state in ('waiting', 'confirmed', 'assigned'):
-    #         instance = self.env['instance.3pl'].search([], limit=1)
-    #         url = "https://secure-wms.com/inventory/pos"
-    #         orderItems = []
-    #         for line in self.move_ids_without_package:
-    #             if not line.product_id.default_code:
-    #                 raise UserError('SKU on product must exist')
-    #             orderItems.append(
-    #                 {
-    #                     "itemIdentifier": {
-    #                         "sku": line.product_id.default_code
-    #                     },
-    #                     "quantity": line.quantity_done,
-    #                     "expectedFacility": {
-    #                         "id": source_warehouse
-    #                     }
-    #                 }
-    #             )
-    #         payload = json.dumps({
-    #             "customerIdentifier": {
-    #                 "id": instance.customerId
-    #             },
-    #             "purchaseOrderNumber": self.name,
-    #             "notes": '',
-    #             "supplier": {
-    #                 "companyName": self.partner_id.name,
-    #                 "name": self.partner_id.name,
-    #                 "address1": self.partner_id.street,
-    #                 "address2": self.partner_id.street2,
-    #                 "city": self.partner_id.city,
-    #                 "state": self.partner_id.state_id.name,
-    #                 "zip": self.partner_id.zip,
-    #                 "country": self.partner_id.country_id.code
-    #             },
-    #             "lineItems": orderItems
-    #         })
-    #
-    #         headers = {
-    #             'Host': 'secure-wms.com',
-    #             'Content-Type': 'application/hal+json; charset=utf-8',
-    #             'Accept': 'application/hal+json',
-    #             'Authorization': 'Bearer ' + str(instance.access_token)
-    #         }
-    #         response = requests.request("POST", url, headers=headers, data=payload)
-    #         if response.status_code == 201:
-    #             res_dict = self.button_validate()
-    #             if type(res_dict) != bool:
-    #                 self.env['stock.immediate.transfer'].with_context(res_dict['context']).process()
-    #             response = json.loads(response.text)
-    #             self.threeplId = response.get('readOnly').get('purchaseOrderId')
-    #         else:
-    #             raise UserError(response.text)
-    #     else:
-    #         raise UserError("Only Order in Waiting and Ready state can be pushed to 3PL.")
 
     def export_picking_to_3pl_purchase_order(self, source_warehouse):
         if self.state in ('waiting', 'confirmed', 'assigned'):
