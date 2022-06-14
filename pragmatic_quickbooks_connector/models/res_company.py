@@ -1575,7 +1575,13 @@ class ResCompany(models.Model):
                                                 res_product = self.env['product.product'].search(
                                                     [('qbo_product_id', '=',
                                                       i.get('SalesItemLineDetail').get('ItemRef').get('value'))])
-
+                                                if not res_product and '(deleted)' in i.get(
+                                                        'SalesItemLineDetail').get('ItemRef').get('name'):
+                                                    default_code_qbo = i.get('SalesItemLineDetail').get(
+                                                        'ItemRef').get('name')
+                                                    res_product = self.env['product.product'].search(
+                                                        [('default_code', '=',
+                                                          default_code_qbo.replace(' (deleted)', ''))])
                                                 if res_product:
                                                     dict_l = {}
 
@@ -1700,6 +1706,14 @@ class ResCompany(models.Model):
                                                 res_product = self.env['product.product'].search(
                                                     [('qbo_product_id', '=',
                                                       i.get('SalesItemLineDetail').get('ItemRef').get('value'))])
+                                                if not res_product and '(deleted)' in i.get(
+                                                        'SalesItemLineDetail').get('ItemRef').get(
+                                                    'name'):
+                                                    default_code_qbo = i.get('SalesItemLineDetail').get(
+                                                        'ItemRef').get('name')
+                                                    res_product = self.env['product.product'].search(
+                                                        [('default_code', '=',
+                                                          default_code_qbo.replace(' (deleted)', ''))])
                                                 if res_product:
                                                     s_order_line = self.env['sale.order.line'].search(
                                                         ['&', ('product_id', '=', res_product.id),
@@ -1771,7 +1785,14 @@ class ResCompany(models.Model):
                                                             [('qbo_product_id', '=',
                                                               i.get('SalesItemLineDetail').get('ItemRef').get(
                                                                   'value'))])
-
+                                                        if not res_product and '(deleted)' in i.get(
+                                                                'SalesItemLineDetail').get('ItemRef').get(
+                                                                'name'):
+                                                            default_code_qbo = i.get('SalesItemLineDetail').get(
+                                                                'ItemRef').get('name')
+                                                            res_product = self.env['product.product'].search(
+                                                                [('default_code', '=',
+                                                                  default_code_qbo.replace(' (deleted)', ''))])
                                                         if res_product:
                                                             dict_l = {}
                                                             if i.get('Id'):
@@ -1920,7 +1941,10 @@ class ResCompany(models.Model):
                                             res_product = self.env['product.product'].search(
                                                 [('qbo_product_id', '=',
                                                   i.get('ItemBasedExpenseLineDetail').get('ItemRef').get('value'))])
-
+                                            if not res_product and '(deleted)' in i.get('ItemBasedExpenseLineDetail').get('ItemRef').get('name'):
+                                                default_code_qbo = i.get('ItemBasedExpenseLineDetail').get('ItemRef').get('name')
+                                                res_product = self.env['product.product'].search(
+                                                    [('default_code', '=', default_code_qbo.replace(' (deleted)', ''))])
                                             if res_product:
                                                 dict_l = {}
 
