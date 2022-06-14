@@ -66,13 +66,13 @@ class StockPicking(models.Model):
             if source_warehouse:
                 # To Create 3PL Order
                 self.export_picking_to_3pl(source_warehouse)
-                self.state = 'push_3pl'
+                # self.state = 'push_3pl'
         elif self.picking_type_id.code == 'incoming':
             source_warehouse = self.get_3pl_warehouse_from_locations(self.location_dest_id)
             if source_warehouse:
                 # To Create 3PL Receipt
                 self.export_picking_to_3pl_purchase_order(source_warehouse)
-                self.state = 'push_3pl'
+                # self.state = 'push_3pl'
 
         
     def export_picking_to_3pl(self, source_warehouse):

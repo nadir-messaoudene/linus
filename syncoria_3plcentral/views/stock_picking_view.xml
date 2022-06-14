@@ -26,8 +26,8 @@
             <field name="inherit_id" ref="stock.view_picking_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='origin']" position="after">
-                    <field name="threeplId" readonly="1"/>
-                    <field name="tracking_3pl" readonly="1"/>
+                    <field name="threeplId" readonly="1" attrs="{'invisible':[('ship_by_3pl','=',False)]}"/>
+                    <field name="tracking_3pl" readonly="1" attrs="{'invisible':[('ship_by_3pl','=',False)]}"/>
                     <field name="container_ref" attrs="{'invisible': [('picking_type_code', '=', 'outgoing')]}"/>
                     <field name="ship_by_3pl" invisible="1"/>
                 </xpath>
