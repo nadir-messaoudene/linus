@@ -85,6 +85,8 @@ class StockPicking(models.Model):
             #orderItems
             orderItems = []
             for line in self.move_ids_without_package:
+                if not line.quantity_done:
+                    raise UserError("Please modify 'Done' quantity before pushing to 3PL.")
                 orderItems.append(
                         {
                         "itemIdentifier": {
@@ -102,7 +104,7 @@ class StockPicking(models.Model):
                 "facilityIdentifier": {
                     "id": source_warehouse
                 },
-                "referenceNum": self.name,
+                "referenceNum": self.name + str(randrange(10)),
                 "notes": self.warehouse_instruction if self.warehouse_instruction else "",
                 "shippingNotes": self.carrier_instruction if self.carrier_instruction else "",
                 "billingCode": "Prepaid",
