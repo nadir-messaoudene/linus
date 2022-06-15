@@ -16,15 +16,17 @@ class DeliveryCarrier(models.Model):
     is_category = fields.Boolean(default=False)
 
     def _get_price_available(self, order):
+        order.sudo().write({'delivery_carrier_desc': ''})
         if not self.is_category:
             delivery_carrier_price = super(DeliveryCarrier, self)._get_price_available(order)
         else:
             self.ensure_one()
             self = self.sudo()
             order = order.sudo()
-            order.write({'delivery_carrier_desc': ''})
             categ_ids = set([rule.categ_ids for rule in self.price_rule_ids])
             delivery_carrier_price = 0
+            if not categ_ids:
+                raise UserError(_("No price rule matching this order; delivery cost cannot be computed."))
             for categ in categ_ids:
                 total = weight = volume = quantity = 0
                 total_delivery = 0.0
@@ -58,7 +60,7 @@ class DeliveryCarrier(models.Model):
             if test:
                 price = line.list_base_price + line.list_price * price_dict[line.variable_factor]
                 criteria_found = True
-                order.write({'delivery_carrier_desc': (order.delivery_carrier_desc + line.description + ": " + str(price) + '\n')})
+                order.write({'delivery_carrier_desc': (order.delivery_carrier_desc + line.description or '' + ": " + str(order.currency_id.symbol or '') + str(price) + '\n')})
                 break
         if not criteria_found:
             raise UserError(_("No price rule matching this order; delivery cost cannot be computed."))
