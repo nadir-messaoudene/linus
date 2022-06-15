@@ -13,12 +13,12 @@
     'data': [
         'views/delivery_view.xml',
         'views/delivery_grid_view.xml',
+        'views/website_sale_delivery_templates.xml',
     ],
     'license': 'OPL-1',
     'support': "support@syncoria.com",
     'assets': {
         'web.assets_qweb': [
-            # 'linus_stock/static/src/xml/**/*',
         ],
     },
     'installable': True,

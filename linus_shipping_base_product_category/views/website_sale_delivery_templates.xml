@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="payment_delivery_methods" inherit_id="website_sale_delivery.payment_delivery_methods">
+        <t t-if="delivery.website_description" position="before">
+            <t t-if="order.delivery_carrier_desc and delivery.is_category">
+                <span t-attf-class="#{badge_class}" t-esc="order.delivery_carrier_desc"/>
+            </t>
+        </t>
+    </template>
+</odoo>
