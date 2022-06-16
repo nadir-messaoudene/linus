@@ -17,9 +17,7 @@ class DeliveryCarrier(models.Model):
 
     def _get_price_available(self, order):
         order.sudo().write({'delivery_carrier_desc': ''})
-        if not self.is_category:
-            delivery_carrier_price = super(DeliveryCarrier, self)._get_price_available(order)
-        else:
+        if self.is_category:
             self.ensure_one()
             self = self.sudo()
             order = order.sudo()
@@ -47,6 +45,8 @@ class DeliveryCarrier(models.Model):
                 total = self._compute_currency(order, total, 'pricelist_to_company')
                 if order.order_line.filtered(lambda l: l.product_id.categ_id.id in categ.ids):
                     delivery_carrier_price += self._get_price_from_order_picking(total, weight, volume, quantity, categ, order)
+        else:
+            delivery_carrier_price = super(DeliveryCarrier, self)._get_price_available(order)
         return delivery_carrier_price
 
     def _get_price_from_order_picking(self, total, weight, volume, quantity, categ_ids, order):
@@ -60,7 +60,8 @@ class DeliveryCarrier(models.Model):
             if test:
                 price = line.list_base_price + line.list_price * price_dict[line.variable_factor]
                 criteria_found = True
-                order.write({'delivery_carrier_desc': (order.delivery_carrier_desc + line.description or '' + ": " + str(order.currency_id.symbol or '') + str(price) + '\n')})
+                so_description = order.delivery_carrier_desc + (line.description or '') + ': ' + str(price and order.currency_id.symbol or '') + (price and str(price) or 'Free')
+                order.write({'delivery_carrier_desc': so_description + '    '})
                 break
         if not criteria_found:
             raise UserError(_("No price rule matching this order; delivery cost cannot be computed."))
