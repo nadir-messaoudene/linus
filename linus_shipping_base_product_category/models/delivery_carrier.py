@@ -61,7 +61,7 @@ class DeliveryCarrier(models.Model):
                 price = line.list_base_price + line.list_price * price_dict[line.variable_factor]
                 criteria_found = True
                 so_description = order.delivery_carrier_desc + (line.description or '') + ': ' + str(price and order.currency_id.symbol or '') + (price and str(price) or 'Free')
-                order.write({'delivery_carrier_desc': so_description + '    '})
+                order.write({'delivery_carrier_desc': so_description + ', '})
                 break
         if not criteria_found:
             raise UserError(_("No price rule matching this order; delivery cost cannot be computed."))
