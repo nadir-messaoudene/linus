@@ -28,6 +28,7 @@
                         <button string="Get Access Token" class="btn btn-primary" name="upsert_access_token" type="object" attrs="{'invisible': [('access_token','!=',False)]}"/>
                         <button string="Get Access Token" class="btn btn-primary" name="upsert_access_token" type="object" />
                         <button string="Connect" class="btn btn-primary" name="action_connect" type="object" attrs="{'invisible': [('access_token','=',False)]}"/>
+                        <button string="Map Products" class="btn btn-primary" name="map_products" type="object"/>
                     </header>
                     <sheet>
                         <group name="credential" string="Credential">
@@ -35,7 +36,7 @@
                             <field name="user_login_id"/>
                             <field name="username"/>
                             <field name="password" password="True"/>
-                            <field name="access_token" invisible="1"/>
+                            <field name="access_token" invisible="0"/>
                         </group>
                         <group name="customer_infor" string="Customer Infor">
                             <field name="customerId" readonly="1"/>
@@ -59,6 +60,13 @@
                                     <tree>
                                         <field name="name"></field>
                                         <field name="service_ids"></field>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page name="measure_types" string="Measure Types">
+                                <field name="measure_type_ids">
+                                    <tree>
+                                        <field name="name"></field>
                                     </tree>
                                 </field>
                             </page>
