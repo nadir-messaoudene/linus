@@ -7,7 +7,8 @@
                 <input type="text" id="customer_reference" class="form-control" name="po_number" required="required"/>
                 <label for="order_type">Order Type</label>
                 <select name="order_type" class="form-control" id="order_type">
-                    <option value="Preorder">PREORDER</option>
+<!--                    <option value="Preorder">PREORDER</option>-->
+                    <option value=""></option>
                     <option value="Immediate">IMMEDIATE</option>
                 </select>
             </div>
