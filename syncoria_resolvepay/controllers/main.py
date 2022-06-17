@@ -206,8 +206,11 @@ class ResolvepayController(http.Controller):
         print(po)
         print(order_type)
         order = request.website.sale_get_order()
-        order.client_order_ref = po
-        tag_id = request.env['crm.tag'].sudo().search([('name', '=', order_type)])
+        tag_id = False
+        if po:
+            order.client_order_ref = po
+        if order_type:
+            tag_id = request.env['crm.tag'].sudo().search([('name', '=', order_type)])
         if tag_id:
             order.tag_ids = [(4, tag_id.id)]
         return True
