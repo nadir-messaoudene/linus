@@ -288,7 +288,14 @@ class ShopifyFeedProducts(models.Model):
                         # pro_tmpl = self.env['product.template'].browse(
                         #     product_tmpl_id.id)
                         pro_tmpl = product_tmpl_id
-
+                        if 'image' in product:
+                            pro_tmpl.write({'product_template_image_ids': [(5, 0, 0)]})
+                            image_src = []
+                            for im in product.get('images'):
+                                if im.get("src") != product.get("image").get("src"):
+                                    image_src.append(im.get("src"))
+                            for im in image_src:
+                                self.env['product.image'].create({'name': im, 'image_1920': self.shopify_image_processing(im), 'product_tmpl_id': pro_tmpl.id})
                         pro_tmpl.write({
                             "shopify_instance_id":instance_id.id,
                             "shopify_vendor":product.get("vendor"),
@@ -383,6 +390,15 @@ class ShopifyFeedProducts(models.Model):
                             if 'image' in product:
                                 pro_tmpl.update({'image_1920': self.shopify_image_processing(product.get("image").get("src")),
                                                  'default_code': product.get('sku')})
+                                pro_tmpl.write({'product_template_image_ids': [(5, 0, 0)]})
+                                image_src = []
+                                for im in product.get('images'):
+                                    if im.get("src") != product.get("image").get("src"):
+                                        image_src.append(im.get("src"))
+                                for im in image_src:
+                                    self.env['product.image'].create(
+                                        {'name': im, 'image_1920': self.shopify_image_processing(im),
+                                         'product_tmpl_id': pro_tmpl.id})
 
                         except:
                             _logger.info(
