@@ -244,7 +244,7 @@ class AccountInvoice(models.Model):
             headers['Authorization'] = 'Bearer ' + company.access_token
             headers['accept'] = 'application/json'
             headers['Content-Type'] = 'text/plain'
-            query = "select * from invoice WHERE Id = '183390'"
+            query = "select * from invoice WHERE Id = '179300'"
             # query = "select * from invoice WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
             #     company.quickbooks_last_invoice_imported_id, company.date_from, company.date_to, company.start, company.limit)
             # query = "select * from invoice WHERE Id = '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (119, company.start, company.limit)
@@ -389,7 +389,8 @@ class AccountInvoice(models.Model):
                         else:
                             _logger.info("Begin updating taxes!")
                             account_invoice.button_draft()
-                            account_invoice.invoice_line_ids.with_context(check_move_validity=False).unlink()
+                            # for invoice_line in account_invoice.invoice_line_ids:
+                            #     invoice_line.unlink()
                             account_invoice.line_ids.unlink()
                             dict_i = {'invoice_line_ids': []}
                             invoice_obj = account_invoice.partner_id
@@ -400,32 +401,32 @@ class AccountInvoice(models.Model):
                                 # return True
                                 _logger.info("Dictionary for f is ---> {}".format(dict_i))
                                 account_invoice.write(dict_i)
-                            else:
-                                _logger.error("NO Line Found for Invoice!")
-                                raise UserError("NO Line Found for Invoice!")
-                            account_invoice.action_post()
-                            _logger.info("Starting mapping payment ---> {}".format(account_invoice.name))
-                            pay_term_lines = account_invoice.line_ids.filtered(lambda line: line.account_id.user_type_id.type in ('receivable', 'payable'))
-                            domain = [
-                                ('account_id', 'in', pay_term_lines.account_id.ids),
-                                ('parent_state', '=', 'posted'),
-                                ('partner_id', '=', account_invoice.commercial_partner_id.id),
-                                ('reconciled', '=', False),
-                                '|', ('amount_residual', '!=', 0.0), ('amount_residual_currency', '!=', 0.0),
-                            ]
-                            if account_invoice.is_inbound():
-                                domain.append(('balance', '<', 0.0))
-                                domain.append(('ref', '=', account_invoice.name))
-                            move_payment_lines = self.env['account.move.line'].search(domain)
-                            for line in move_payment_lines:
-                                account_invoice.js_assign_outstanding_line(line.id)
-                            _logger.info("End updating taxes!")
-                            if type == 'out_invoice':
-                                company.quickbooks_last_invoice_imported_id = cust.get('Id')
-                            elif type == 'out_refund':
-                                company.quickbooks_last_credit_note_imported_id = cust.get('Id')
-                            elif type == 'in_invoice':
-                                company.quickbooks_last_vendor_bill_imported_id = cust.get('Id')
+                            # else:
+                            #     _logger.error("NO Line Found for Invoice!")
+                            #     raise UserError("NO Line Found for Invoice!")
+                            # account_invoice.action_post()
+                            # _logger.info("Starting mapping payment ---> {}".format(account_invoice.name))
+                            # pay_term_lines = account_invoice.line_ids.filtered(lambda line: line.account_id.user_type_id.type in ('receivable', 'payable'))
+                            # domain = [
+                            #     ('account_id', 'in', pay_term_lines.account_id.ids),
+                            #     ('parent_state', '=', 'posted'),
+                            #     ('partner_id', '=', account_invoice.commercial_partner_id.id),
+                            #     ('reconciled', '=', False),
+                            #     '|', ('amount_residual', '!=', 0.0), ('amount_residual_currency', '!=', 0.0),
+                            # ]
+                            # if account_invoice.is_inbound():
+                            #     domain.append(('balance', '<', 0.0))
+                            #     domain.append(('ref', '=', account_invoice.name))
+                            # move_payment_lines = self.env['account.move.line'].search(domain)
+                            # for line in move_payment_lines:
+                            #     account_invoice.js_assign_outstanding_line(line.id)
+                            # _logger.info("End updating taxes!")
+                            # if type == 'out_invoice':
+                            #     company.quickbooks_last_invoice_imported_id = cust.get('Id')
+                            # elif type == 'out_refund':
+                            #     company.quickbooks_last_credit_note_imported_id = cust.get('Id')
+                            # elif type == 'in_invoice':
+                            #     company.quickbooks_last_vendor_bill_imported_id = cust.get('Id')
                             # _logger.info("All data seems to be imported successfully!")
                             # raise UserError("All data seems to be imported!")
 #                                 _logger.info("Attempting to update the invoice!")
