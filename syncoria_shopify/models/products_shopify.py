@@ -5,14 +5,14 @@
 ###############################################################################
 
 import pprint
-import re
+import requests
 
 from odoo.exceptions import AccessError, UserError
 from ..shopify.utils import *
 from odoo import models, api, fields, tools, exceptions, _
 import logging
 from odoo.tools.float_utils import float_round
-
+import base64
 _logger = logging.getLogger(__name__)
 
 
@@ -249,8 +249,44 @@ class ProductTemplate(models.Model):
                 'inventory_quantity': stock_info.get('available'),
             }).action_apply_inventory()
 
+    def fetch_images_from_shopify(self):
+        for record in self:
+            if not record.shopify_id:
+                continue
+            if record.shopify_instance_id:
+                marketplace_instance_id = record.shopify_instance_id
+            else:
+                marketplace_instance_id = get_marketplace(record)
+            if not marketplace_instance_id:
+                raise ValueError('Can not find marketplace_instance_id for product id:' + str(record.id))
+            version = marketplace_instance_id.marketplace_api_version
+            url = marketplace_instance_id.marketplace_host + '/admin/api/%s/products/%s/images.json' % (version, record.shopify_id)
+            complete_url = url if url.startswith("https://") else 'https://' + url
+            _logger.info("Product Image URL-->" + str(complete_url))
+            headers = {
+                'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password}
+            res = requests.get(complete_url, headers=headers)
+            if res.status_code == 200:
+                images = json.loads(res.text)
+                if 'images' in images:
+                    record.write({'product_template_image_ids': [(5, 0, 0)]})
+                    image_src = []
+                    for im in images.get('images'):
+                        image_src.append(im.get("src"))
+                    for im in image_src:
+                        self.env['product.image'].create({'name': im, 'image_1920': self.shopify_image_processing(im),
+                                                          'product_tmpl_id': record.id})
+            else:
+                _logger.info(res.text)
 
-
+    def shopify_image_processing(self, image_url):
+        if image_url:
+            image = False
+            if requests.get(image_url).status_code == 200:
+                image = base64.b64encode(requests.get(image_url).content)
+            return image
+        else:
+            return False
 
 class ProductProductShopify(models.Model):
     _inherit = 'product.product'
