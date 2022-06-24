@@ -1160,3 +1160,9 @@ class ResPartner(models.Model):
                     self.exportCustomer()
                 elif self.supplier_rank:
                     self.exportVendor()
+
+    def mapping_account_partner(self):
+        for contact in self:
+            if contact.type == 'contact':
+                contact.property_account_receivable_id = 2921
+                contact.property_account_payable_id = 2954
