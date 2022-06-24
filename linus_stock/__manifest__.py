@@ -19,5 +19,8 @@
         'web.assets_qweb': [
             'linus_stock/static/src/xml/**/*',
         ],
+        'web.assets_backend': [
+            'linus_stock/static/src/js/report_stock_forecasted.js',
+        ],
     }
 }

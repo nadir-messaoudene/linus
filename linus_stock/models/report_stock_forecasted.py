@@ -11,10 +11,12 @@ class ReplenishmentReport(models.AbstractModel):
 
     @api.model
     def get_warehouses(self):
+        self = self.with_context(warehouse=70)
         return self.env['stock.location'].search_read([('usage', 'in', ['view', 'internal'])], fields=['id', 'name', 'complete_name'])
-        # (fields=['id', 'name', 'complete_name'])
 
     def _get_report_data(self, product_template_ids=False, product_variant_ids=False):
+        print("_get_report_data")
+        print(self.env.context.get('warehouse'))
         assert product_template_ids or product_variant_ids
         res = {}
         if self.env.context.get('warehouse'):
