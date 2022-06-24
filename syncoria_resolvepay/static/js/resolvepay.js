@@ -21,12 +21,12 @@ odoo.define('syncoria_resolvepay.payment_checkout', require => {
          * @return {Promise}
          */
       _processPayment: function(provider, paymentOptionId, flow) {
-//        console.log("--------------------------------------");
-//        console.log("Resolve Pay ==>>>_processPayment ===>>>>");
-//        console.log("provider ===>>>>", provider);
-//        console.log("paymentOptionId ===>>>>", paymentOptionId);
-//        console.log("flow ===>>>>", flow);
-//        console.log("--------------------------------------");
+        console.log("--------------------------------------");
+        console.log("Resolve Pay ==>>>_processPayment ===>>>>");
+        console.log("provider ===>>>>", provider);
+        console.log("paymentOptionId ===>>>>", paymentOptionId);
+        console.log("flow ===>>>>", flow);
+        console.log("--------------------------------------");
         const po = document.querySelector('#customer_reference')
         const order_type = document.querySelector('#order_type')
         let result = this._rpc({route: "/shop/add_po_ordertype",  params: {po: po.value, order_type: order_type.value}})
@@ -34,7 +34,7 @@ odoo.define('syncoria_resolvepay.payment_checkout', require => {
           return this._super(...arguments);
         }
 
-        if (paymentOptionId == 16) {
+        if (paymentOptionId == 18) {
           return this._rpc({
                 route: "/shop/resolvepay/get_sale_order",
             })
