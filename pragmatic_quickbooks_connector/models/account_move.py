@@ -288,7 +288,6 @@ class AccountInvoice(models.Model):
             headers['Authorization'] = 'Bearer ' + company.access_token
             headers['accept'] = 'application/json'
             headers['Content-Type'] = 'text/plain'
-
             # query = "select * from Bill WHERE Id > '%s' order by Id" % (
             #     company.quickbooks_last_vendor_bill_imported_id)
             query = "select * from bill WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
@@ -355,7 +354,9 @@ class AccountInvoice(models.Model):
                             #     continue
                             if invoice_line:
                                 for k in invoice_line:
-                                    if not k['exclude_from_invoice_tab']:
+                                    if 'exclude_from_invoice_tab' in k and not k['exclude_from_invoice_tab']:
+                                        dict_i['invoice_line_ids'].append((0, 0, k))
+                                    elif 'exclude_from_invoice_tab' not in k:
                                         dict_i['invoice_line_ids'].append((0, 0, k))
                                 # return True
                                 _logger.info("Dictionary for f is ---> {}".format(dict_i))
