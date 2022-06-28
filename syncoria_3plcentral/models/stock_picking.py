@@ -11,9 +11,6 @@ import requests
 import json
 from odoo.tools.misc import format_date
 
-from random import randrange
-
-
 class Location(models.Model):
     _inherit = 'stock.location'
 
@@ -67,6 +64,8 @@ class StockPicking(models.Model):
         return False
 
     def action_push_to_3pl(self):
+        if self.state == 'draft':
+            raise UserError('Can not export draft Transfer')
         if self.picking_type_id.code == 'outgoing':
             source_warehouse = self.get_3pl_warehouse_from_locations(self.location_id)
             if source_warehouse:
@@ -79,8 +78,13 @@ class StockPicking(models.Model):
                 # To Create 3PL Receipt
                 self.export_picking_to_3pl_purchase_order(source_warehouse)
                 self.state = 'push_3pl'
+        elif self.picking_type_id.code == 'internal' and self.location_dest_id.is_manual_validate:
+            source_warehouse = self.get_3pl_warehouse_from_locations(self.location_id)
+            if source_warehouse:
+                # To Create 3PL Order
+                self.export_picking_to_3pl(source_warehouse)
+                self.state = 'push_3pl'
 
-        
     def export_picking_to_3pl(self, source_warehouse):
         if not self.carrier_services_3pl_id:
             raise UserError("Please select 3PL Carrier and Service.")
@@ -176,6 +180,8 @@ class StockPicking(models.Model):
         instance = self.env['instance.3pl'].search([], limit=1)
         if self.picking_type_id.code == 'incoming':
             return
+        if not self.threeplId:
+            raise UserError("The transfer does not have 3PL ID (Maybe it hasn't been exported)")
         url = "https://secure-wms.com/orders/{}".format(self.threeplId)
 
         headers = {
@@ -203,8 +209,8 @@ class StockPicking(models.Model):
             if is_closed and status == 1 and fully_allocated:
                 tracking_number = response.get('routingInfo').get('trackingNumber')
                 self.tracking_3pl = tracking_number
-                # Check if a location is manual validated
-                if self.location_dest_id.is_manual_validate:
+                # Check if this picking is internal transfer and the dest location is manual validated
+                if self.picking_type_id.code == 'internal' and self.location_dest_id.is_manual_validate:
                     return
                 # Line 210 - 224: To Compare Qty Done between Odoo and 3PL, overwrite Odoo Qty if 3PL has less
                 items_dict = self.get_order_item_3pl(self.threeplId)
@@ -226,21 +232,6 @@ class StockPicking(models.Model):
                 if type(res_dict) != bool:
                     self.env['stock.backorder.confirmation'].with_context(res_dict['context']).process()
                 self.create_shopify_fulfillment()
-                # if dict_item_to_create_backorder_lines:
-                #     new_backorder = self.copy()
-                #     new_backorder.threeplId = ''
-                #     new_backorder.tracking_3pl = ''
-                #     list_product = list(dict_item_to_create_backorder_lines.keys())
-                #     for line in new_backorder.move_ids_without_package:
-                #         if line.product_id.id not in list_product:
-                #             line.unlink()
-                #         else:
-                #             line.product_uom_qty = dict_item_to_create_backorder_lines.get(line.product_id.id)
-                #     self.message_post(
-                #         body=_(
-                #             'The backorder <a href=# data-oe-model=stock.picking data-oe-id=%d>%s</a> has been created.') % (
-                #                  new_backorder.id, new_backorder.name))
-                # self.state = 'done'
         else:
             raise UserError(response.text)
 
