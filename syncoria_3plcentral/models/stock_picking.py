@@ -13,6 +13,12 @@ from odoo.tools.misc import format_date
 
 from random import randrange
 
+
+class Location(models.Model):
+    _inherit = 'stock.location'
+
+    is_manual_validate = fields.Boolean("Is Manual Validate", default=False)
+
 class StockPicking(models.Model):
     _inherit = "stock.picking"
 
@@ -197,6 +203,10 @@ class StockPicking(models.Model):
             if is_closed and status == 1 and fully_allocated:
                 tracking_number = response.get('routingInfo').get('trackingNumber')
                 self.tracking_3pl = tracking_number
+                # Check if a location is manual validated
+                if self.location_dest_id.is_manual_validate:
+                    return
+                # Line 210 - 224: To Compare Qty Done between Odoo and 3PL, overwrite Odoo Qty if 3PL has less
                 items_dict = self.get_order_item_3pl(self.threeplId)
                 dict_item_to_create_backorder_lines = {}
                 for item in items_dict:
@@ -215,6 +225,7 @@ class StockPicking(models.Model):
                 res_dict = self.button_validate()
                 if type(res_dict) != bool:
                     self.env['stock.backorder.confirmation'].with_context(res_dict['context']).process()
+                self.create_shopify_fulfillment()
                 # if dict_item_to_create_backorder_lines:
                 #     new_backorder = self.copy()
                 #     new_backorder.threeplId = ''

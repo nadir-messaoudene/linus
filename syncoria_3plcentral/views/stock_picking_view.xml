@@ -53,5 +53,16 @@
 <!--                </xpath>-->
             </field>
         </record>
+
+        <record id="view_location_form_inherit_3pl_validate" model="ir.ui.view">
+            <field name="name">stock.location.form.inherit.3pl.validate</field>
+            <field name="model">stock.location</field>
+            <field name="inherit_id" ref="stock.view_location_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='return_location']" position="replace">
+                    <field name="is_manual_validate" />
+                </xpath>
+            </field>
+        </record>
     </data>
 </odoo>
