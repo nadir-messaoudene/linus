@@ -229,6 +229,18 @@
 <!--            </field>-->
 <!--        </record>-->
 
+        <record id="fetch_image_shopify" model="ir.actions.server">
+            <field name="name">Fetch Images from Shopify</field>
+            <field name="model_id" ref="product.model_product_template" />
+            <field name="binding_model_id" ref="product.model_product_template" />
+            <field name="binding_view_types">list,form</field>
+            <field name="state">code</field>
+            <field name="code">
+                if records:
+                    action = records.fetch_images_from_shopify()
+            </field>
+        </record>
+
 
     </data>
 </odoo>
