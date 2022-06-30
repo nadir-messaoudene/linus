@@ -467,6 +467,25 @@ class AccountInvoice(models.Model):
                     raise UserError("It seems that all of the data is already imported!")
                     _logger.warning(_('Empty data'))
 
+    def map_payment_invoice(self):
+        for record in self:
+            pay_term_lines = record.line_ids.filtered(
+                lambda line: line.account_id.user_type_id.type in ('receivable', 'payable'))
+            domain = [
+                ('account_id', 'in', pay_term_lines.account_id.ids),
+                ('parent_state', '=', 'posted'),
+                ('partner_id', '=', record.commercial_partner_id.id),
+                ('reconciled', '=', False),
+                '|', ('amount_residual', '!=', 0.0), ('amount_residual_currency', '!=', 0.0),
+            ]
+            if record.is_inbound():
+                domain.append(('balance', '<', 0.0))
+                # domain.append(('ref', '=', record.name))
+            move_payment_lines = self.env['account.move.line'].search(domain)
+            move_payment_lines_filtered = move_payment_lines.filtered(lambda m: m.move_id.payment_id.qbo_payment_ref == record.qbo_invoice_name)
+            for line in move_payment_lines_filtered:
+                record.js_assign_outstanding_line(line.id)
+
     def odoo_create_invoice_line_dict(self, cust, invoice_obj, type,qbo_inv_id=''):
         _logger.info("Attempting to create Invoice Line Dictionary")
         inv_line_data = []

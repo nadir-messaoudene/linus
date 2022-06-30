@@ -306,4 +306,14 @@ if records:
 		<field name="key">action</field>
 		<field name="model">qbo.payment.method</field>
 	</record>	 -->
+	<record id="action_map_payment_qbo" model="ir.actions.server">
+		<field name="name">Map Payment</field>
+		<field name="model_id" ref="account.model_account_move" />
+		<field name="binding_model_id" ref="account.model_account_move"/>
+		<field name="state">code</field>
+		<field name="code">
+	if records:
+    	action = records.map_payment_invoice()
+		</field>
+	</record>
 </odoo>
