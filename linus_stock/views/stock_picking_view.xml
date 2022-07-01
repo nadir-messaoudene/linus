@@ -8,7 +8,7 @@
             <field name="inherit_id" ref="stock.view_picking_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//header" position="inside">
-                    <button string="Reset to Draft" class="btn" name="action_draft" type="object" attrs="{'invisible': [('state','not in',['waiting', 'confirmed'])]  }" />
+                    <button string="Reset to Draft" class="btn" name="action_draft" type="object" attrs="{'invisible': [('state','not in',['waiting', 'confirmed', 'assigned'])]  }" />
                   </xpath>
             </field>
 	    </record>
