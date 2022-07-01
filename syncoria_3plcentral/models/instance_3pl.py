@@ -164,6 +164,7 @@ class Instance3PL(models.Model):
             instance.upsert_access_token()
 
     def map_products(self):
+        print("map_products")
         pgsiz = 100
         url = "https://secure-wms.com/customers/{}/items?pgsiz={}".format(self.customerId, pgsiz)
         payload = {}
@@ -183,18 +184,19 @@ class Instance3PL(models.Model):
                     next_page = True
                     url = 'https://secure-wms.com' + res.get('_links').get('next').get('href')
                 response_dict = json.loads(response.text).get('_embedded').get('http://api.3plCentral.com/rels/customers/item')
-                print(response_dict)
                 for product in response_dict:
                     prod_res = self.env['product.product'].search([('default_code', '=', product['sku'])])
+                    if len(prod_res) > 1:
+                        continue
                     if prod_res:
                         prod_res.product_3pl_id = product['itemId']
                         package_unit = product.get('options').get('packageUnit', False)
-                        if package_unit:
-                            prod_res.length = package_unit.get('imperial').get('length')
-                            prod_res.width = package_unit.get('imperial').get('width')
-                            prod_res.height = package_unit.get('imperial').get('height')
-                            prod_res.weight = package_unit.get('imperial').get('weight')
-                        hazmat = product.get('options').get('hazMat').get('isHazMat')
+                        if package_unit and package_unit.get('imperial'):
+                            prod_res.length = package_unit.get('imperial').get('length', False)
+                            prod_res.width = package_unit.get('imperial').get('width', False)
+                            prod_res.height = package_unit.get('imperial').get('height', False)
+                            prod_res.weight = package_unit.get('imperial').get('weight', False)
+                        hazmat = product.get('options').get('hazMat').get('isHazMat', False)
                         if hazmat:
                             prod_res.is_haz_mat = hazmat
                             prod_res.haz_mat_id = product.get('options').get('hazMat').get('id')

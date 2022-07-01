@@ -120,7 +120,8 @@ class StockPicking(models.Model):
                 "billingCode": "Prepaid",
                 "routingInfo": {
                     "carrier": self.carrier_services_3pl_id.carrier_3pl_id.name,
-                    "mode": self.carrier_services_3pl_id.code
+                    "mode": self.carrier_services_3pl_id.code,
+                    "account": self.carrier_services_3pl_id.carrier_3pl_id.account_number,
                 },
                 "shipTo": {
                     "companyName": self.partner_id.name,
@@ -128,7 +129,7 @@ class StockPicking(models.Model):
                     "address1": self.partner_id.street,
                     "address2": self.partner_id.street2 if self.partner_id.street2 else "",
                     "city": self.partner_id.city,
-                    "state": self.partner_id.state_id.name,
+                    "state": self.partner_id.state_id.code,
                     "zip": self.partner_id.zip,
                     "country": self.partner_id.country_id.code
                 },
@@ -290,7 +291,7 @@ class StockPicking(models.Model):
                     "address1": self.partner_id.street,
                     "address2": self.partner_id.street2,
                     "city": self.partner_id.city,
-                    "state": self.partner_id.state_id.name,
+                    "state": self.partner_id.state_id.code,
                     "zip": self.partner_id.zip,
                     "country": self.partner_id.country_id.code
                 },
