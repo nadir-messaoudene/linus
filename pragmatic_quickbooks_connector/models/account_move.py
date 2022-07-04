@@ -244,7 +244,7 @@ class AccountInvoice(models.Model):
             headers['Authorization'] = 'Bearer ' + company.access_token
             headers['accept'] = 'application/json'
             headers['Content-Type'] = 'text/plain'
-
+            # query = "select * from invoice WHERE Id = '182090'"
             query = "select * from invoice WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
                 company.quickbooks_last_invoice_imported_id, company.date_from, company.date_to, company.start, company.limit)
             # query = "select * from invoice WHERE Id = '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (119, company.start, company.limit)
@@ -288,7 +288,6 @@ class AccountInvoice(models.Model):
             headers['Authorization'] = 'Bearer ' + company.access_token
             headers['accept'] = 'application/json'
             headers['Content-Type'] = 'text/plain'
-
             # query = "select * from Bill WHERE Id > '%s' order by Id" % (
             #     company.quickbooks_last_vendor_bill_imported_id)
             query = "select * from bill WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
@@ -355,7 +354,10 @@ class AccountInvoice(models.Model):
                             #     continue
                             if invoice_line:
                                 for k in invoice_line:
-                                    dict_i['invoice_line_ids'].append((0, 0, k))
+                                    if 'exclude_from_invoice_tab' in k and not k['exclude_from_invoice_tab']:
+                                        dict_i['invoice_line_ids'].append((0, 0, k))
+                                    elif 'exclude_from_invoice_tab' not in k:
+                                        dict_i['invoice_line_ids'].append((0, 0, k))
                                 # return True
                                 _logger.info("Dictionary for f is ---> {}".format(dict_i))
                                 invoice_obj = self.env['account.move'].create(dict_i)
@@ -387,6 +389,46 @@ class AccountInvoice(models.Model):
 
 
                         else:
+                            _logger.info("Begin updating taxes!")
+                            account_invoice.button_draft()
+                            # for invoice_line in account_invoice.invoice_line_ids:
+                            #     invoice_line.unlink()
+                            account_invoice.line_ids.unlink()
+                            dict_i = {'invoice_line_ids': []}
+                            invoice_obj = account_invoice.partner_id
+                            invoice_line = self.odoo_create_invoice_line_dict(cust, invoice_obj, type, dict_i.get('qbo_invoice_id'))
+                            if invoice_line:
+                                for k in invoice_line:
+                                    if not k['exclude_from_invoice_tab']:
+                                        dict_i['invoice_line_ids'].append((0, 0, k))
+                                _logger.info("Dictionary for f is ---> {}".format(dict_i))
+                                account_invoice.write(dict_i)
+                            else:
+                                _logger.error("NO Line Found for Invoice!")
+                                raise UserError("NO Line Found for Invoice!")
+                            account_invoice.action_post()
+                            _logger.info("Starting mapping payment ---> {}".format(account_invoice.name))
+                            pay_term_lines = account_invoice.line_ids.filtered(lambda line: line.account_id.user_type_id.type in ('receivable', 'payable'))
+                            domain = [
+                                ('account_id', 'in', pay_term_lines.account_id.ids),
+                                ('parent_state', '=', 'posted'),
+                                ('partner_id', '=', account_invoice.commercial_partner_id.id),
+                                ('reconciled', '=', False),
+                                '|', ('amount_residual', '!=', 0.0), ('amount_residual_currency', '!=', 0.0),
+                            ]
+                            if account_invoice.is_inbound():
+                                domain.append(('balance', '<', 0.0))
+                                domain.append(('ref', '=', account_invoice.name))
+                            move_payment_lines = self.env['account.move.line'].search(domain)
+                            for line in move_payment_lines:
+                                account_invoice.js_assign_outstanding_line(line.id)
+                            _logger.info("End updating taxes!")
+                            if type == 'out_invoice':
+                                company.quickbooks_last_invoice_imported_id = cust.get('Id')
+                            elif type == 'out_refund':
+                                company.quickbooks_last_credit_note_imported_id = cust.get('Id')
+                            elif type == 'in_invoice':
+                                company.quickbooks_last_vendor_bill_imported_id = cust.get('Id')
                             _logger.info("All data seems to be imported successfully!")
                             # raise UserError("All data seems to be imported!")
 #                                 _logger.info("Attempting to update the invoice!")
@@ -425,29 +467,29 @@ class AccountInvoice(models.Model):
                     raise UserError("It seems that all of the data is already imported!")
                     _logger.warning(_('Empty data'))
 
+    def map_payment_invoice(self):
+        for record in self:
+            pay_term_lines = record.line_ids.filtered(
+                lambda line: line.account_id.user_type_id.type in ('receivable', 'payable'))
+            domain = [
+                ('account_id', 'in', pay_term_lines.account_id.ids),
+                ('parent_state', '=', 'posted'),
+                ('partner_id', '=', record.commercial_partner_id.id),
+                ('reconciled', '=', False),
+                '|', ('amount_residual', '!=', 0.0), ('amount_residual_currency', '!=', 0.0),
+            ]
+            if record.is_inbound():
+                domain.append(('balance', '<', 0.0))
+                # domain.append(('ref', '=', record.name))
+            move_payment_lines = self.env['account.move.line'].search(domain)
+            move_payment_lines_filtered = move_payment_lines.filtered(lambda m: m.move_id.payment_id.qbo_payment_ref == record.qbo_invoice_name)
+            for line in move_payment_lines_filtered:
+                record.js_assign_outstanding_line(line.id)
+
     def odoo_create_invoice_line_dict(self, cust, invoice_obj, type,qbo_inv_id=''):
         _logger.info("Attempting to create Invoice Line Dictionary")
         inv_line_data = []
         discount = 0
-        invoice_lines = cust.get('Line')
-        sub_total = 0
-        if invoice_lines:
-            for j in invoice_lines:
-                if j.get('DetailType') == 'SubTotalLineDetail':
-                    sub_total = j.get('Amount')
-
-                if "DiscountLineDetail" in j:
-                    if j.get('DiscountLineDetail').get('PercentBased'):
-                        if j.get("DiscountLineDetail").get('DiscountPercent'):
-                            res_account = self.env['account.account'].search(
-                                [('qbo_id', '=', j.get('DiscountLineDetail').get('DiscountAccountRef').get('value'))])
-                            discount = j.get('DiscountLineDetail').get('DiscountPercent')
-                    else:
-                        if sub_total > 0:
-                            total_amount = (j.get('Amount')/sub_total)*100
-                            discount = abs(total_amount)
-
-
 
         for i in cust.get('Line'):
 
@@ -788,14 +830,16 @@ class AccountInvoice(models.Model):
                 # print('\n\n 8888888888888888888888888888888888888888888888888888888',i,i.get(get_data_for))
 
                 qbo_id = i.get(get_data_for).get('ItemRef').get('value')
-
                 res_product = self.env['product.product'].search(
-                    [('qbo_product_id', '=', i.get(get_data_for).get('ItemRef').get('value'))])
+                    [('default_code', '=', i.get(get_data_for).get('ItemRef').get('name').split(' -')[0])])
+                if not res_product:
+                    res_product = self.env['product.product'].search(
+                        [('qbo_product_id', '=', i.get(get_data_for).get('ItemRef').get('value'))])
                 # print('res_product : ',res_product,isinstance(qbo_id, int))
                 if not res_product:
                     if not isinstance(qbo_id, int):
                         vals = {
-                            'name': qbo_id,
+                            'name': i.get('Description') or i.get(get_data_for).get('ItemRef').get('name'),
                             'type': 'service',
                             'qbo_product_id': qbo_id,
                         }
@@ -983,11 +1027,11 @@ class AccountInvoice(models.Model):
                     _logger.info("DICT TOL IS ---> {}".format(dict_tol))
                     if 'account_id' in dict_ol and 'account_id' in dict_col:
                         _logger.info("\n\n Invoice Line is  ---> {}".format(dict_ol))
-                        dict_ol['discount'] = discount
+                        # dict_ol['discount'] = discount
                         dict_ol['currency_id'] = self.env.user.company_id.currency_id.id
                         inv_line_data.append(dict_ol)
 
-                        dict_col['discount'] = discount
+                        # dict_col['discount'] = discount
                         dict_col['currency_id'] = self.env.user.company_id.currency_id.id
                         inv_line_data.append(dict_col)
                         _logger.info("INVOICE LINE DATA FOR NOW IS ---> {}".format(inv_line_data))
@@ -1004,7 +1048,7 @@ class AccountInvoice(models.Model):
                                 dict_ol['tax_base_amount'] = 0
                                 dict_col['tax_base_amount'] = 0
                                 dict_tol['tax_base_amount'] = dict_ol['quantity'] * dict_ol['price_unit']
-                                dict_tol['discount'] = discount
+                                # dict_tol['discount'] = discount
                                 dict_tol['currency_id'] = self.env.user.company_id.currency_id.id
 
 
@@ -1037,6 +1081,30 @@ class AccountInvoice(models.Model):
                     j['quantity']=1
                 if not j.get('product_id'):
                     inv_line_data.remove(j)
+
+        # Create discount line
+        invoice_lines = cust.get('Line')
+        dict_discount = {}
+        if invoice_lines:
+            for j in invoice_lines:
+                if "DiscountLineDetail" in j:
+                    if j.get('DiscountLineDetail').get('PercentBased'):
+                        if j.get("DiscountLineDetail").get('DiscountPercent'):
+                            raise UserError("This invoice has Discount Percentage")
+                            # res_account = self.env['account.account'].search(
+                            #     [('qbo_id', '=', j.get('DiscountLineDetail').get('DiscountAccountRef').get('value'))])
+                            # discount = j.get('`DiscountLineDetail`').get('DiscountPercent')
+                    else:
+                        dict_discount['name'] = 'Discount'
+                        res_account = self.env['account.account'].search(
+                            [('code', '=', j.get('DiscountLineDetail').get('DiscountAccountRef').get('name').split(' ')[0])])
+                        if not res_account:
+                            raise UserError("Can not find account: " + j.get('DiscountLineDetail').get('DiscountAccountRef').get('name'))
+                        dict_discount['account_id'] = res_account.id
+                        dict_discount['exclude_from_invoice_tab'] = False
+                        dict_discount['quantity'] = 1
+                        dict_discount['price_unit'] = -j.get('Amount')
+                        inv_line_data.append(dict_discount)
         _logger.info("INVOICE LINE DATA SENDING FOR CREATION IS --LATER -> {}".format(inv_line_data))
 
         return inv_line_data
