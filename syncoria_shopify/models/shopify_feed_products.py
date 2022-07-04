@@ -193,14 +193,40 @@ class ShopifyFeedProducts(models.Model):
         return
 
 
+    # def _get_product_id(self,shopify_product_val):
+    #         product_sku = shopify_product_val.get("variants")[0].get('sku')
+    #         if product_sku != '':
+    #             product_tmpl_id = self.env['product.product'].search([
+    #                 ('default_code', '=', product_sku),
+    #             ]).product_tmpl_id
+    #
+    #             if len(product_tmpl_id) > 1:
+    #                 _logger.warning("Duplicate Products")
+    #                 raise Exception("Duplicate Products!")
+    #         else:
+    #             product_tmpl_id = None
+    #
+    #         return  product_tmpl_id
+
     def _get_product_id(self,shopify_product_val):
-            product_sku = shopify_product_val.get("variants")[0].get('sku')
-            if product_sku != '':
-                product_tmpl_id = self.env['product.product'].search([
-                    ('default_code', '=', product_sku),
+            # product_sku = shopify_product_val.get("variants")[0].get('sku')
+            product_skus = list(map(lambda x: x['sku'], shopify_product_val.get("variants")))
+            if '' in product_skus:
+                # raise Exception("Please fill SKU properly!")
+                product_skus.remove('')
+            # if product_sku != '':
+            #     product_tmpl_id = self.env['product.product'].search([
+            #         ('default_code', '=', product_sku),
+            #     ]).product_tmpl_id
+            # else:
+            #     product_tmpl_id = None
+
+            product_tmpl_id = self.env['product.product'].search([
+                    ('default_code', 'in', product_skus),
                 ]).product_tmpl_id
-            else:
-                product_tmpl_id = None
+            if len(product_tmpl_id) >1:
+                # _logger.warning("Duplicate Products")
+                raise Exception("Duplicate Products!")
 
             return  product_tmpl_id
 
@@ -222,7 +248,10 @@ class ShopifyFeedProducts(models.Model):
             template: required fields with their values for product template
             attributes: complete list of attributes from shopify
         """
+        if self.id == 233:
+            a=1
 
+        isUpdate = False
         VariantObj = self.env['product.product']
         cr = self._cr
         # fetching all the attributes and their values
@@ -288,14 +317,6 @@ class ShopifyFeedProducts(models.Model):
                         # pro_tmpl = self.env['product.template'].browse(
                         #     product_tmpl_id.id)
                         pro_tmpl = product_tmpl_id
-                        if 'image' in product:
-                            pro_tmpl.write({'product_template_image_ids': [(5, 0, 0)]})
-                            image_src = []
-                            for im in product.get('images'):
-                                if im.get("src") != product.get("image").get("src"):
-                                    image_src.append(im.get("src"))
-                            for im in image_src:
-                                self.env['product.image'].create({'name': im, 'image_1920': self.shopify_image_processing(im), 'product_tmpl_id': pro_tmpl.id})
                         pro_tmpl.write({
                             "shopify_instance_id":instance_id.id,
                             "shopify_vendor":product.get("vendor"),
@@ -306,6 +327,8 @@ class ShopifyFeedProducts(models.Model):
                             "shopify_id": str(product['id']),
                         })
                         product_tmpl_id = [product_tmpl_id.id]
+                        self.message_post(body=f"{pro_tmpl.name} Product Updated")
+                        isUpdate =True
                     else:
                         product_categ_ids = []
                         if product.get('product_type'):
@@ -374,7 +397,7 @@ class ShopifyFeedProducts(models.Model):
                         pro_tmpl = self.env['product.template'].sudo().create(template)
                         product_tmpl_id = [pro_tmpl.id]
 
-
+                        self.message_post(body=f"{pro_tmpl.name} Product Created")
                     _logger.info("\nproduct_tmpl_id-->" + str(product_tmpl_id))
                     _logger.info("\npro_tmpl-->" + str(pro_tmpl))
 
@@ -390,15 +413,7 @@ class ShopifyFeedProducts(models.Model):
                             if 'image' in product:
                                 pro_tmpl.update({'image_1920': self.shopify_image_processing(product.get("image").get("src")),
                                                  'default_code': product.get('sku')})
-                                pro_tmpl.write({'product_template_image_ids': [(5, 0, 0)]})
-                                image_src = []
-                                for im in product.get('images'):
-                                    if im.get("src") != product.get("image").get("src"):
-                                        image_src.append(im.get("src"))
-                                for im in image_src:
-                                    self.env['product.image'].create(
-                                        {'name': im, 'image_1920': self.shopify_image_processing(im),
-                                         'product_tmpl_id': pro_tmpl.id})
+
 
                         except:
                             _logger.info(
@@ -461,8 +476,11 @@ class ShopifyFeedProducts(models.Model):
 
 
                                 domain = [("product_tmpl_id","=",pro_tmpl.id)]
-                                for option in option_names:
-                                    domain += [("product_template_attribute_value_ids.name","=",option)]
+                                if isUpdate:
+                                    domain += [("default_code", "=", child['sku'])]
+                                else:
+                                    for option in option_names:
+                                        domain += [("product_template_attribute_value_ids.name","=",option)]
                                 # self.env['product.product'].search([("product_tmpl_id","=",28),("product_template_attribute_value_ids.name","=","ALLOY/SILVER"),("product_template_attribute_value_ids.name","=","700c")])
                                 print("domain ====>>>>", domain)
                                 product_id = self.env['product.product'].search(domain, limit=1)
@@ -558,28 +576,28 @@ class ShopifyFeedProducts(models.Model):
                                 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-                                for option in options:
-                                    att_id = str(option['attribute_id'])
-                                    current_att_id = attributes_list[att_id]['id']
-                                    if current_att_id not in attrib_line:
-                                        attrib_line[current_att_id] = []
-                                    att_code = attributes_list[att_id]['code']
-                                    att_options = attributes_list[att_id]['options']
-
-                                    att_code_id = self.env['product.attribute'].sudo().search(
-                                        [('name', '=', att_code)])
-                                    if att_code_id:
-                                        for key, value in attrib_line.items():
-                                            if key in att_code_id.ids:
-                                                attrib_line[key] = [
-                                                    value for key, value in att_options.items()]
-
-                                    att_values = []
-                                    if att_options:
-                                        for key, value in att_options.items():
-                                            if key in option_names:
-                                                att_values.append(
-                                                    att_options[key])
+                                # for option in options:
+                                #     att_id = str(option['attribute_id'])
+                                #     current_att_id = attributes_list[att_id]['id']
+                                #     if current_att_id not in attrib_line:
+                                #         attrib_line[current_att_id] = []
+                                #     att_code = attributes_list[att_id]['code']
+                                #     att_options = attributes_list[att_id]['options']
+                                #
+                                #     att_code_id = self.env['product.attribute'].sudo().search(
+                                #         [('name', '=', att_code)])
+                                #     if att_code_id:
+                                #         for key, value in attrib_line.items():
+                                #             if key in att_code_id.ids:
+                                #                 attrib_line[key] = [
+                                #                     value for key, value in att_options.items()]
+                                #
+                                #     att_values = []
+                                #     if att_options:
+                                #         for key, value in att_options.items():
+                                #             if key in option_names:
+                                #                 att_values.append(
+                                #                     att_options[key])
 
 
 
@@ -822,6 +840,9 @@ class ShopifyFeedProducts(models.Model):
 
                 except Exception as e:
                     _logger.warning("Exception-{}".format(e.args))
+                    print(self)
+                    self.message_post(body= "Exception-{}".format(e.args))
+                    self.state='failed'
             else:
 
                 product_obj = self.env['product.template']
@@ -829,6 +850,8 @@ class ShopifyFeedProducts(models.Model):
                 current_product.write({"shopify_instance_id":instance_id.id})
                 if product_type == 'configurable_product':
                     current_product.product_variant_ids.write({"shopify_instance_id":instance_id.id})
+                self.message_post(body=f"{current_product.name}Product Updated")
+            self.state='processed'
 
 
 
