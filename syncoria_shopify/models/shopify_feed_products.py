@@ -248,9 +248,6 @@ class ShopifyFeedProducts(models.Model):
             template: required fields with their values for product template
             attributes: complete list of attributes from shopify
         """
-        if self.id == 233:
-            a=1
-
         isUpdate = False
         VariantObj = self.env['product.product']
         cr = self._cr
@@ -822,7 +819,7 @@ class ShopifyFeedProducts(models.Model):
                             str(product['id']))
 
                     print("Variants creation Ends")
-
+                    self.state = 'processed'
                     self.env.cr.commit()
                     
                     # print("Catergory creation Starts")
@@ -842,7 +839,7 @@ class ShopifyFeedProducts(models.Model):
                     _logger.warning("Exception-{}".format(e.args))
                     print(self)
                     self.message_post(body= "Exception-{}".format(e.args))
-                    self.state='failed'
+                    self.state ='failed'
             else:
 
                 product_obj = self.env['product.template']
@@ -851,7 +848,8 @@ class ShopifyFeedProducts(models.Model):
                 if product_type == 'configurable_product':
                     current_product.product_variant_ids.write({"shopify_instance_id":instance_id.id})
                 self.message_post(body=f"{current_product.name}Product Updated")
-            self.state='processed'
+                self.state = 'processed'
+
 
 
 

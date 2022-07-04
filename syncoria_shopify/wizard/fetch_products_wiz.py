@@ -943,7 +943,7 @@ class ProductsFetchWizard(models.Model):
                 all_feed_products_rec = [self.create_feed_parent_product(product,marketplace_instance_id) for product in product_list]
                 for process_product in all_feed_products_rec:
                     process_product.process_feed_product()
-                    process_product.write({"state":'processed'})
+                    # process_product.write({"state":'processed'})
 
             except Exception as e:
                 _logger.warning("Exception occured: {}".format(e.args))
