@@ -45,6 +45,13 @@ class StockPicking(models.Model):
     carrier_services_3pl_id = fields.Many2one('carrier.services.3pl', 'Service', domain="[('carrier_3pl_id', '=', carriers_3pl_id)]")
     ship_by_3pl = fields.Boolean("Ship by 3PL", compute="_compute_ship_by_3pl")
 
+    def action_update_3pl_pickings(self):
+        to_update = self.env['stock.picking'].search([('state', '=', 'push_3pl')])
+        if not to_update:
+            return
+        for rec in to_update:
+            rec.update_picking_from_3pl()
+
     @api.depends('picking_type_id')
     def _compute_ship_by_3pl(self):
         instance = self.env['instance.3pl'].search([], limit=1)
