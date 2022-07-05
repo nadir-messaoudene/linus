@@ -844,6 +844,7 @@ class ProductsFetchWizard(models.Model):
 
     def shopify_fetch_products_to_odoo(self, kwargs):
         update_products_no = 0
+        failed_products_no = 0
         sp_product_list = []
         existing_ids = []
         cr = self._cr
@@ -943,7 +944,11 @@ class ProductsFetchWizard(models.Model):
                 all_feed_products_rec = [self.create_feed_parent_product(product,marketplace_instance_id) for product in product_list]
                 for process_product in all_feed_products_rec:
                     process_product.process_feed_product()
-                    process_product.write({"state":'processed'})
+                    if process_product.state == 'processed':
+                        update_products_no += 1
+                    if process_product.state == 'failed':
+                        failed_products_no += 1
+                    # process_product.write({"state":'processed'})
 
             except Exception as e:
                 _logger.warning("Exception occured: {}".format(e.args))
@@ -951,7 +956,7 @@ class ProductsFetchWizard(models.Model):
 
 
         _logger.info("%d products are successfully updated." % update_products_no)
-
+        _logger.info("%d products are failed." % failed_products_no)
         # self.update_sync_history({
         #     'last_product_sync': '',
         #     'last_product_sync_id': sp_product_list[-1].get('id') if len(sp_product_list) > 0 else '',
