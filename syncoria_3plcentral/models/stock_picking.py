@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
-from jsonschema import ValidationError
 from odoo import _, api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from odoo.osv import expression
 from odoo.tools.float_utils import float_compare, float_is_zero, float_round
 from odoo.tools.misc import clean_context, OrderedSet
@@ -88,6 +87,8 @@ class StockPicking(models.Model):
     def export_picking_to_3pl(self, source_warehouse):
         if not self.carrier_services_3pl_id:
             raise UserError("Please select 3PL Carrier and Service.")
+        if not self.partner_id.street or not self.partner_id.city or not self.partner_id.state_id.code or not self.partner_id.zip or not self.partner_id.country_id.code:
+            raise ValidationError("Please check shipping address.")
         print("export_picking_to_3pl")
         if self.state in ('waiting', 'confirmed', 'assigned'):
             instance = self.env['instance.3pl'].search([], limit=1)
@@ -106,7 +107,7 @@ class StockPicking(models.Model):
                         }
                 )
             #END orderItems
-
+            
             payload = json.dumps({
                 "customerIdentifier": {
                     "id": instance.customerId
