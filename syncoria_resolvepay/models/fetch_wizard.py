@@ -15,9 +15,8 @@ class ResolvepayFetch(models.Model):
     )
     
     def fetch_customers_resolvepay(self):
-        print("fetch_customers_resolvepay")
         instance = self.env['resolvepay.instance'].search([], limit=1)
-        for i in range(1,130):
+        for i in range(1,150):
             params = {'limit': 100, 'page': i}
             url = instance.instance_baseurl + 'customers'
             res = instance.get_data(url, params)
@@ -26,15 +25,8 @@ class ResolvepayFetch(models.Model):
                 if data.get('count') > 0:
                     customer_list = data.get('results')
                     for customer in customer_list:
-                        if customer.get('email') == None:
+                        if customer.get('email') == None or customer.get('amount_approved') == 0:
                             continue
-                        #Check FOUND?
-                        try:
-                            time.sleep(0.5)
-                            res = instance.get_data(url+"/"+customer.get('id'))
-                        except:
-                            continue
-                        #END check FOUND?
                         partner = self.env['res.partner'].search([('email', '=', customer.get('email'))], limit=1)
 
                         if partner:
@@ -69,7 +61,7 @@ class ResolvepayFetch(models.Model):
                                 partner_dict['terms'] = customer.get('default_terms').capitalize() if customer.get('default_terms') else customer.get('default_terms')
                                 partner_dict['net_terms_status'] = customer.get('net_terms_status').capitalize() if customer.get('net_terms_status') else customer.get('net_terms_status')
                                 partner_dict['credit_status'] = customer.get('credit_status').capitalize() if customer.get('credit_status') else customer.get('credit_status')
-                                self.env['res.partner'].with_context(res_partner_search_mode='customer').create(partner_dict)
+                                partner = self.env['res.partner'].with_context(res_partner_search_mode='customer').create(partner_dict)
                             except Exception as e:
                                 _logger.info("Error occurred =====> %s", e)
                                 raise ValidationError('Error occurred: %s', e)
