@@ -91,10 +91,10 @@ class StockPicking(models.Model):
                 self.state = 'push_3pl'
 
     def export_picking_to_3pl(self, source_warehouse):
-        # if not self.carrier_services_3pl_id:
-        #     raise UserError("Please select 3PL Carrier and Service.")
-        # if not self.partner_id.street or not self.partner_id.city or not self.partner_id.state_id.code or not self.partner_id.zip or not self.partner_id.country_id.code:
-        #     raise ValidationError("Please check shipping address.")
+        if not self.carrier_services_3pl_id:
+            raise UserError("Please select 3PL Carrier and Service.")
+        if not self.partner_id.street or not self.partner_id.city or not self.partner_id.state_id.code or not self.partner_id.zip or not self.partner_id.country_id.code:
+            raise ValidationError("Please check shipping address.")
         print("export_picking_to_3pl")
         if self.state in ('waiting', 'confirmed', 'assigned'):
             instance = self.env['instance.3pl'].search([], limit=1)
