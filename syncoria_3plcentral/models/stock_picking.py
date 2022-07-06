@@ -99,16 +99,16 @@ class StockPicking(models.Model):
         if self.state in ('waiting', 'confirmed', 'assigned'):
             instance = self.env['instance.3pl'].search([], limit=1)
             url = "https://secure-wms.com/orders"
-            #orderItems
+            # orderItems
             orderItems = []
-            #Make sure have done line(s)
+            # Make sure have done line(s)
             flag = False
             for line in self.move_line_ids_without_package:
                 if line.qty_done:
                     flag = True
             if not flag:
                 raise UserError("Please modify 'Done' quantity before pushing to 3PL.")
-            #END Make sure have done line(s)
+            # END Make sure have done line(s)
             for line in self.move_line_ids_without_package:
                 if line.qty_done > 0:
                     orderItems.append(
@@ -119,7 +119,7 @@ class StockPicking(models.Model):
                             "qty": line.qty_done
                             }
                     )
-            #END orderItems
+            # END orderItems
             
             payload = json.dumps({
                 "customerIdentifier": {
@@ -216,14 +216,14 @@ class StockPicking(models.Model):
             fully_allocated = response.get('readOnly').get('fullyAllocated')
             print(is_closed)
             print(status)
-            tracking_number = response.get('routingInfo').get('trackingNumber')
-            self.carrier_tracking_ref = tracking_number
             # CANCEL ORDER
             if is_closed and status == 2:
                 if self.state == 'push_3pl':
                     self.action_cancel()
             # CLOSED ORDER
             if is_closed and status == 1 and fully_allocated:
+                tracking_number = response.get('routingInfo').get('trackingNumber')
+                self.carrier_tracking_ref  = tracking_number
                 # Check if this picking is internal transfer and the dest location is manual validated
                 if self.picking_type_id.code == 'internal' and self.location_dest_id.is_manual_validate:
                     return
