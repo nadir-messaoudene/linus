@@ -102,9 +102,15 @@ class StockPicking(models.Model):
             url = "https://secure-wms.com/orders"
             #orderItems
             orderItems = []
+            #Make sure have done line(s)
+            flag = False
             for line in self.move_line_ids_without_package:
-                # if not line.qty_done:
-                #     raise UserError("Please modify 'Done' quantity before pushing to 3PL.")
+                if not line.qty_done:
+                    flag = True
+            if flag:
+                raise UserError("Please modify 'Done' quantity before pushing to 3PL.")
+            #END Make sure have done line(s)
+            for line in self.move_line_ids_without_package:
                 if line.qty_done > 0:
                     orderItems.append(
                             {
