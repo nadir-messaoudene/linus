@@ -103,16 +103,17 @@ class StockPicking(models.Model):
             #orderItems
             orderItems = []
             for line in self.move_line_ids_without_package:
-                if not line.qty_done:
-                    raise UserError("Please modify 'Done' quantity before pushing to 3PL.")
-                orderItems.append(
-                        {
-                        "itemIdentifier": {
-                            "sku": line.product_id.default_code
-                        },
-                        "qty": line.qty_done
-                        }
-                )
+                # if not line.qty_done:
+                #     raise UserError("Please modify 'Done' quantity before pushing to 3PL.")
+                if line.qty_done > 0:
+                    orderItems.append(
+                            {
+                            "itemIdentifier": {
+                                "sku": line.product_id.default_code
+                            },
+                            "qty": line.qty_done
+                            }
+                    )
             #END orderItems
             
             payload = json.dumps({
