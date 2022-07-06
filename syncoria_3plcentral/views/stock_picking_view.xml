@@ -25,16 +25,20 @@
             <field name="model">stock.picking</field>
             <field name="inherit_id" ref="stock.view_picking_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//field[@name='origin']" position="after">
-                    <field name="threeplId" readonly="1" attrs="{'invisible':[('ship_by_3pl','=',False)]}"/>
-                    <field name="tracking_3pl" readonly="1" attrs="{'invisible':[('ship_by_3pl','=',False)]}"/>
-                    <field name="container_ref" attrs="{'invisible': [('picking_type_code', '=', 'outgoing')]}"/>
-                    <field name="ship_by_3pl" invisible="1"/>
+                <xpath expr="//group[not(ancestor::group)]/group[last()]" position="after">
+                    <group string="3PL Information" name="3pl_carrier_data" attrs="{'invisible':[('ship_by_3pl','=',False)]}">
+                        <field name="threeplId" readonly="1"/>
+                        <field name="container_ref" attrs="{'invisible': [('picking_type_code', '=', 'outgoing')]}"/>
+                        <field name="carrier_tracking_ref"/>
+                        <field name="ship_by_3pl" invisible="1"/>
+                        <field name="carriers_3pl_id" attrs="{'readonly': [('state', 'in', ('done', 'cancel'))]}" options="{'no_create': True, 'no_open': True}"/>
+                        <field name="carrier_services_3pl_id" attrs="{'readonly': [('state', 'in', ('done', 'cancel'))]}" options="{'no_create': True, 'no_open': True}"/>
+                    </group>
                 </xpath>
                 <xpath expr="//field[@name='state']" position="replace">
                     <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,assigned,done,push_3pl"/>
                 </xpath>
-                <xpath expr="//notebook" position="inside">
+                <xpath expr="//page[@name='operations']" position="after">
                     <page string="3PL Notes" attrs="{'invisible': [('picking_type_code', '=', 'incoming')]}">
                         <group>
                             <field name="warehouse_instruction" />
@@ -42,15 +46,6 @@
                         </group>
                     </page>
                 </xpath>
-                <xpath expr="//group[@name='other_infos']" position="after">
-                    <group string="3PL Shipping Information" name="3pl_carrier_data" attrs="{'invisible':[('ship_by_3pl','=',False)]}">
-                        <field name="carriers_3pl_id" attrs="{'readonly': [('state', 'in', ('done', 'cancel'))]}" options="{'no_create': True, 'no_open': True}"/>
-                        <field name="carrier_services_3pl_id" attrs="{'readonly': [('state', 'in', ('done', 'cancel'))]}" options="{'no_create': True, 'no_open': True}"/>
-                    </group>
-                </xpath>
-<!--                <xpath expr="//field[@name='products_availability']" position='attributes'>-->
-<!--                    <attribute name="attrs">{'invisible': ['|', ('picking_type_code', '!=', 'outgoing'), ('state', 'not in', ['confirmed', 'waiting', 'assigned', 'push_3pl'])]}</attribute>-->
-<!--                </xpath>-->
             </field>
         </record>
 
