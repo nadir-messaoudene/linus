@@ -12,6 +12,16 @@
                 records.create_customer_resolvepay()</field>
         </record>
 
+        <record id="update_customer_resolvepay" model="ir.actions.server">
+            <field name="name">Update from ResolvePay</field>
+            <field name="model_id" ref="base.model_res_partner"/>
+            <field name="binding_model_id" ref="base.model_res_partner"/>
+            <field name="binding_view_types">list,tree,form</field>
+            <field name="state">code</field>
+            <field name="code">if records:
+                records.fetch_customer_resolvepay()</field>
+        </record>
+
         <record id="res_partner_resolvepay_form_inherit" model="ir.ui.view">
             <field name="name">res.partner.resolvepay.form.inherit</field>
             <field name="model">res.partner</field>
