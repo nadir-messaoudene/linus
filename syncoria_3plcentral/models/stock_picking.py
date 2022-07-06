@@ -216,14 +216,14 @@ class StockPicking(models.Model):
             fully_allocated = response.get('readOnly').get('fullyAllocated')
             print(is_closed)
             print(status)
+            tracking_number = response.get('routingInfo').get('trackingNumber')
+            self.carrier_tracking_ref = tracking_number
             # CANCEL ORDER
             if is_closed and status == 2:
                 if self.state == 'push_3pl':
                     self.action_cancel()
             # CLOSED ORDER
             if is_closed and status == 1 and fully_allocated:
-                tracking_number = response.get('routingInfo').get('trackingNumber')
-                self.carrier_tracking_ref  = tracking_number
                 # Check if this picking is internal transfer and the dest location is manual validated
                 if self.picking_type_id.code == 'internal' and self.location_dest_id.is_manual_validate:
                     return
