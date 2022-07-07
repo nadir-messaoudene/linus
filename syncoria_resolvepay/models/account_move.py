@@ -1,7 +1,7 @@
 from odoo import models, fields, api, _
 import requests
 from odoo.exceptions import UserError, ValidationError
-import json
+import json, time
 import logging
 _logger = logging.getLogger(__name__)
 
@@ -11,6 +11,19 @@ class Invoice(models.Model):
     resolvepay_invoice_id = fields.Char(string='ResolvePay Invoice Id')
     resolvepay_charge_id = fields.Char(string='ResolvePay Charge Id')
     available_credit = fields.Integer(string='Available Credit', related='partner_id.available_credit')
+
+    def action_update_resolve_pay(self):
+        to_update = self.env['account.move'].search([('resolvepay_invoice_id', '!=', None), ('state', '=', 'posted'), ('payment_state', 'in', ('not_paid', 'in_payment', 'partial'))])
+        print("to_update")
+        print(to_update)
+        if not to_update:
+            return
+        for rec in to_update:
+            try:
+                time.sleep(0.5)
+                rec.resolvepay_fetch_invoice()
+            except:
+                continue
 
     def create_invoice_resolvepay(self):
         for record in self:
