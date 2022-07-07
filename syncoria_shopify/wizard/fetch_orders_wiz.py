@@ -581,7 +581,7 @@ class OrderFetchWizard(models.Model):
             try:
                 print("log_msg ===>>>{}".format(log_msg))
                 print("error_msg ===>>>{}".format(error_msg))
-                if feed_order_list and self.instance_id:
+                if self.instance_id:
                     log_id = self.env['marketplace.logging'].sudo().create({
                         'name' : self.env['ir.sequence'].next_by_code('marketplace.logging'),
                         'create_uid' : self.env.user.id,

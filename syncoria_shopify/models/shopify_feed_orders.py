@@ -638,7 +638,7 @@ class ShopifyFeedOrders(models.Model):
                             
                             order_id = self.env['sale.order'].sudo().create(order_vals)
                             log_msg = "Sale Order Created-{} for Feed Order-{}".format(order_id, self)
-                            msg_body += '\n' + log_msg
+                            msg_body += '\n' + log_msg + '\n'
                             _logger.info(log_msg)
 
                             if order_id:
