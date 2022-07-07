@@ -566,14 +566,16 @@ class OrderFetchWizard(models.Model):
             feed_order_list = []
             for i in sp_orders:
                 feed_order_id, feed_log_msg, feed_error_msg = self.create_feed_orders(i)
+                log_msg += feed_log_msg
+                error_msg += feed_error_msg
                 if feed_order_id:
                     feed_order_list += feed_order_id.ids
-                    log_msg += feed_log_msg
-                    error_msg += feed_error_msg
 
                     process_log_msg, process_error_msg = feed_order_id.process_feed_order()
                     log_msg += process_log_msg
                     error_msg += process_error_msg
+
+
 
 
             try:
