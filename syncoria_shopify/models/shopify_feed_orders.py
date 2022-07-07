@@ -154,7 +154,7 @@ class ShopifyFeedOrders(models.Model):
 
         if default_address:
             if default_address.get('company'):
-                customer['company_id']=default_address.get('company')
+                customer['shopify_company_name']=default_address.get('company')
 
             customer['street']=default_address.get(
                 'address1') or ""
