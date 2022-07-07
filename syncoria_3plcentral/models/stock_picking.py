@@ -246,7 +246,9 @@ class StockPicking(models.Model):
                 res_dict = self.button_validate()
                 if type(res_dict) != bool:
                     self.env['stock.backorder.confirmation'].with_context(res_dict['context']).process()
-                self.create_shopify_fulfillment()
+                sale_order = self.env['sale.order'].search([('name', '=', self.origin)])
+                if sale_order and sale_order.shopify_id:
+                    self.create_shopify_fulfillment()
         else:
             raise UserError(response.text)
 
