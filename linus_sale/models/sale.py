@@ -29,7 +29,7 @@ class SaleOrder(models.Model):
 
     last_carrier_tracking_ref = fields.Char(string='Tracking Reference',compute='_get_delivery_status', store=True)
 
-    @api.depends('picking_ids')
+    @api.depends('picking_ids.state')
     def _get_delivery_status(self):
         for order in self:
             if len(order.picking_ids) > 0:
@@ -38,3 +38,11 @@ class SaleOrder(models.Model):
             else: 
                 order.delivery_status = 'none'
                 order.last_carrier_tracking_ref = ''
+
+    def action_update(self):
+        to_update = self.env['sale.order'].search([])
+        if not to_update:
+            return
+        for rec in to_update:
+            rec._get_delivery_status()
+    
