@@ -88,7 +88,7 @@ class ResPartner(models.Model):
         readonly="1",
     )
     shopify_default = fields.Boolean(default=False)
-    
+    shopify_company_name = fields.Char(string="Shopify Contact Company Name")
 
     def create_shopify_customer(self):
         """

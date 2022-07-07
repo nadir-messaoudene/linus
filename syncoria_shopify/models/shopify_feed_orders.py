@@ -154,11 +154,7 @@ class ShopifyFeedOrders(models.Model):
 
         if default_address:
             if default_address.get('company'):
-                company=env['res.partner'].sudo().search(
-                    [('name', '=', default_address.get('company'))], limit=1)
-                customer['company_id']=company.id if company else None
-                customer['company_name']=default_address.get(
-                    'company') or ""
+                customer['company_id']=default_address.get('company')
 
             customer['street']=default_address.get(
                 'address1') or ""

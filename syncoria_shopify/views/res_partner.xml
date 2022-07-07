@@ -42,6 +42,7 @@
                                 <field name="shopify_last_order_name" readonly="1"/>
                                 <field name="orders_count" readonly="1"/>
                                 <field name="shopify_total_spent" readonly="1"/>
+                                <field name="shopify_company_name" readonly="1"/>
                             </group>
                             <group>
                                 <h3>Tax Exempt</h3>
