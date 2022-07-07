@@ -1,5 +1,6 @@
 from odoo import models, fields, api, _
 
+
 class AccountPaymentRegister(models.TransientModel):
     _inherit = 'account.payment.register'
 
@@ -10,6 +11,7 @@ class AccountPaymentRegister(models.TransientModel):
         payment_vals = super()._create_payment_vals_from_wizard()
         payment_vals['resolvepay_payment_date'] = self.resolvepay_payment_date
         return payment_vals
+
 
 class AccountPayment(models.Model):
     _inherit = "account.payment"

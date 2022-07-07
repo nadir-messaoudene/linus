@@ -46,7 +46,6 @@ class ResolvePay(models.Model):
             headers = {
                 'Content-Type': 'application/json'
             }
-        _logger.info("Complete_url===>>>%s", url)
         try:
             res = dict()
             response = requests.request('GET', url, headers=headers, params=params, auth=HTTPBasicAuth(self.instance_merchant_id, self.instance_secret_key))

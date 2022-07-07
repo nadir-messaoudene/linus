@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
-from jsonschema import ValidationError
 from odoo import _, api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from odoo.osv import expression
 from odoo.tools.float_utils import float_compare, float_is_zero, float_round
 from odoo.tools.misc import clean_context, OrderedSet
@@ -37,7 +36,6 @@ class StockPicking(models.Model):
              " * Done: The transfer has been processed.\n"
              " * Cancelled: The transfer has been cancelled.")
     threeplId = fields.Integer(string="3PL ID", copy=False)
-    tracking_3pl = fields.Char(string="Tracking Number 3PL",copy=False)
     container_ref = fields.Char(string="Container Reference",copy=False)
     warehouse_instruction = fields.Char(string="Warehouse Instruction",copy=False)
     carrier_instruction = fields.Char(string="Carrier Instruction",copy=False)
@@ -45,6 +43,13 @@ class StockPicking(models.Model):
     carriers_3pl_id = fields.Many2one('carriers.3pl', 'Carrier', domain="[('instance_3pl_id', '=', 1)]")
     carrier_services_3pl_id = fields.Many2one('carrier.services.3pl', 'Service', domain="[('carrier_3pl_id', '=', carriers_3pl_id)]")
     ship_by_3pl = fields.Boolean("Ship by 3PL", compute="_compute_ship_by_3pl")
+
+    def action_update_3pl_pickings(self):
+        to_update = self.env['stock.picking'].search([('state', '=', 'push_3pl')])
+        if not to_update:
+            return
+        for rec in to_update:
+            rec.update_picking_from_3pl()
 
     @api.depends('picking_type_id')
     def _compute_ship_by_3pl(self):
@@ -88,25 +93,34 @@ class StockPicking(models.Model):
     def export_picking_to_3pl(self, source_warehouse):
         if not self.carrier_services_3pl_id:
             raise UserError("Please select 3PL Carrier and Service.")
+        if not self.partner_id.street or not self.partner_id.city or not self.partner_id.state_id.code or not self.partner_id.zip or not self.partner_id.country_id.code:
+            raise ValidationError("Please check shipping address.")
         print("export_picking_to_3pl")
         if self.state in ('waiting', 'confirmed', 'assigned'):
             instance = self.env['instance.3pl'].search([], limit=1)
             url = "https://secure-wms.com/orders"
-            #orderItems
+            # orderItems
             orderItems = []
-            for line in self.move_ids_without_package:
-                if not line.quantity_done:
-                    raise UserError("Please modify 'Done' quantity before pushing to 3PL.")
-                orderItems.append(
-                        {
-                        "itemIdentifier": {
-                            "sku": line.product_id.default_code
-                        },
-                        "qty": line.quantity_done
-                        }
-                )
-            #END orderItems
-
+            # Make sure have done line(s)
+            flag = False
+            for line in self.move_line_ids_without_package:
+                if line.qty_done:
+                    flag = True
+            if not flag:
+                raise UserError("Please modify 'Done' quantity before pushing to 3PL.")
+            # END Make sure have done line(s)
+            for line in self.move_line_ids_without_package:
+                if line.qty_done > 0:
+                    orderItems.append(
+                            {
+                            "itemIdentifier": {
+                                "sku": line.product_id.default_code
+                            },
+                            "qty": line.qty_done
+                            }
+                    )
+            # END orderItems
+            
             payload = json.dumps({
                 "customerIdentifier": {
                     "id": instance.customerId
@@ -150,7 +164,7 @@ class StockPicking(models.Model):
                 pickings_to_backorder = self._check_backorder()
                 if pickings_to_backorder:
                     # START processing back order
-                    moves_todo = self.mapped('move_lines').filtered(lambda self: self.state in ['draft', 'waiting', 'partially_available', 'assigned', 'confirmed'])
+                    moves_todo = self.mapped('move_lines').filtered(lambda move: move.state in ['draft', 'waiting', 'partially_available', 'assigned', 'confirmed'] and move.quantity_done > 0)
                     backorder_moves_vals = []
                     for move in moves_todo:
                         # To know whether we need to create a backorder or not, round to the general product's
@@ -209,7 +223,7 @@ class StockPicking(models.Model):
             # CLOSED ORDER
             if is_closed and status == 1 and fully_allocated:
                 tracking_number = response.get('routingInfo').get('trackingNumber')
-                self.tracking_3pl = tracking_number
+                self.carrier_tracking_ref  = tracking_number
                 # Check if this picking is internal transfer and the dest location is manual validated
                 if self.picking_type_id.code == 'internal' and self.location_dest_id.is_manual_validate:
                     return
@@ -322,7 +336,7 @@ class StockPicking(models.Model):
         backorders = self.env['stock.picking']
         bo_to_assign = self.env['stock.picking']
         for picking in self:
-            moves_to_backorder = picking.move_lines.filtered(lambda x: x.id not in ids)
+            moves_to_backorder = picking.move_lines.filtered(lambda x: x.id not in ids or x.quantity_done == 0)
             if moves_to_backorder:
                 backorder_picking = picking.copy({
                     'name': '/',

@@ -894,7 +894,7 @@ class ShopifyFeedOrders(models.Model):
             Tax = self.env['account.tax']
             tax_ob = Tax.sudo().search(search_domain, limit=1)
             if not tax_ob:
-                Tax.sudo().create({
+                tax_ob = Tax.sudo().create({
                     'name': tax_id['title'],
                     'amount': tax_id['rate'] * 100,
                     'type_tax_use': 'sale',
