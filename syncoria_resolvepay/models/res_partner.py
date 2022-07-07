@@ -1,7 +1,7 @@
 from odoo import models, fields, api, _
 import requests
 from odoo.exceptions import UserError, ValidationError
-import json
+import json, time
 from requests.auth import HTTPBasicAuth
 
 import logging
@@ -16,6 +16,19 @@ class ResPartner(models.Model):
     terms = fields.Char(string='Terms', tracking=True)
     net_terms_status = fields.Char(string='Net Term Status', tracking=True)
     credit_status = fields.Char(string='Credit Check Status', tracking=True)
+
+    def action_update_resolve_pay(self):
+        to_update = self.env['res.partner'].search([('resolvepay_customer_id', '!=', None)])
+        print("to_update")
+        print(to_update)
+        if not to_update:
+            return
+        for rec in to_update:
+            try:
+                time.sleep(0.5)
+                rec.fetch_customer_resolvepay()
+            except:
+                continue
 
     def create_customer_resolvepay(self):
         print('create_customer_resolvepay')
