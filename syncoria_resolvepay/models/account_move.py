@@ -14,8 +14,7 @@ class Invoice(models.Model):
 
     def action_update_resolve_pay(self):
         to_update = self.env['account.move'].search([('resolvepay_invoice_id', '!=', None), ('state', '=', 'posted'), ('payment_state', 'in', ('not_paid', 'in_payment', 'partial'))])
-        print("to_update")
-        print(to_update)
+        _logger.info("Invoices info =====> %s", to_update)
         if not to_update:
             return
         for rec in to_update:

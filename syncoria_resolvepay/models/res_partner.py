@@ -19,8 +19,6 @@ class ResPartner(models.Model):
 
     def action_update_resolve_pay(self):
         to_update = self.env['res.partner'].search([('resolvepay_customer_id', '!=', None)])
-        print("to_update")
-        print(to_update)
         if not to_update:
             return
         for rec in to_update:
