@@ -183,33 +183,34 @@ class ProductProduct(models.Model):
 
     def update_product_qty_from_3pl(self):
         instance = self.env['instance.3pl'].search([], limit=1)
-        url = "https://secure-wms.com/inventory/stocksummaries?pgsiz=500&pgnum=1&rql=ItemId=={}".format(self.product_3pl_id)
+        for record in self:
+            url = "https://secure-wms.com/inventory/stocksummaries?pgsiz=500&pgnum=1&rql=ItemId=={}".format(record.product_3pl_id)
 
-        headers = {
-            'Host': 'secure-wms.com',
-            'Accept-Language': 'en-US,en;q=0.8',
-            'Content-Type': 'application/json; charset=utf-8',
-            'Accept': 'application/hal+json',
-            'Authorization': 'Bearer ' + str(instance.access_token)
-        }
+            headers = {
+                'Host': 'secure-wms.com',
+                'Accept-Language': 'en-US,en;q=0.8',
+                'Content-Type': 'application/json; charset=utf-8',
+                'Accept': 'application/hal+json',
+                'Authorization': 'Bearer ' + str(instance.access_token)
+            }
 
-        response = requests.request("GET", url, headers=headers)
-        if response.status_code == 200:
-            response = json.loads(response.text)
-            summaries = response.get('summaries')
-            if self.product_warehouse_3pl_ids:
-                self.product_warehouse_3pl_ids = [(5,0,0)]
-            for each_warehouse in summaries:
-                print(each_warehouse)
-                fac = self.env['facilities.3pl'].search([('facilityId', '=', each_warehouse.get('facilityId')), ('instance_3pl_id', '=', instance.id)])
-                # if not fac.warehouse_id:
-                #     raise UserError('There is no warehouse mapping for facilityId: {}'.format(each_warehouse.get('facilityId')))
-                self.env['product.warehouse.3pl'].create({
-                    'name': each_warehouse.get('facilityId'),
-                    'warehouse_name': fac.name,
-                    'product_id': self.id,
-                    'quantity': each_warehouse.get('onHand')
-                })
-        else:
-            _logger.info(response.text)
-            raise UserError(response.text)
+            response = requests.request("GET", url, headers=headers)
+            if response.status_code == 200:
+                response = json.loads(response.text)
+                summaries = response.get('summaries')
+                if record.product_warehouse_3pl_ids:
+                    record.product_warehouse_3pl_ids = [(5,0,0)]
+                for each_warehouse in summaries:
+                    print(each_warehouse)
+                    fac = self.env['facilities.3pl'].search([('facilityId', '=', each_warehouse.get('facilityId')), ('instance_3pl_id', '=', instance.id)])
+                    # if not fac.warehouse_id:
+                    #     raise UserError('There is no warehouse mapping for facilityId: {}'.format(each_warehouse.get('facilityId')))
+                    self.env['product.warehouse.3pl'].create({
+                        'name': each_warehouse.get('facilityId'),
+                        'warehouse_name': fac.name,
+                        'product_id': record.id,
+                        'quantity': each_warehouse.get('onHand')
+                    })
+            else:
+                _logger.info(response.text)
+                raise UserError(response.text)
