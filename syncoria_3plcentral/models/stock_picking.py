@@ -197,6 +197,8 @@ class StockPicking(models.Model):
             return
         if not self.threeplId:
             raise UserError("The transfer does not have 3PL ID (Maybe it hasn't been exported)")
+        if not self.state == 'push_3pl':
+            raise UserError("Only 'Push To 3PL' orders can be updated")
         url = "https://secure-wms.com/orders/{}".format(self.threeplId)
 
         headers = {
