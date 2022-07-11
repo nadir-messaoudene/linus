@@ -127,7 +127,7 @@ class StockPicking(models.Model):
 
         fullfillment["tracking_company"]=self.carrier_id.delivery_type if self.carrier_id else None
         fullfillment.update({
-            "location_id": self.location_id.warehouse_id.shopify_warehouse_id,
+            "location_id": self.location_id.shopify_warehouse_id,
             "notify_customer": marketplace_instance_id.notify_customer or False
         })
 
@@ -275,3 +275,15 @@ class  InheritedStockwarehouse(models.Model):
     def _partner_id_change(self):
         if self.shopify_warehouse.partner_id:
             self.partner_id = self.shopify_warehouse.partner_id
+
+class  InheritedStocklocation(models.Model):
+    _inherit = 'stock.location'
+
+    shopify_warehouse_id = fields.Char(related='shopify_warehouse.shopify_invent_id',string="Shopify Warehouse ID",
+                                       store=True,
+                                       readonly=True,
+                                       )
+    shopify_warehouse_active = fields.Boolean(string='Shopify Active', related='shopify_warehouse.shopify_loc_active',store=True,
+                                       readonly=True,)
+
+    shopify_warehouse = fields.Many2one("shopify.warehouse",string="Shopify Warehouse",help="If this field have value it will update qty of product/product variants.If not set value it will only update price. ")

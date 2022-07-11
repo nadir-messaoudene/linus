@@ -1,0 +1,33 @@
+<odoo>
+  <data>
+
+        <record id="update_stock_wizard_inherit" model="ir.ui.view">
+            <field name="name">update.stock.wizard.inherit</field>
+            <field name="model">update.stock.wizard</field>
+            <field name="inherit_id" ref="syncoria_base_marketplace.update_stock_wizard" />
+            <field name="arch" type="xml">
+                <xpath expr="//sheet/group/group[2]" position="replace">
+                    <group>
+                        <field name="dest_shopify_loc_id" options="{'no_create': True}" attrs="{'invisible': [('fetch_type','!=','from_odoo')], 'required': [('fetch_type','=', 'from_odoo')]}" />
+                        <field name="source_location_ids" widget="many2many_tags" attrs="{'invisible': [('fetch_type','!=','from_odoo')], 'required': [('fetch_type','=', 'from_odoo')]}"/>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="stock_location_form_inherit_shopify" model="ir.ui.view">
+            <field name="name">stock.location.form.inherit.shopify</field>
+            <field name="model">stock.location</field>
+            <field name="inherit_id" ref="stock.view_location_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//group[@name='additional_info']" position="after">
+                    <group string="Shopify">
+                        <field name="shopify_warehouse_id" />
+                        <field name="shopify_warehouse_active" />
+                        <field name="shopify_warehouse" />
+                    </group>
+                </xpath>
+            </field>
+        </record>
+  </data>
+</odoo>

@@ -39,6 +39,8 @@ class ProductsFetchWizard(models.Model):
         ('to_odoo', 'Import stock status'),
         ('from_odoo', 'Export stock status')
     ], string="Operation Type")
+    dest_shopify_loc_id = fields.Many2one("shopify.warehouse", string="Shopify Warehouse", domain=[("shopify_invent_id", "!=", False),("shopify_loc_active", "=", True)])
+    source_location_ids = fields.Many2many('stock.location', string="Source Location", )
 
     def action_update_stock_item(self):
         print("""action_update_stock_item===>>>>""")
@@ -180,6 +182,7 @@ class ProductsFetchWizard(models.Model):
 
                 except Exception as e:
                     _logger.warning("Exception-%s", e.args)
+                    raise UserError(e)
 
             return {
                 'type': 'ir.actions.client',
@@ -207,11 +210,11 @@ class ProductsFetchWizard(models.Model):
                             host = marketplace_instance_id.marketplace_host[0:-1]
                     print("HOST===>>>", host)
                     if product.type == 'product' and product.shopify_id and product_template.attribute_line_ids:
-                        if self.shopify_warehouse:
+                        if self.dest_shopify_loc_id:
                             update_qty = self._shopify_update_qty(
-                                warehouse=self.shopify_warehouse.shopify_warehouse_id,
+                                warehouse=self.dest_shopify_loc_id.shopify_invent_id,
                                 inventory_item_id=product.shopify_inventory_id, quantity=int(
-                                    product.with_context({"warehouse": self.shopify_warehouse.id}).qty_available),
+                                    product.with_context({"location": self.source_location_ids.ids}).qty_available),
                                 marketplace_instance_id=marketplace_instance_id, host=host)
                         else:
                             quants_ids = product.stock_quant_ids.search(
@@ -219,7 +222,7 @@ class ProductsFetchWizard(models.Model):
                             for quants in quants_ids:
                                 if marketplace_instance_id.set_stock and product.qty_available and quants.location_id.warehouse_id.shopify_warehouse_active:
                                     update_qty = self._shopify_update_qty(
-                                        warehouse=quants.location_id.warehouse_id.shopify_warehouse_id,
+                                        warehouse=quants.location_id.shopify_warehouse_id,
                                         inventory_item_id=product.shopify_inventory_id,
                                         quantity=int(quants.quantity),
                                         marketplace_instance_id=marketplace_instance_id,
@@ -281,18 +284,20 @@ class ProductsFetchWizard(models.Model):
         # return
 
     def change_product_qty(self, stock_info, product_info):
-        warehouse = self.env['stock.warehouse'].search(
+        location = self.env['stock.location'].search(
             [("shopify_warehouse_id", "=", stock_info.get("location_id")), ("shopify_warehouse_active", "=", True)],
             limit=1)
         # Before creating a new quant, the quand `create` method will check if
         # it exists already. If it does, it'll edit its `inventory_quantity`
         # instead of create a new one.
-        if warehouse:
+        if location:
             self.env['stock.quant'].with_context(inventory_mode=True).create({
                 'product_id': product_info.id,
-                'location_id': warehouse.lot_stock_id.id,
+                'location_id': location.id,
                 'inventory_quantity': stock_info.get('available'),
             }).action_apply_inventory()
+        else:
+            raise UserError('Cannot find location that is mapped to shopify location id: {}'.format(stock_info.get("location_id")))
 
     def _shopify_update_qty(self, **kwargs):
         Connector = self.env['marketplace.connector']
