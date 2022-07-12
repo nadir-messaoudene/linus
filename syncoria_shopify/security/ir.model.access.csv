@@ -58,3 +58,6 @@ access_shopify_fulfilment_man,access_shopify_fulfilment_man,model_shopify_fulfil
 ,,,,,,
 access_shopify_fulfilment_line_usr,access_shopify_fulfilment_line_usr,model_shopify_fulfilment_line,base.group_user,1,0,0,0
 access_shopify_fulfilment_line_man,access_shopify_fulfilment_line_man,model_shopify_fulfilment_line,base.group_erp_manager,1,1,1,1
+
+access_shopify_multi_store_usr,access_shopify_multi_store_usr,model_shopify_multi_store,base.group_user,1,0,0,0
+access_shopify_multi_store_man,access_shopify_multi_store_man,model_shopify_multi_store,base.group_erp_manager,1,1,1,1

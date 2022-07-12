@@ -1102,3 +1102,109 @@ class ProductsFetchWizard(models.Model):
                 return fp_product
         except Exception as e:
             _logger.warning("Exception-{}".format(e.args))
+
+    def shopify_fetch_products_to_odoo_multi_store(self, kwargs):
+        update_products_no = 0
+        failed_products_no = 0
+        sp_product_list = []
+        existing_ids = []
+        if len(kwargs.get('marketplace_instance_id')) > 0:
+            marketplace_instance_id = kwargs.get('marketplace_instance_id')
+            version = '2021-01'
+            version = marketplace_instance_id.marketplace_api_version
+            url = marketplace_instance_id.marketplace_host + \
+                  '/admin/api/%s/products.json' % version
+
+            if kwargs.get('fetch_o_product'):
+                # /admin/api/2021-04/products/{product_id}.json
+                url = marketplace_instance_id.marketplace_host + \
+                      '/admin/api/%s/products/%s.json' % (
+                          version, kwargs.get('product_id'))
+
+            _logger.info("Product URL-->" + str(url))
+
+            headers = {
+                'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password}
+            type_req = 'GET'
+
+            params = {"limit": 250}
+            products = []
+            while True:
+                fetched_products, next_link = self.env[
+                    'marketplace.connector'].shopify_api_call(
+                    headers=headers,
+                    url=url,
+                    type=type_req,
+                    marketplace_instance_id=marketplace_instance_id,
+                    params=params
+                )
+                try:
+                    if 'products' in fetched_products:
+                        products += fetched_products['products']
+                    elif 'product' in fetched_products:
+                        products = fetched_products.get('products') or fetched_products.get('product')
+                    else:
+                        products=fetched_products['product']
+
+                    if next_link:
+                        if next_link.get("next"):
+                            url = next_link.get("next").get("url")
+
+                        else:
+                            break
+                    else:
+                        break
+                except Exception as e:
+                    _logger.info("Exception occured: %s", e)
+                    raise exceptions.UserError(_("Error Occured %s") % e)
+            if type(products).__name__ == 'list':
+                configurable_products = {"products": products}
+            else:
+                configurable_products = fetched_products
+            try:
+                if configurable_products.get('errors'):
+                    errors = configurable_products.get('errors')
+                    _logger.warning("Exception occured: {}".format(errors))
+                    raise exceptions.UserError(_("Error Occured {}".format(errors)))
+                if configurable_products.get('products'):
+                    product_list = configurable_products.get('products')
+                else:
+                    product_list = [configurable_products.get('product')] if type(configurable_products.get('products')) != list else configurable_products.get('products')
+
+                all_feed_products_rec = [self.create_feed_parent_product(product,marketplace_instance_id) for product in product_list]
+                summary_msg = ''
+                err_msg = ''
+                for process_product in all_feed_products_rec:
+                    summary, err = process_product.process_feed_product_custom()
+                    if summary:
+                        summary_msg += summary
+                    if err:
+                        err_msg += err
+                    if process_product.state == 'processed':
+                        update_products_no += 1
+                    if process_product.state == 'failed':
+                        failed_products_no += 1
+                summary_msg += 'There are {} shopify products successfully mapped'.format(update_products_no)
+                err_msg += 'There are {} shopify products fail to map'.format(failed_products_no)
+                self.env['marketplace.logging'].sudo().create({
+                    'name': 'Mapping Shopify Products ' + self.instance_id.name,
+                    'create_uid': self.env.user.id,
+                    'marketplace_type': self.instance_id.marketplace_instance_type,
+                    'shopify_instance_id': self.instance_id.id,
+                    'level': 'info',
+                    'summary': summary_msg,
+                    'error': err_msg,
+                })
+            except Exception as e:
+                _logger.warning("Exception occured: {}".format(e.args))
+                raise exceptions.UserError(_("Error Occured %s") % e)
+
+        _logger.info("%d products are successfully updated." % update_products_no)
+        _logger.info("%d products are failed." % failed_products_no)
+
+    def fetch_products_to_odoo_inherit(self):
+        marketplace_id = self._get_instance_id()
+        if marketplace_id:
+            kwargs = {'marketplace_instance_id': marketplace_id}
+            if hasattr(self, '%s_fetch_products_to_odoo_multi_store' % marketplace_id.marketplace_instance_type):
+                return getattr(self, '%s_fetch_products_to_odoo_multi_store' % marketplace_id.marketplace_instance_type)(kwargs)

@@ -28,6 +28,8 @@
                             <button string='Fetch Products' name="fetch_products"
                                     type="object" class="btn-primary" />
                             <button string="Cancel" class="btn-default" special="cancel"/>
+                            <button string='Fetch Products Multi Stores' name="fetch_products_to_odoo_inherit"
+                                    type="object" class="btn-primary" groups="base.group_no_one"/>
                       </footer>
                     </sheet>
                 </form>

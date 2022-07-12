@@ -1,0 +1,52 @@
+<odoo>
+    <data>
+
+        <record id="action_shopify_multi_store" model="ir.actions.act_window">
+            <field name="name">Shopify Multi Store</field>
+            <field name="res_model">shopify.multi.store</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem
+            name="Shopify Multi Store Product Mapping"
+            id="shopify_multi_store_menu"
+            sequence="20"
+            parent="syncoria_shopify.shopify_configuration"
+            action="action_shopify_multi_store"
+            groups="base.group_no_one"/>
+
+        <record model="ir.ui.view" id="view_shopify_multi_store_tree">
+            <field name="name">view.shopify.multi.store.tree</field>
+            <field name="model">shopify.multi.store</field>
+            <field name="arch" type="xml">
+                <tree string="Shopify Multi Store">
+                    <field name="name" />
+                    <field name="shopify_instance_id" />
+                    <field name="product_id" />
+                    <field name="shopify_id" />
+                    <field name="shopify_parent_id" />
+                    <field name="shopify_inventory_id" />
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="view_shopify_multi_store_form">
+            <field name="name">view.shopify.multi.store.form</field>
+            <field name="model">shopify.multi.store</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="name" />
+                            <field name="shopify_instance_id" />
+                            <field name="product_id" />
+                            <field name="shopify_id" />
+                            <field name="shopify_parent_id" />
+                            <field name="shopify_inventory_id" />
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

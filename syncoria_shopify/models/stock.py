@@ -279,11 +279,4 @@ class  InheritedStockwarehouse(models.Model):
 class  InheritedStocklocation(models.Model):
     _inherit = 'stock.location'
 
-    shopify_warehouse_id = fields.Char(related='shopify_warehouse.shopify_invent_id',string="Shopify Warehouse ID",
-                                       store=True,
-                                       readonly=True,
-                                       )
-    shopify_warehouse_active = fields.Boolean(string='Shopify Active', related='shopify_warehouse.shopify_loc_active',store=True,
-                                       readonly=True,)
-
-    shopify_warehouse = fields.Many2one("shopify.warehouse",string="Shopify Warehouse",help="If this field have value it will update qty of product/product variants.If not set value it will only update price. ")
+    shopify_warehouse_ids = fields.Many2many("shopify.warehouse",string="Shopify Warehouse")

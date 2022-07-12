@@ -1377,3 +1377,35 @@ class ShopifyFeedProducts(models.Model):
                      ])
 
         return template
+
+    def process_feed_product_custom(self):
+        product_dict = json.loads(self.product_data)
+        product_variants = product_dict.get('variants')
+        err_msg = ''
+        summary = ''
+        for product in product_variants:
+            product_id = self.env['product.product'].sudo().search([('default_code', '=', product.get('sku'))])
+            # Assume that SKU is always unique
+            if product_id:
+                # At the time this function is written, we assume that each product.product should have max 3 mappings (3 shopify stores)
+                # So the search should always return 1 record, if more, there is something wrong
+                prod_mapping = self.env['shopify.multi.store'].sudo().search([('product_id', '=', product_id.id), ('shopify_instance_id', '=', self.instance_id.id)])
+                val_dict = {
+                    'name': product.get('sku'),
+                    'shopify_instance_id': self.instance_id.id,
+                    'product_id': product_id.id,
+                    'shopify_id': product.get('id'),
+                    'shopify_parent_id': product.get('product_id'),
+                    'shopify_inventory_id': product.get('inventory_item_id')
+                }
+                if not prod_mapping:
+                    prod_mapping = self.env['shopify.multi.store'].sudo().create(val_dict)
+                else:
+                    prod_mapping.write(val_dict)
+                summary += 'Product Odoo ID: {} is mapped to Shopify Store {}\n'.format(product_id, self.instance_id.name)
+                self.state = 'processed'
+            else:
+                err_msg += 'SKU: {} does not exist in Odoo. Shopify Product Parent ID: {}\n'.format(product.get('sku'), product.get('product_id'))
+                self.state = 'failed'
+                break
+        return summary, err_msg
