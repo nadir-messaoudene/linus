@@ -40,6 +40,8 @@ class WarehouseFetchWizard(models.TransientModel):
         if marketplace_instance_id:
             marketplace_instance_id = self.env['marketplace.instance'].sudo().search(
                 [('id', '=', marketplace_instance_id[0])])
+            if self.instance_id:
+                marketplace_instance_id = self.instance_id
         return marketplace_instance_id
 
 

@@ -8,9 +8,15 @@
             <field name="arch" type="xml">
                 <xpath expr="//sheet/group/group[2]" position="replace">
                     <group>
-                        <field name="dest_shopify_loc_id" options="{'no_create': True}" attrs="{'invisible': [('fetch_type','!=','from_odoo')], 'required': [('fetch_type','=', 'from_odoo')]}" />
-                        <field name="source_location_ids" widget="many2many_tags" attrs="{'invisible': [('fetch_type','!=','from_odoo')], 'required': [('fetch_type','=', 'from_odoo')]}"/>
+                        <field name="warehouse_id" options="{'no_create': True}" attrs="{'invisible': [('fetch_type','!=','from_odoo')]}" />
+                        <field name="source_location_ids" options="{'no_create': True}" widget="many2many_tags" attrs="{'invisible': [('fetch_type','!=','from_odoo')]}"/>
                     </group>
+                </xpath>
+                <xpath expr="//p" position="before">
+                    <p attrs="{'invisible': [('fetch_type','!=','from_odoo')]}">
+                        Please select either Warehouse or Source Location. If you choose a warehouse, we will update all locations that belong to that warehouse.
+                        If you just want to update stock of a specific location, please leave Warehouse blank.
+                    </p>
                 </xpath>
             </field>
         </record>
