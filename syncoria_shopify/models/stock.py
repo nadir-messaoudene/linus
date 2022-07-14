@@ -126,8 +126,15 @@ class StockPicking(models.Model):
                 fullfillment['tracking_url']=self.carrier_tracking_url
 
         fullfillment["tracking_company"]=self.carrier_id.delivery_type if self.carrier_id else None
+        SaleOrder = self.env['sale.order'].sudo()
+        try:
+            sp_order_obj = SaleOrder.search([('name', '=', self.origin)], limit=1)
+            shopify_warehouse = self.location_id.shopify_warehouse_ids.filtered(lambda l: l.shopify_instance_id.id == sp_order_obj.shopify_instance_id.id)
+            shopify_inv_id = shopify_warehouse.shopify_invent_id
+        except:
+            raise exceptions.UserError(_("The location is mapped to more than 1 warehouse of the same store"))
         fullfillment.update({
-            "location_id": self.location_id.shopify_warehouse_id,
+            "location_id": shopify_inv_id,
             "notify_customer": marketplace_instance_id.notify_customer or False
         })
 
