@@ -189,7 +189,7 @@ class ShopifyFeedOrders(models.Model):
 
         return customer
 
-    def get_partner_invoice_id(self, sp_order_dict, partner_id):
+    def get_partner_invoice_id(self, sp_order_dict, partner_id, no_name=False):
         res_partner = self.env['res.partner'].sudo()
         partner_invoice_id = partner_id
         if sp_order_dict.get('billing_address'):
@@ -210,21 +210,34 @@ class ShopifyFeedOrders(models.Model):
                                 ] if billing_address.get('province') else state_domain
                 state_id = self.env['res.country.state'].sudo().search(
                     state_domain, limit=1)
-
-                partner_invoice_id.write({
-                    'name': billing_address.get('name', None),
-                    'street': billing_address.get('address1'),
-                    'street2': billing_address.get('address2'),
-                    'zip': billing_address.get('zip'),
-                    'country_id': country_id.id,
-                    'state_id': state_id.id,
-                    'city': billing_address.get('city'),
-                    'parent_id': partner_id.id,
-                    'property_account_receivable_id' : partner_id.property_account_receivable_id.id,
-                    'property_account_payable_id' : partner_id.property_account_payable_id.id,
-                    'type': 'invoice'
-                })
-
+                if not no_name:
+                    partner_invoice_id.write({
+                        'name': billing_address.get('name', None),
+                        'street': billing_address.get('address1'),
+                        'street2': billing_address.get('address2'),
+                        'zip': billing_address.get('zip'),
+                        'country_id': country_id.id,
+                        'state_id': state_id.id,
+                        'city': billing_address.get('city'),
+                        'parent_id': partner_id.id,
+                        'property_account_receivable_id' : partner_id.property_account_receivable_id.id,
+                        'property_account_payable_id' : partner_id.property_account_payable_id.id,
+                        'type': 'invoice'
+                    })
+                else:
+                    partner_invoice_id = self.env['res.partner'].create({
+                        'name': billing_address.get('name', None),
+                        'street': billing_address.get('address1'),
+                        'street2': billing_address.get('address2'),
+                        'zip': billing_address.get('zip'),
+                        'country_id': country_id.id,
+                        'state_id': state_id.id,
+                        'city': billing_address.get('city'),
+                        'parent_id': partner_id.id,
+                        'property_account_receivable_id': partner_id.property_account_receivable_id.id,
+                        'property_account_payable_id': partner_id.property_account_payable_id.id,
+                        'type': 'invoice'
+                    })
 
             if not partner_invoice_id:
                 partner_invoice_id = self._match_or_create_address(
@@ -243,7 +256,7 @@ class ShopifyFeedOrders(models.Model):
             _logger.warning("Exception-{}".format(e.args))
         return partner_invoice_id
 
-    def get_partner_shipping_id(self, sp_order_dict, partner_id):
+    def get_partner_shipping_id(self, sp_order_dict, partner_id, no_name=False):
         partner_shipping_id = partner_id
         if sp_order_dict.get('shipping_address'):
             shipping_address = sp_order_dict.get('shipping_address', {})
@@ -263,22 +276,35 @@ class ShopifyFeedOrders(models.Model):
                                 ] if shipping_address.get('province') else state_domain
                 state_id = self.env['res.country.state'].sudo().search(
                     state_domain, limit=1)
+                if not no_name:
+                    partner_shipping_id.write({
+                        'name': shipping_address.get('name', None),
+                        'street': shipping_address.get('address1'),
+                        'street2': shipping_address.get('address2'),
+                        'zip': shipping_address.get('zip'),
+                        'country_id': country_id.id,
+                        'state_id': state_id.id,
+                        'city': shipping_address.get('city'),
+                        'parent_id': partner_id.id,
+                        'property_account_receivable_id' : partner_id.property_account_receivable_id.id,
+                        'property_account_payable_id' : partner_id.property_account_payable_id.id,
+                        'type': 'delivery'
+                    })
+                else:
+                    partner_shipping_id = self.env['res.partner'].create({
+                        'name': shipping_address.get('name', None),
+                        'street': shipping_address.get('address1'),
+                        'street2': shipping_address.get('address2'),
+                        'zip': shipping_address.get('zip'),
+                        'country_id': country_id.id,
+                        'state_id': state_id.id,
+                        'city': shipping_address.get('city'),
+                        'parent_id': partner_id.id,
+                        'property_account_receivable_id': partner_id.property_account_receivable_id.id,
+                        'property_account_payable_id': partner_id.property_account_payable_id.id,
+                        'type': 'delivery'
+                    })
 
-                partner_shipping_id.write({
-                    'name': shipping_address.get('name', None),
-                    'street': shipping_address.get('address1'),
-                    'street2': shipping_address.get('address2'),
-                    'zip': shipping_address.get('zip'),
-                    'country_id': country_id.id,
-                    'state_id': state_id.id,
-                    'city': shipping_address.get('city'),
-                    'parent_id': partner_id.id,
-                    'property_account_receivable_id' : partner_id.property_account_receivable_id.id,
-                    'property_account_payable_id' : partner_id.property_account_payable_id.id,
-                    'type': 'invoice'
-                })
-
-                
             if not partner_shipping_id:
                 partner_shipping_id = self._match_or_create_address(
                     partner_id, sp_order_dict.get('shipping_address'), 'delivery')
@@ -320,6 +346,10 @@ class ShopifyFeedOrders(models.Model):
                 self._cr.commit()
             except Exception as e:
                 _logger.warning("Exception-{}".format(e.args))
+        else:
+            partner_id = res_partner.browse(133524)
+            partner_invoice_id = self.get_partner_invoice_id(sp_order_dict, partner_id, no_name=True)
+            partner_shipping_id = self.get_partner_shipping_id(sp_order_dict, partner_id, no_name=True)
         return partner_id, partner_invoice_id, partner_shipping_id
 
 
