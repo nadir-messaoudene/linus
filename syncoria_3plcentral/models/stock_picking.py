@@ -191,68 +191,69 @@ class StockPicking(models.Model):
             raise UserError("Only Order in Waiting and Ready state can be pushed to 3PL.")
 
     def update_picking_from_3pl(self):
-        print("update_picking_from_3pl")
-        instance = self.env['instance.3pl'].search([], limit=1)
-        if self.picking_type_id.code == 'incoming':
-            return
-        if not self.threeplId:
-            raise UserError("The transfer does not have 3PL ID (Maybe it hasn't been exported)")
-        if not self.state == 'push_3pl':
-            raise UserError("Only 'Push To 3PL' orders can be updated")
-        url = "https://secure-wms.com/orders/{}".format(self.threeplId)
+        for record in self:
+            print("update_picking_from_3pl")
+            instance = self.env['instance.3pl'].search([], limit=1)
+            if record.picking_type_id.code == 'incoming':
+                return
+            if not record.threeplId:
+                raise UserError("The transfer does not have 3PL ID (Maybe it hasn't been exported)")
+            if not record.state == 'push_3pl':
+                raise UserError("Only 'Push To 3PL' orders can be updated")
+            url = "https://secure-wms.com/orders/{}".format(record.threeplId)
 
-        headers = {
-            'Host': 'secure-wms.com',
-            'Accept-Language': 'en-US,en;q=0.8',
-            'Content-Type': 'application/json; charset=utf-8',
-            'Accept': 'application/hal+json',
-            'Authorization': 'Bearer ' + str(instance.access_token)
-        }
-        response = requests.request("GET", url, headers=headers, data={})
-        print(response.status_code)
-        if response.status_code == 200:
-            response = json.loads(response.text)
-            print(response)
-            is_closed = response.get('readOnly').get('isClosed')
-            status = response.get('readOnly').get('status')
-            fully_allocated = response.get('readOnly').get('fullyAllocated')
-            print(is_closed)
-            print(status)
-            # CANCEL ORDER
-            if is_closed and status == 2:
-                if self.state == 'push_3pl':
-                    self.action_cancel()
-            # CLOSED ORDER
-            if is_closed and status == 1 and fully_allocated:
-                tracking_number = response.get('routingInfo').get('trackingNumber')
-                self.carrier_tracking_ref  = tracking_number
-                # Check if this picking is internal transfer and the dest location is manual validated
-                if self.picking_type_id.code == 'internal' and self.location_dest_id.is_manual_validate:
-                    return
-                # Line 210 - 224: To Compare Qty Done between Odoo and 3PL, overwrite Odoo Qty if 3PL has less
-                items_dict = self.get_order_item_3pl(self.threeplId)
-                dict_item_to_create_backorder_lines = {}
-                for item in items_dict:
-                    item_3pl_id = item.get('itemIdentifier').get('id')
-                    item_qty = item.get('qty')
-                    item_odoo_id = self.env['product.product'].search([('product_3pl_id', '=', item_3pl_id)])
-                    if not item_odoo_id:
-                        raise UserError('Can not find the product with 3pl id: ' + str(item_3pl_id))
-                    res_item = self.move_line_ids_without_package.filtered(lambda l: l.product_id == item_odoo_id)
-                    if not res_item:
-                        raise UserError(
-                            'Can not find move_line_ids_without_package with product_id: ' + str(item_odoo_id.id))
-                    if res_item.qty_done != item_qty:
-                        dict_item_to_create_backorder_lines[item_odoo_id.id] = res_item.qty_done - item_qty
-                        res_item.write({'qty_done': item_qty})
-                res_dict = self.button_validate()
-                if type(res_dict) != bool:
-                    self.env['stock.backorder.confirmation'].with_context(res_dict['context']).process()
-                sale_order = self.env['sale.order'].search([('name', '=', self.origin)])
-                if sale_order and sale_order.shopify_id:
-                    self.create_shopify_fulfillment()
-        else:
-            raise UserError(response.text)
+            headers = {
+                'Host': 'secure-wms.com',
+                'Accept-Language': 'en-US,en;q=0.8',
+                'Content-Type': 'application/json; charset=utf-8',
+                'Accept': 'application/hal+json',
+                'Authorization': 'Bearer ' + str(instance.access_token)
+            }
+            response = requests.request("GET", url, headers=headers, data={})
+            print(response.status_code)
+            if response.status_code == 200:
+                response = json.loads(response.text)
+                print(response)
+                is_closed = response.get('readOnly').get('isClosed')
+                status = response.get('readOnly').get('status')
+                fully_allocated = response.get('readOnly').get('fullyAllocated')
+                print(is_closed)
+                print(status)
+                # CANCEL ORDER
+                if is_closed and status == 2:
+                    if record.state == 'push_3pl':
+                        record.action_cancel()
+                # CLOSED ORDER
+                if is_closed and status == 1 and fully_allocated:
+                    tracking_number = response.get('routingInfo').get('trackingNumber')
+                    record.carrier_tracking_ref = tracking_number
+                    # Check if this picking is internal transfer and the dest location is manual validated
+                    if record.picking_type_id.code == 'internal' and record.location_dest_id.is_manual_validate:
+                        return
+                    # Line 210 - 224: To Compare Qty Done between Odoo and 3PL, overwrite Odoo Qty if 3PL has less
+                    items_dict = record.get_order_item_3pl(record.threeplId)
+                    dict_item_to_create_backorder_lines = {}
+                    for item in items_dict:
+                        item_3pl_id = item.get('itemIdentifier').get('id')
+                        item_qty = item.get('qty')
+                        item_odoo_id = self.env['product.product'].search([('product_3pl_id', '=', item_3pl_id)])
+                        if not item_odoo_id:
+                            raise UserError('Can not find the product with 3pl id: ' + str(item_3pl_id))
+                        res_item = record.move_line_ids_without_package.filtered(lambda l: l.product_id == item_odoo_id)
+                        if not res_item:
+                            raise UserError(
+                                'Can not find move_line_ids_without_package with product_id: ' + str(item_odoo_id.id))
+                        if res_item.qty_done != item_qty:
+                            dict_item_to_create_backorder_lines[item_odoo_id.id] = res_item.qty_done - item_qty
+                            res_item.write({'qty_done': item_qty})
+                    res_dict = record.button_validate()
+                    if type(res_dict) != bool:
+                        self.env['stock.backorder.confirmation'].with_context(res_dict['context']).process()
+                    sale_order = self.env['sale.order'].search([('name', '=', record.origin)])
+                    if sale_order and sale_order.shopify_id:
+                        record.create_shopify_fulfillment()
+            else:
+                raise UserError(response.text)
 
     def get_order_item_3pl(self, order_id):
         instance = self.env['instance.3pl'].search([], limit=1)
