@@ -29,7 +29,7 @@
         </record>
        
         <record id="update_stock_from_shopify1" model="ir.actions.act_window">
-            <field name="name">Update Stock &amp; Price</field>
+            <field name="name">Update Stock &amp; Price to Shopify</field>
             <field name="res_model">update.stock.wizard</field>
             <field name="view_mode">form,tree</field>
             <field name="view_id" ref="update_stock_wizard"/>
@@ -39,7 +39,7 @@
         </record>      
 
         <record id="update_stock_from_shopify2" model="ir.actions.act_window">
-            <field name="name">Update Stock &amp; Price</field>
+            <field name="name">Update Stock &amp; Price to Shopify</field>
             <field name="res_model">update.stock.wizard</field>
             <field name="view_mode">form</field>
             <field name="view_id" ref="update_stock_wizard"/>

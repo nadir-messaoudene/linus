@@ -191,7 +191,7 @@ class ProductsFetchWizard(models.Model):
         elif self.fetch_type == 'from_odoo':
             """TO DO: 'from_odoo'"""
             products = self._shopify_get_product_list(active_ids)
-
+            msg = ''
             for product in products:
                 try:
                     if self.warehouse_id:
@@ -235,6 +235,11 @@ class ProductsFetchWizard(models.Model):
                                                 product.with_context(
                                                     {"location": location.id}).qty_available),
                                             marketplace_instance_id=marketplace_instance_id, host=host)
+                                        product.message_post(
+                                            body='Prduct {} ({}) updated {} quantity from {} to location {} of store {}.\n'.format(
+                                                product.name, product.default_code, product.with_context(
+                                                    {"location": location.id}).qty_available, location.complete_name,
+                                                shopify_warehouse.shopify_loc_name, marketplace_instance_id.name))
                             else:
                                 if shopify_instance == product.shopify_instance_id:
                                     marketplace_instance_id = product.shopify_instance_id
@@ -272,6 +277,10 @@ class ProductsFetchWizard(models.Model):
                                                 inventory_item_id=product.shopify_inventory_id, quantity=int(
                                                     product.with_context({"location": location.id}).qty_available),
                                                 marketplace_instance_id=marketplace_instance_id, host=host)
+                                            product.message_post(body= 'Prduct {} ({}) updated {} quantity from {} to location {} of store {}.\n'.format(
+                                                product.name, product.default_code, product.with_context(
+                                                    {"location": location.id}).qty_available, location.complete_name,
+                                                shopify_warehouse.shopify_loc_name, marketplace_instance_id.name))
                                         # else:
                                         #     quants_ids = product.stock_quant_ids.search(
                                         #         [("location_id.usage", "=", "internal"), ("product_id", "=", product.id)])
@@ -311,6 +320,7 @@ class ProductsFetchWizard(models.Model):
                                         if 'call_button' in str(request.httprequest) and stock_item.get('errors'):
                                             errors = stock_item.get('errors', {}).get('error')
                                             _logger.warning(_("Request Error: %s" % (errors)))
+                    # product.message_post(body=msg)
                 except Exception as e:
                     _logger.warning("Error in Request: %s" % (e.args))
                     raise ValidationError(e)
