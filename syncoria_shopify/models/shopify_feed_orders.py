@@ -347,9 +347,10 @@ class ShopifyFeedOrders(models.Model):
             except Exception as e:
                 _logger.warning("Exception-{}".format(e.args))
         else:
-            partner_id = res_partner.browse(133524)
-            partner_invoice_id = self.get_partner_invoice_id(sp_order_dict, partner_id, no_name=True)
-            partner_shipping_id = self.get_partner_shipping_id(sp_order_dict, partner_id, no_name=True)
+            if self.instance_id.default_res_partner_id and sp_order_dict.get('tags') == 'Maisonette':
+                partner_id = self.instance_id.default_res_partner_id
+                partner_invoice_id = self.get_partner_invoice_id(sp_order_dict, partner_id, no_name=True)
+                partner_shipping_id = self.get_partner_shipping_id(sp_order_dict, partner_id, no_name=True)
         return partner_id, partner_invoice_id, partner_shipping_id
 
 

@@ -24,7 +24,7 @@ class ModelName(models.Model):
     marketplace_webhook = fields.Boolean(
         string='Use Webhook?',
     )
-    
+    default_res_partner_id = fields.Many2one('res.partner', string='Default Contact For Order With No Customer')
     @api.onchange('marketplace_host')
     def _onchange_marketplace_host(self):
         if self.marketplace_host and 'https://' in str(self.marketplace_host):
