@@ -233,12 +233,12 @@ class ProductsFetchWizard(models.Model):
                                             warehouse=shopify_warehouse.shopify_invent_id,
                                             inventory_item_id=prod_mapping.shopify_inventory_id, quantity=int(
                                                 product.with_context(
-                                                    {"location": location.id}).qty_available),
+                                                    {"location": location.id}).free_qty),
                                             marketplace_instance_id=marketplace_instance_id, host=host)
                                         product.message_post(
                                             body='Prduct {} ({}) updated {} quantity from {} to location {} of store {}.\n'.format(
                                                 product.name, product.default_code, product.with_context(
-                                                    {"location": location.id}).qty_available, location.complete_name,
+                                                    {"location": location.id}).free_qty, location.complete_name,
                                                 shopify_warehouse.shopify_loc_name, marketplace_instance_id.name))
                             else:
                                 if shopify_instance == product.shopify_instance_id:
@@ -275,11 +275,11 @@ class ProductsFetchWizard(models.Model):
                                             update_qty = self._shopify_adjust_qty(
                                                 warehouse=shopify_warehouse.shopify_invent_id,
                                                 inventory_item_id=product.shopify_inventory_id, quantity=int(
-                                                    product.with_context({"location": location.id}).qty_available),
+                                                    product.with_context({"location": location.id}).free_qty),
                                                 marketplace_instance_id=marketplace_instance_id, host=host)
                                             product.message_post(body= 'Prduct {} ({}) updated {} quantity from {} to location {} of store {}.\n'.format(
                                                 product.name, product.default_code, product.with_context(
-                                                    {"location": location.id}).qty_available, location.complete_name,
+                                                    {"location": location.id}).free_qty, location.complete_name,
                                                 shopify_warehouse.shopify_loc_name, marketplace_instance_id.name))
                                         # else:
                                         #     quants_ids = product.stock_quant_ids.search(
