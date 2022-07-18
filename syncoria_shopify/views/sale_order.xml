@@ -21,6 +21,7 @@
                                 <field name="shopify_instance_id" options="{'no_open': True,'no_create': True}"/>
                                 <field name="shopify_id"/>
                                 <field name="shopify_order"/>
+                                <field name="shopify_tag_ids" widget="many2many_tags"/>
                             </group>
                             <group>
                                 <field name="shopify_is_invoice" readonly="1"/>
