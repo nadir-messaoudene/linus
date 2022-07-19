@@ -51,7 +51,10 @@ class StockPicking(models.Model):
             return
         for rec in to_update:
             time.sleep(1)
-            rec.update_picking_from_3pl()
+            try:
+                rec.update_picking_from_3pl()
+            except:
+                continue
 
     @api.depends('picking_type_id')
     def _compute_ship_by_3pl(self):
