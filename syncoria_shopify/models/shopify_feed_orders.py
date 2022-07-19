@@ -708,9 +708,9 @@ class ShopifyFeedOrders(models.Model):
                                 tag_ids.append(tag_id.id)
 
                         if tag_ids:
-                            current_order_id.tag_ids= tag_ids
+                            current_order_id.shopify_tag_ids = tag_ids
                         else:
-                            current_order_id.tag_ids.unlink()
+                            current_order_id.shopify_tag_ids.unlink()
 
                     except Exception as e:
                         _logger.warning(e)
