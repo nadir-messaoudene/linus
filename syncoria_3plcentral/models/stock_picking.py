@@ -8,6 +8,7 @@ from odoo.tools.float_utils import float_compare, float_is_zero, float_round
 from odoo.tools.misc import clean_context, OrderedSet
 import requests
 import json
+import time
 from odoo.tools.misc import format_date
 
 class Location(models.Model):
@@ -49,6 +50,7 @@ class StockPicking(models.Model):
         if not to_update:
             return
         for rec in to_update:
+            time.sleep(1)
             rec.update_picking_from_3pl()
 
     @api.depends('picking_type_id')
