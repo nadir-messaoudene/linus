@@ -177,7 +177,7 @@ def get_protmpl_vals(record, values):
     if "req_type" in values:
         single_product = True
         product.update({"id": record.shopify_id})
-    if not product['variants']:
+    if 'variants' not in product:
         shopify_price = record.list_price
         if insatnce_id.pricelist_id.currency_id.id != record.currency_id.id:
             shopify_price = record.shopify_price
