@@ -70,18 +70,18 @@ def get_protmpl_vals(record, values):
     data = {}
     product = {}
     body_html = record.description_sale or ''
-    # if record.description_sale:
-    #     body_html = "<strong>" + record.description_sale + "</strong>"
-    # elif record.name:
-    #     body_html = "<strong>" + record.name + "</strong>"
+
     product.update({
         "title": record.name,
         "body_html": body_html,
         "vendor": record.shopify_vendor or "",
         "product_type": record.categ_id.name or "",
-        "status": record.shopify_product_status
+        "status": record.shopify_product_status,
     })
     instance_id = record.shopify_instance_id
+    if not instance_id:
+        instance_id = get_marketplace(record)
+    print(instance_id)
     if 'product.template' in str(record):
         variants = []
         variants_rec = record.product_variant_ids
@@ -151,13 +151,7 @@ def get_protmpl_vals(record, values):
             options.append(option)
 
         product["options"] = options
-        # ---------------------------------------------------------------
-        # if len(variants_rec) == 1:
-        #     data = get_provar_vals(variants_rec, {})
-        #     if variants_rec.shopify_id:
-        #         shopify_pt_request(record, data, 'update')
-
-
+    
     # Update Product Image
     if record.image_1920:
         product.update({
@@ -177,7 +171,8 @@ def get_protmpl_vals(record, values):
     if "req_type" in values:
         single_product = True
         product.update({"id": record.shopify_id})
-    if 'variants' not in product:
+    # print(len(product['variants']))
+    if 'variants' not in product or ('variants' in product and len(product['variants']) == 0):
         shopify_price = record.list_price
         if instance_id.pricelist_id.currency_id.id != record.currency_id.id:
             shopify_price = record.shopify_price
@@ -201,7 +196,6 @@ def get_protmpl_vals(record, values):
         
         del product['product_type']
     else:
-
         shopify_price = record.list_price
         if instance_id.pricelist_id.currency_id.id != record.currency_id.id:
             shopify_price = record.shopify_price
@@ -216,21 +210,57 @@ def get_protmpl_vals(record, values):
             'inventory_quantity': record.qty_available,
         })
 
+    print(product)
+    print(values)
+    print("data")
+    print(data)
+
     marketplace_instance_id = get_marketplace(record)
+    print(marketplace_instance_id)
     if marketplace_instance_id.set_price:
         product.update({"price": record.list_price})
     if marketplace_instance_id.set_stock and record.qty_available:
         product.update({"inventory_quantity": int(record.qty_available)})
-    # if marketplace_instance_id.publish_in_website:
-    #     variant.update({"inventory_quantity" : int(product.qty_available)})    
-    # if marketplace_instance_id.set_image:
-    #     variant.update({"inventory_quantity" : int(product.qty_available)})    
     if product.get('images'):
         _logger.info("\images===>>>\n" + str(len(product['images'])))
-
+    
     product = {k: v for k, v in product.items() if v}
     data["product"] = product
+
+
+    if 'product.product' in str(record):
+        data = {}
+        variant = {}
+
+        #Product ID
+        variant["product_id"] = record.product_tmpl_id.shopify_id
+        variant["sku"] = record.default_code
+
+        #Price
+        shopify_price = record.list_price
+        if instance_id.pricelist_id.currency_id.id != record.currency_id.id:
+            shopify_price = record.shopify_price
+        variant["price"] = shopify_price
+        if marketplace_instance_id.set_price:
+            variant.update({"price": record.list_price})
+
+        #Attributes
+        position = 1
+        for att in record.product_template_variant_value_ids.sorted():
+            value = record.env['product.attribute.value'].browse(att.product_attribute_value_id.id)
+            variant['option' + str(position)] = value.name
+            position += 1
+        
+        #Images
+        # if record.image_1920:
+        #     variant['image'] = [{
+        #             "attachment": record.image_1920.decode() if record.image_1920 else ""
+        #         }]
+
+        data['variant'] = variant
+
     _logger.info("\nDATA===>>>\n" + pprint.pformat(data))
+    
     return data
 
 
@@ -414,6 +444,7 @@ def shopify_pt_request(record, data, req_type):
         url += '/admin/api/%s/variants/%s.json' % (version, record.shopify_id)
 
     if 'product.product' in str(record) and data.get('product'):
+        data = {}
         data['variant'] = data.get('product')
 
     headers = {
@@ -506,10 +537,24 @@ def shopify_pt_request(record, data, req_type):
         else:
             record.write(
                 {'shopify_inventory_id': created_products.get("product").get("inventory_item_id")})
-
+    
 
         body = _("Shopify Product " + req_type + " with Shopify ID: " +
                  str(created_products.get("product").get("id")))
+        _logger.info(body)
+        record.message_post(body=body)
+    elif created_products.get('variant', {}).get("id"):
+        if not record.shopify_id:
+            record.write(
+                {'shopify_id': created_products.get("variant").get("id"),
+                'marketplace_type': 'shopify',
+                'shopify_instance_id': marketplace_instance_id.id,
+                'shopify_inventory_id': created_products.get("variant").get("inventory_item_id"),
+                })
+            update_product_images(record, record.product_tmpl_id, req_type)
+
+        body = _("Shopify Product Variant " + req_type + " with Shopify ID: " +
+                 str(created_products.get("variant").get("id")))
         _logger.info(body)
         record.message_post(body=body)
 
