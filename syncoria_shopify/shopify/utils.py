@@ -81,11 +81,11 @@ def get_protmpl_vals(record, values):
         "product_type": record.categ_id.name or "",
         "status": record.shopify_product_status
     })
-
+    instance_id = record.shopify_instance_id
     if 'product.template' in str(record):
         variants = []
         variants_rec = record.product_variant_ids
-        insatnce_id = record.shopify_instance_id
+        
         for var in variants_rec:
             variant = {}
             count = 1
@@ -98,7 +98,7 @@ def get_protmpl_vals(record, values):
                 _logger.warning("Exception ===>>>%s", e.args)
 
             shopify_price = var.lst_price
-            if insatnce_id.pricelist_id.currency_id.id != var.currency_id.id:
+            if instance_id.pricelist_id.currency_id.id != var.currency_id.id:
                 shopify_price = var.shopify_price
             
             for attrib in var.product_template_attribute_value_ids:
@@ -179,7 +179,7 @@ def get_protmpl_vals(record, values):
         product.update({"id": record.shopify_id})
     if 'variants' not in product:
         shopify_price = record.list_price
-        if insatnce_id.pricelist_id.currency_id.id != record.currency_id.id:
+        if instance_id.pricelist_id.currency_id.id != record.currency_id.id:
             shopify_price = record.shopify_price
         product['variants'] = [{
             'title': record.name,
@@ -203,7 +203,7 @@ def get_protmpl_vals(record, values):
     else:
 
         shopify_price = record.list_price
-        if insatnce_id.pricelist_id.currency_id.id != record.currency_id.id:
+        if instance_id.pricelist_id.currency_id.id != record.currency_id.id:
             shopify_price = record.shopify_price
         product.update({
             'id': record.shopify_id or "",
