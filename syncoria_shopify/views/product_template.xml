@@ -101,7 +101,7 @@
                            name="action_update_inventory_item"
                            attrs="{'invisible': [('shopify_id', '=', False)]}"/>
                    <button
-                           string="Create Product in Shopify"
+                           string="Create Variant in Shopify"
                            type="object"
                            groups="base.group_erp_manager"
                            name="action_create_shopify_product"
