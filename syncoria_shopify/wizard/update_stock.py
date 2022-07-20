@@ -215,11 +215,15 @@ class ProductsFetchWizard(models.Model):
                                     if marketplace_instance_id.marketplace_host:
                                         if '/' in marketplace_instance_id.marketplace_host[-1]:
                                             host = marketplace_instance_id.marketplace_host[0:-1]
-                                    update_qty = self._shopify_update_qty(
-                                        warehouse=shopify_warehouse.shopify_invent_id,
-                                        inventory_item_id=prod_mapping.shopify_inventory_id, quantity=int(
-                                            0),
-                                        marketplace_instance_id=marketplace_instance_id, host=host)
+                                    try:
+                                        update_qty = self._shopify_update_qty(
+                                            warehouse=shopify_warehouse.shopify_invent_id,
+                                            inventory_item_id=prod_mapping.shopify_inventory_id, quantity=int(
+                                                0),
+                                            marketplace_instance_id=marketplace_instance_id, host=host)
+                                    except Exception as e:
+                                        _logger.warning("Error in Request: %s" % e.args)
+                                        continue
                                 ###############
                                 marketplace_instance_id = shopify_instance
                                 host = marketplace_instance_id.marketplace_host
@@ -256,11 +260,15 @@ class ProductsFetchWizard(models.Model):
                                         if marketplace_instance_id.marketplace_host:
                                             if '/' in marketplace_instance_id.marketplace_host[-1]:
                                                 host = marketplace_instance_id.marketplace_host[0:-1]
-                                        update_qty = self._shopify_update_qty(
-                                            warehouse=shopify_warehouse.shopify_invent_id,
-                                            inventory_item_id=product.shopify_inventory_id, quantity=int(
-                                                0),
-                                            marketplace_instance_id=marketplace_instance_id, host=host)
+                                        try:
+                                            update_qty = self._shopify_update_qty(
+                                                warehouse=shopify_warehouse.shopify_invent_id,
+                                                inventory_item_id=product.shopify_inventory_id, quantity=int(
+                                                    0),
+                                                marketplace_instance_id=marketplace_instance_id, host=host)
+                                        except Exception as e:
+                                            _logger.warning("Error in Request: %s" % e.args)
+                                            continue
                                     #######################
                                     product_template = product.product_tmpl_id
                                     variant = {"id": product.shopify_id}
@@ -396,8 +404,8 @@ class ProductsFetchWizard(models.Model):
         )
         _logger.info("stock_item: %s" % (stock_item))
         if 'call_button' in str(request.httprequest) and stock_item.get('errors'):
-            errors = stock_item.get('errors', {}).get('error')
-            raise errors
+            errors = stock_item.get('errors', {})
+            raise Exception(errors)
 
     def _shopify_adjust_qty(self, **kwargs):
         Connector = self.env['marketplace.connector']
