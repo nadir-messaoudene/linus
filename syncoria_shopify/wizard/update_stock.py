@@ -10,6 +10,7 @@ from odoo import fields, models, exceptions, _
 from odoo.http import request
 import re
 import pprint
+import time
 
 from odoo.exceptions import UserError, ValidationError
 
@@ -114,7 +115,7 @@ class ProductsFetchWizard(models.Model):
                     )
                     _logger.info("stock_item: %s" % (stock_item))
                     if 'call_button' in str(request.httprequest) and stock_item.get('errors'):
-                        errors = stock_item.get('errors', {}).get('error')
+                        errors = stock_item.get('errors', {})
                         _logger.warning(_("Request Error: %s" % (errors)))
 
                 if not product_template.attribute_line_ids:
@@ -202,6 +203,7 @@ class ProductsFetchWizard(models.Model):
                     shopify_warehouse_dict = {}
                     for location in self.source_location_ids:
                         for shopify_warehouse in location.shopify_warehouse_ids:
+                            time.sleep(1)
                             shopify_instance = shopify_warehouse.shopify_instance_id
                             prod_mapping = self.env['shopify.multi.store'].search(
                                 [('product_id', '=', product.id),
@@ -319,6 +321,7 @@ class ProductsFetchWizard(models.Model):
                                     #             warehouse=warehouse_location.partner_id.shopify_warehouse_id,
                                     #             inventory_item_id=product.shopify_inventory_id, quantity=int(product.qty_available),
                                     #             marketplace_instance_id=marketplace_instance_id, host=host)
+                                    time.sleep(1)
                                     if marketplace_instance_id.set_price:
                                         price = product.lst_price
                                         if product.shopify_currency_id:
@@ -334,7 +337,7 @@ class ProductsFetchWizard(models.Model):
                                         )
                                         _logger.info("stock_item: %s" % (stock_item))
                                         if 'call_button' in str(request.httprequest) and stock_item.get('errors'):
-                                            errors = stock_item.get('errors', {}).get('error')
+                                            errors = stock_item.get('errors', {})
                                             _logger.warning(_("Request Error: %s" % (errors)))
                     # product.message_post(body=msg)
                 except Exception as e:
@@ -448,7 +451,7 @@ class ProductsFetchWizard(models.Model):
         _logger.info("stock_item: %s" % (stock_item))
         if 'call_button' in str(request.httprequest) and stock_item.get('errors'):
             errors = stock_item.get('errors', {})
-            raise errors
+            raise Exception(errors)
 
     def _shopify_get_product_list(self, active_ids):
         if self._context.get('active_model') == 'product.product':
