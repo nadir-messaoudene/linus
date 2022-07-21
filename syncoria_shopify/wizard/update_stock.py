@@ -233,12 +233,16 @@ class ProductsFetchWizard(models.Model):
                                 print("HOST===>>>", host)
                                 if product.type == 'product' and prod_mapping.shopify_id:
                                     if self.source_location_ids:
-                                        update_qty = self._shopify_adjust_qty(
-                                            warehouse=shopify_warehouse.shopify_invent_id,
-                                            inventory_item_id=prod_mapping.shopify_inventory_id, quantity=int(
-                                                product.with_context(
-                                                    {"location": location.id}).free_qty),
-                                            marketplace_instance_id=marketplace_instance_id, host=host)
+                                        try:
+                                            update_qty = self._shopify_adjust_qty(
+                                                warehouse=shopify_warehouse.shopify_invent_id,
+                                                inventory_item_id=prod_mapping.shopify_inventory_id, quantity=int(
+                                                    product.with_context(
+                                                        {"location": location.id}).free_qty),
+                                                marketplace_instance_id=marketplace_instance_id, host=host)
+                                        except Exception as e:
+                                            _logger.warning("Error in Request: %s" % e.args)
+                                            continue
                                         product.message_post(
                                             body='Prduct {} ({}) updated {} quantity from {} to location {} of store {}.\n'.format(
                                                 product.name, product.default_code, product.with_context(
@@ -280,11 +284,15 @@ class ProductsFetchWizard(models.Model):
                                     print("HOST===>>>", host)
                                     if product.type == 'product' and product.shopify_id:
                                         if self.source_location_ids:
-                                            update_qty = self._shopify_adjust_qty(
-                                                warehouse=shopify_warehouse.shopify_invent_id,
-                                                inventory_item_id=product.shopify_inventory_id, quantity=int(
-                                                    product.with_context({"location": location.id}).free_qty),
-                                                marketplace_instance_id=marketplace_instance_id, host=host)
+                                            try:
+                                                update_qty = self._shopify_adjust_qty(
+                                                    warehouse=shopify_warehouse.shopify_invent_id,
+                                                    inventory_item_id=product.shopify_inventory_id, quantity=int(
+                                                        product.with_context({"location": location.id}).free_qty),
+                                                    marketplace_instance_id=marketplace_instance_id, host=host)
+                                            except Exception as e:
+                                                _logger.warning("Error in Request: %s" % e.args)
+                                                continue
                                             product.message_post(body= 'Prduct {} ({}) updated {} quantity from {} to location {} of store {}.\n'.format(
                                                 product.name, product.default_code, product.with_context(
                                                     {"location": location.id}).free_qty, location.complete_name,
@@ -439,7 +447,7 @@ class ProductsFetchWizard(models.Model):
         )
         _logger.info("stock_item: %s" % (stock_item))
         if 'call_button' in str(request.httprequest) and stock_item.get('errors'):
-            errors = stock_item.get('errors', {}).get('error')
+            errors = stock_item.get('errors', {})
             raise errors
 
     def _shopify_get_product_list(self, active_ids):
