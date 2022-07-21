@@ -203,8 +203,11 @@ class ProductsFetchWizard(models.Model):
                     shopify_warehouse_dict = {}
                     for location in self.source_location_ids:
                         for shopify_warehouse in location.shopify_warehouse_ids:
-                            time.sleep(1)
+                            time.sleep(0.5)
                             shopify_instance = shopify_warehouse.shopify_instance_id
+                            marketplace_instance_id = shopify_instance
+                            host = marketplace_instance_id.marketplace_host
+                            api_version = marketplace_instance_id.marketplace_api_version
                             prod_mapping = self.env['shopify.multi.store'].search(
                                 [('product_id', '=', product.id),
                                  ('shopify_instance_id', '=', shopify_instance.id)])
@@ -212,8 +215,6 @@ class ProductsFetchWizard(models.Model):
                             if prod_mapping:
                                 if shopify_warehouse.shopify_invent_id not in shopify_warehouse_dict:
                                     shopify_warehouse_dict[shopify_warehouse.shopify_invent_id] = 1
-                                    marketplace_instance_id = shopify_instance
-                                    host = marketplace_instance_id.marketplace_host
                                     if marketplace_instance_id.marketplace_host:
                                         if '/' in marketplace_instance_id.marketplace_host[-1]:
                                             host = marketplace_instance_id.marketplace_host[0:-1]
@@ -227,8 +228,6 @@ class ProductsFetchWizard(models.Model):
                                         _logger.warning("Error in Request: %s" % e.args)
                                         continue
                                 ###############
-                                marketplace_instance_id = shopify_instance
-                                host = marketplace_instance_id.marketplace_host
                                 if marketplace_instance_id.marketplace_host:
                                     if '/' in marketplace_instance_id.marketplace_host[-1]:
                                         host = marketplace_instance_id.marketplace_host[0:-1]
@@ -236,20 +235,41 @@ class ProductsFetchWizard(models.Model):
                                 if product.type == 'product' and prod_mapping.shopify_id:
                                     if self.source_location_ids:
                                         try:
-                                            update_qty = self._shopify_adjust_qty(
-                                                warehouse=shopify_warehouse.shopify_invent_id,
-                                                inventory_item_id=prod_mapping.shopify_inventory_id, quantity=int(
-                                                    product.with_context(
-                                                        {"location": location.id}).free_qty),
-                                                marketplace_instance_id=marketplace_instance_id, host=host)
+                                            if product.with_context({"location": location.id}).free_qty > 0:
+                                                update_qty = self._shopify_adjust_qty(
+                                                    warehouse=shopify_warehouse.shopify_invent_id,
+                                                    inventory_item_id=prod_mapping.shopify_inventory_id, quantity=int(
+                                                        product.with_context(
+                                                            {"location": location.id}).free_qty),
+                                                    marketplace_instance_id=marketplace_instance_id, host=host)
+                                            if marketplace_instance_id.set_price:
+                                                price = product.lst_price
+                                                if product.shopify_currency_id:
+                                                    price = product.shopify_price
+                                                variant.update({"price": price})
+                                                data = {'variant': variant}
+                                                product_url = host + "/admin/api/%s/variants/%s.json" % (
+                                                api_version, product.shopify_id)
+                                                stock_item, next_link = Connector.shopify_api_call(
+                                                    headers=headers,
+                                                    url=product_url,
+                                                    type=type_req,
+                                                    data=data
+                                                )
+                                                _logger.info("stock_item: %s" % (stock_item))
+                                                if 'call_button' in str(request.httprequest) and stock_item.get(
+                                                        'errors'):
+                                                    errors = stock_item.get('errors', {})
+                                                    _logger.warning(_("Request Error: %s" % (errors)))
                                         except Exception as e:
                                             _logger.warning("Error in Request: %s" % e.args)
                                             continue
-                                        product.message_post(
-                                            body='Prduct {} ({}) updated {} quantity from {} to location {} of store {}.\n'.format(
-                                                product.name, product.default_code, product.with_context(
-                                                    {"location": location.id}).free_qty, location.complete_name,
-                                                shopify_warehouse.shopify_loc_name, marketplace_instance_id.name))
+                                        if product.with_context({"location": location.id}).free_qty > 0:
+                                            product.message_post(
+                                                body='Prduct {} ({}) updated {} quantity from {} to location {} of store {}.\n'.format(
+                                                    product.name, product.default_code, product.with_context(
+                                                        {"location": location.id}).free_qty, location.complete_name,
+                                                    shopify_warehouse.shopify_loc_name, marketplace_instance_id.name))
                             else:
                                 if shopify_instance == product.shopify_instance_id:
                                     marketplace_instance_id = product.shopify_instance_id
@@ -287,18 +307,20 @@ class ProductsFetchWizard(models.Model):
                                     if product.type == 'product' and product.shopify_id:
                                         if self.source_location_ids:
                                             try:
-                                                update_qty = self._shopify_adjust_qty(
-                                                    warehouse=shopify_warehouse.shopify_invent_id,
-                                                    inventory_item_id=product.shopify_inventory_id, quantity=int(
-                                                        product.with_context({"location": location.id}).free_qty),
-                                                    marketplace_instance_id=marketplace_instance_id, host=host)
+                                                if product.with_context({"location": location.id}).free_qty > 0:
+                                                    update_qty = self._shopify_adjust_qty(
+                                                        warehouse=shopify_warehouse.shopify_invent_id,
+                                                        inventory_item_id=product.shopify_inventory_id, quantity=int(
+                                                            product.with_context({"location": location.id}).free_qty),
+                                                        marketplace_instance_id=marketplace_instance_id, host=host)
                                             except Exception as e:
                                                 _logger.warning("Error in Request: %s" % e.args)
                                                 continue
-                                            product.message_post(body= 'Prduct {} ({}) updated {} quantity from {} to location {} of store {}.\n'.format(
-                                                product.name, product.default_code, product.with_context(
-                                                    {"location": location.id}).free_qty, location.complete_name,
-                                                shopify_warehouse.shopify_loc_name, marketplace_instance_id.name))
+                                            if product.with_context({"location": location.id}).free_qty > 0:
+                                                product.message_post(body= 'Prduct {} ({}) updated {} quantity from {} to location {} of store {}.\n'.format(
+                                                    product.name, product.default_code, product.with_context(
+                                                        {"location": location.id}).free_qty, location.complete_name,
+                                                    shopify_warehouse.shopify_loc_name, marketplace_instance_id.name))
                                         # else:
                                         #     quants_ids = product.stock_quant_ids.search(
                                         #         [("location_id.usage", "=", "internal"), ("product_id", "=", product.id)])
@@ -321,7 +343,6 @@ class ProductsFetchWizard(models.Model):
                                     #             warehouse=warehouse_location.partner_id.shopify_warehouse_id,
                                     #             inventory_item_id=product.shopify_inventory_id, quantity=int(product.qty_available),
                                     #             marketplace_instance_id=marketplace_instance_id, host=host)
-                                    time.sleep(1)
                                     if marketplace_instance_id.set_price:
                                         price = product.lst_price
                                         if product.shopify_currency_id:
