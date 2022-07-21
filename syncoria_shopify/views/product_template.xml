@@ -100,18 +100,18 @@
                            groups="base.group_erp_manager"
                            name="action_update_inventory_item"
                            attrs="{'invisible': [('shopify_id', '=', False)]}"/>
-<!--                    <button-->
-<!--                            string="Create Product in Shopify"-->
-<!--                            type="object"-->
-<!--                            groups="base.group_erp_manager"-->
-<!--                            name="action_create_shopify_product"-->
-<!--                            attrs="{'invisible': [('shopify_id', '!=', False)]}"/>-->
-<!--                    <button-->
-<!--                            string="Update in Shopify"-->
-<!--                            type="object"-->
-<!--                            groups="base.group_erp_manager"-->
-<!--                            name="action_update_shopify_product"-->
-<!--                            attrs="{'invisible': [('marketplace_type', '!=', 'shopify'),('shopify_id', '=', False) ]}"/>-->
+                   <button
+                           string="Create Variant in Shopify"
+                           type="object"
+                           groups="base.group_erp_manager"
+                           name="action_create_shopify_product"
+                           attrs="{'invisible': [('shopify_id', '!=', False)]}"/>
+                   <!-- <button
+                           string="Update in Shopify"
+                           type="object"
+                           groups="base.group_erp_manager"
+                           name="action_update_shopify_product"
+                           attrs="{'invisible': [('marketplace_type', '!=', 'shopify'),('shopify_id', '=', False) ]}"/> -->
                </xpath>
                 <xpath expr="//notebook" position="inside">
                     <page string="Shopify">
