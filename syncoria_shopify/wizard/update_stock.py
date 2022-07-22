@@ -203,6 +203,7 @@ class ProductsFetchWizard(models.Model):
                     shopify_warehouse_dict = {}
                     for location in self.source_location_ids:
                         for shopify_warehouse in location.shopify_warehouse_ids:
+                            time.sleep(0.5)
                             shopify_instance = shopify_warehouse.shopify_instance_id
                             marketplace_instance_id = shopify_instance
                             host = marketplace_instance_id.marketplace_host
