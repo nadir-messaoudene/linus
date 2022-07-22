@@ -22,7 +22,17 @@ class ProductsFetchWizard(models.Model):
     ], string="Operation Type")
     shopify_warehouse = fields.Many2one("stock.warehouse",string="Shopify Warehouse",domain=[("shopify_warehouse_id", "!=", False),("shopify_warehouse_active","=", True)],help="If this field have value it will update qty of product/product variants.If not set value it will only update price. ")
 
-    
+    def test_schedule(self):
+        tmp = 1
+        while tmp < 4:
+            _logger.info("test_scheduletest_scheduletest_scheduletest_schedule")
+            print("test_scheduletest_scheduletest_scheduletest_schedule")
+            import time
+            time.sleep(840)
+            print(tmp)
+            _logger.info(tmp)
+            tmp += 1
+
     @api.onchange('fetch_type')
     def _onchange_field(self):
         print("_onchange_field")
