@@ -90,7 +90,7 @@ class Invoice(models.Model):
                             }
                             payment_method_line_id = journal.inbound_payment_method_line_ids
                             if payment_method_line_id:
-                                payment_dict['payment_method_line_id'] = payment_method_line_id.id
+                                payment_dict['payment_method_line_id'] = payment_method_line_id[0].id
                             domain = []
                             for move in move_id:
                                 domain += [('ref', '=', move.name)]
@@ -122,7 +122,7 @@ class Invoice(models.Model):
                             }
                             payment_method_line_id = journal.inbound_payment_method_line_ids
                             if payment_method_line_id:
-                                payment_dict['payment_method_line_id'] = payment_method_line_id.id
+                                payment_dict['payment_method_line_id'] = payment_method_line_id[0].id
                             domain = []
                             for move in move_id:
                                 domain += [('ref', '=', move.name)]
