@@ -10,6 +10,7 @@
                     <group>
                         <field name="warehouse_id" options="{'no_create': True}" attrs="{'invisible': [('fetch_type','!=','from_odoo')]}" />
                         <field name="source_location_ids" options="{'no_create': True}" widget="many2many_tags" attrs="{'invisible': [('fetch_type','!=','from_odoo')]}"/>
+                        <field name="shopify_instance_ids" options="{'no_create': True}" widget="many2many_tags" attrs="{'invisible': [('fetch_type','!=','update_price')]}"/>
                     </group>
                 </xpath>
                 <xpath expr="//p" position="before">
@@ -17,6 +18,9 @@
                         Please select either Warehouse or Source Location. If you choose a warehouse, we will update all locations that belong to that warehouse.
                         If you just want to update stock of a specific location, please leave Warehouse blank.
                     </p>
+                </xpath>
+                <xpath expr="//footer" position="inside">
+                    <button string='Update Price' name="shopify_update_price_item" type="object" class="btn-primary" attrs="{'invisible': [('fetch_type','!=','update_price')]}"/>
                 </xpath>
             </field>
         </record>

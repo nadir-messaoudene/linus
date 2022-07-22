@@ -49,7 +49,7 @@ class ShopifyConnect(models.Model):
             if res.status_code != 200:
                 _logger.warning(_("Error:" + str(res.text)))
             items = json.loads(res.text) if res.status_code == 200 else {'errors':res.text if res.text != '' else 'Error: Empty response from Shopify\nResponse Code: %s' %(res.status_code)}
-            _logger.info("items==>>>" + pprint.pformat(items))
+            _logger.info("Response DATA==>>>" + pprint.pformat(items))
             return items,next_link
         except Exception as e:
             _logger.info("Exception occured %s", e)
