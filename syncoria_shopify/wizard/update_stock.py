@@ -203,7 +203,6 @@ class ProductsFetchWizard(models.Model):
                     shopify_warehouse_dict = {}
                     for location in self.source_location_ids:
                         for shopify_warehouse in location.shopify_warehouse_ids:
-                            time.sleep(0.5)
                             shopify_instance = shopify_warehouse.shopify_instance_id
                             marketplace_instance_id = shopify_instance
                             host = marketplace_instance_id.marketplace_host
@@ -224,6 +223,25 @@ class ProductsFetchWizard(models.Model):
                                             inventory_item_id=prod_mapping.shopify_inventory_id, quantity=int(
                                                 0),
                                             marketplace_instance_id=marketplace_instance_id, host=host)
+                                        if marketplace_instance_id.set_price:
+                                            price = product.lst_price
+                                            if product.shopify_currency_id:
+                                                price = product.shopify_price
+                                            variant.update({"price": price})
+                                            data = {'variant': variant}
+                                            product_url = host + "/admin/api/%s/variants/%s.json" % (
+                                                api_version, product.shopify_id)
+                                            stock_item, next_link = Connector.shopify_api_call(
+                                                headers=headers,
+                                                url=product_url,
+                                                type=type_req,
+                                                data=data
+                                            )
+                                            _logger.info("stock_item: %s" % (stock_item))
+                                            if 'call_button' in str(request.httprequest) and stock_item.get(
+                                                    'errors'):
+                                                errors = stock_item.get('errors', {})
+                                                _logger.warning(_("Request Error: %s" % (errors)))
                                     except Exception as e:
                                         _logger.warning("Error in Request: %s" % e.args)
                                         continue
@@ -242,25 +260,6 @@ class ProductsFetchWizard(models.Model):
                                                         product.with_context(
                                                             {"location": location.id}).free_qty),
                                                     marketplace_instance_id=marketplace_instance_id, host=host)
-                                            if marketplace_instance_id.set_price:
-                                                price = product.lst_price
-                                                if product.shopify_currency_id:
-                                                    price = product.shopify_price
-                                                variant.update({"price": price})
-                                                data = {'variant': variant}
-                                                product_url = host + "/admin/api/%s/variants/%s.json" % (
-                                                api_version, product.shopify_id)
-                                                stock_item, next_link = Connector.shopify_api_call(
-                                                    headers=headers,
-                                                    url=product_url,
-                                                    type=type_req,
-                                                    data=data
-                                                )
-                                                _logger.info("stock_item: %s" % (stock_item))
-                                                if 'call_button' in str(request.httprequest) and stock_item.get(
-                                                        'errors'):
-                                                    errors = stock_item.get('errors', {})
-                                                    _logger.warning(_("Request Error: %s" % (errors)))
                                         except Exception as e:
                                             _logger.warning("Error in Request: %s" % e.args)
                                             continue
@@ -292,6 +291,25 @@ class ProductsFetchWizard(models.Model):
                                                 inventory_item_id=product.shopify_inventory_id, quantity=int(
                                                     0),
                                                 marketplace_instance_id=marketplace_instance_id, host=host)
+                                            if marketplace_instance_id.set_price:
+                                                price = product.lst_price
+                                                if product.shopify_currency_id:
+                                                    price = product.shopify_price
+                                                variant.update({"price": price})
+                                                data = {'variant': variant}
+                                                product_url = host + "/admin/api/%s/variants/%s.json" % (
+                                                api_version, product.shopify_id)
+                                                stock_item, next_link = Connector.shopify_api_call(
+                                                    headers=headers,
+                                                    url=product_url,
+                                                    type=type_req,
+                                                    data=data
+                                                )
+                                                _logger.info("stock_item: %s" % (stock_item))
+                                                if 'call_button' in str(request.httprequest) and stock_item.get(
+                                                        'errors'):
+                                                    errors = stock_item.get('errors', {})
+                                                    _logger.warning(_("Request Error: %s" % (errors)))
                                         except Exception as e:
                                             _logger.warning("Error in Request: %s" % e.args)
                                             continue
@@ -343,23 +361,7 @@ class ProductsFetchWizard(models.Model):
                                     #             warehouse=warehouse_location.partner_id.shopify_warehouse_id,
                                     #             inventory_item_id=product.shopify_inventory_id, quantity=int(product.qty_available),
                                     #             marketplace_instance_id=marketplace_instance_id, host=host)
-                                    if marketplace_instance_id.set_price:
-                                        price = product.lst_price
-                                        if product.shopify_currency_id:
-                                            price = product.shopify_price
-                                        variant.update({"price": price})
-                                        data = {'variant': variant}
-                                        product_url = host + "/admin/api/%s/variants/%s.json" % (api_version, product.shopify_id)
-                                        stock_item, next_link = Connector.shopify_api_call(
-                                            headers=headers,
-                                            url=product_url,
-                                            type=type_req,
-                                            data=data
-                                        )
-                                        _logger.info("stock_item: %s" % (stock_item))
-                                        if 'call_button' in str(request.httprequest) and stock_item.get('errors'):
-                                            errors = stock_item.get('errors', {})
-                                            _logger.warning(_("Request Error: %s" % (errors)))
+
                     # product.message_post(body=msg)
                 except Exception as e:
                     _logger.warning("Error in Request: %s" % (e.args))
