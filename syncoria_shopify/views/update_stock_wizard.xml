@@ -19,8 +19,12 @@
                         If you just want to update stock of a specific location, please leave Warehouse blank.
                     </p>
                 </xpath>
-                <xpath expr="//footer" position="inside">
+                <xpath expr="//button[@name='update_stock_item']" position="after">
                     <button string='Update Price' name="shopify_update_price_item" type="object" class="btn-primary" attrs="{'invisible': [('fetch_type','!=','update_price')]}"/>
+                </xpath>
+                <xpath expr="//button[@name='update_stock_item']" position="replace">
+                    <button string='Update' name="update_stock_item"
+                                    type="object" class="btn-primary" attrs="{'invisible': [('fetch_type','=','update_price')]}"/>
                 </xpath>
             </field>
         </record>
