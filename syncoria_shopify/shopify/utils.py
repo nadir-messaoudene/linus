@@ -630,7 +630,7 @@ def shopify_pt_request_create_product_by_instance(record, data, req_type, market
                 })
             update_product_images(record, record.product_tmpl_id, req_type, marketplace_instance_id)
         if marketplace_instance_id != default_marketplace_instance_id:
-            prod_mapping = record.env['shopify.multi.store'].sudo().search([('product_id', '=', record.id), ('shopify_instance_id', '=', marketplace_instance_id)])
+            prod_mapping = record.env['shopify.multi.store'].sudo().search([('product_id', '=', record.id), ('shopify_instance_id', '=', marketplace_instance_id.id)])
             val_dict = {
                 'name': created_products.get("variant").get('sku'),
                 'shopify_instance_id': marketplace_instance_id.id,
