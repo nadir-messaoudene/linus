@@ -103,9 +103,9 @@
                    <!-- name="action_create_shopify_product" -->
                     <button
                            string="Create Variant in Shopify"
-                           type="action"
+                           type="object"
                            groups="base.group_erp_manager"
-                           name="%(action_create_variant_shopify)d"
+                           name="action_create_shopify_product"
                            attrs="{'invisible': [('shopify_id', '!=', False)]}"
                            context="{'default_product_id': active_id}"/>
                     

@@ -21,6 +21,7 @@
         'data/res_partner.xml',
         'data/update_history.xml',
         # Views
+        'wizard/create_variant_shopify.xml',
         'views/res_partner.xml',
         'views/res_config_settings.xml',
         'views/product_template.xml',
@@ -37,7 +38,7 @@
         'wizard/update_stock.xml',
         'wizard/customer_delete_wiz.xml',
         'wizard/fetch_warehouse_wiz_view.xml',
-        'wizard/create_variant_shopify.xml',
+        
         ################################################
         #FEED
         'wizard/fetch_feed_products_wiz.xml',
