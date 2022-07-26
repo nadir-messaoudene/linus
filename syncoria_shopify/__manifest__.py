@@ -37,6 +37,7 @@
         'wizard/update_stock.xml',
         'wizard/customer_delete_wiz.xml',
         'wizard/fetch_warehouse_wiz_view.xml',
+        'wizard/create_variant_shopify.xml',
         ################################################
         #FEED
         'wizard/fetch_feed_products_wiz.xml',
