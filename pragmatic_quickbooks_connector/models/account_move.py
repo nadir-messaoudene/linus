@@ -7,7 +7,7 @@ import requests
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError, Warning
-
+from odoo.fields import Command
 _logger = logging.getLogger(__name__)
 
 
@@ -244,7 +244,7 @@ class AccountInvoice(models.Model):
             headers['Authorization'] = 'Bearer ' + company.access_token
             headers['accept'] = 'application/json'
             headers['Content-Type'] = 'text/plain'
-            # query = "select * from invoice WHERE Id = '182090'"
+            # query = "select * from invoice WHERE Id = '186075'"
             query = "select * from invoice WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
                 company.quickbooks_last_invoice_imported_id, company.date_from, company.date_to, company.start, company.limit)
             # query = "select * from invoice WHERE Id = '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (119, company.start, company.limit)
@@ -321,6 +321,7 @@ class AccountInvoice(models.Model):
                 if parsed_data.get('QueryResponse') and parsed_data.get('QueryResponse').get(get_data_for):
                     for cust in parsed_data.get('QueryResponse').get(get_data_for):
                         return_val = self.check_account_id(cust)
+                        _logger.info("QB Invoice Data -----> {}".format(cust))
                         # print("----- in vendor bill--",)
                         # if return_val and type != 'in_invoice':
                         #     if type == 'out_invoice' or type == 'out_refund':
@@ -390,22 +391,33 @@ class AccountInvoice(models.Model):
 
                         else:
                             _logger.info("Begin updating taxes!")
-                            account_invoice.button_draft()
                             # for invoice_line in account_invoice.invoice_line_ids:
                             #     invoice_line.unlink()
-                            account_invoice.line_ids.unlink()
-                            dict_i = {'invoice_line_ids': []}
-                            invoice_obj = account_invoice.partner_id
-                            invoice_line = self.odoo_create_invoice_line_dict(cust, invoice_obj, type, dict_i.get('qbo_invoice_id'))
-                            if invoice_line:
-                                for k in invoice_line:
-                                    if not k['exclude_from_invoice_tab']:
-                                        dict_i['invoice_line_ids'].append((0, 0, k))
-                                _logger.info("Dictionary for f is ---> {}".format(dict_i))
-                                account_invoice.write(dict_i)
-                            else:
-                                _logger.error("NO Line Found for Invoice!")
-                                raise UserError("NO Line Found for Invoice!")
+                            # dict_i = {'invoice_line_ids': []}
+                            # invoice_obj = account_invoice.partner_id
+                            # invoice_line = self.odoo_create_invoice_line_dict(cust, invoice_obj, type, dict_i.get('qbo_invoice_id'))
+                            # if invoice_line:
+                            #     account_invoice.button_draft()
+                            #     account_invoice.line_ids.unlink()
+                            #     for k in invoice_line:
+                            #         if not k['exclude_from_invoice_tab']:
+                            #             dict_i['invoice_line_ids'].append((0, 0, k))
+                            #     _logger.info("Dictionary for invoice line is ---> {}".format(dict_i))
+                            #     account_invoice.write(dict_i)
+                            # else:
+                            #     _logger.error("NO Line Found for Invoice!")
+                            #     f = open(r"C:\pyproj\Odoo 15\Syncoria\linus\msg.txt", "a")
+                            #     f.write(account_invoice.name + '\n')
+                            #     f.close()
+                            #     continue
+                            account_invoice.button_draft()
+                            discount_line = account_invoice.invoice_line_ids.filtered(lambda l: l.name == 'Discount')
+                            tax_ids = self.odoo_create_invoice_line_dict_discount_tax(cust, type)
+                            for discount_l in discount_line:
+                                discount_l.write({'tax_ids': tax_ids})
+                                account_invoice.write(
+                                    {'invoice_line_ids': [Command.update(discount_l.id, {'tax_ids': tax_ids})]})
+                            # account_invoice.with_context(check_move_validity=False)._recompute_dynamic_lines(recompute_all_taxes=True)
                             account_invoice.action_post()
                             _logger.info("Starting mapping payment ---> {}".format(account_invoice.name))
                             pay_term_lines = account_invoice.line_ids.filtered(lambda line: line.account_id.user_type_id.type in ('receivable', 'payable'))
@@ -486,11 +498,46 @@ class AccountInvoice(models.Model):
             for line in move_payment_lines_filtered:
                 record.js_assign_outstanding_line(line.id)
 
+    def odoo_create_invoice_line_dict_discount_tax(self, cust, inv_type, qbo_inv_id=''):
+        _logger.info("Attempting to add Discount Tax")
+        if inv_type == 'out_invoice' or inv_type == 'out_refund':
+            if cust.get('TxnTaxDetail').get('TxnTaxCodeRef'):
+                if cust.get('TxnTaxDetail').get('TxnTaxCodeRef').get('value'):
+                    qb_tax_id = cust.get('TxnTaxDetail').get('TxnTaxCodeRef').get('value')
+                    record = self.env['account.tax']
+                    tax = record.search([('qbo_tax_id', '=', qb_tax_id), ('type_tax_use', '=', 'sale')])
+                    if tax:
+                        custom_tax_id = [[6, False, [tax.id]]]
+                        _logger.info("TAX ATTACHED {}".format(tax.id))
+                    else:
+                        custom_tax_id = [[6, False, []]]
+            else:
+                custom_tax_id = [[6, False, []]]
+
+            if cust.get('TxnTaxDetail').get('TaxLine'):
+                _logger.info(_("TxnTaxDetailTxnTaxDetail %s" %
+                               cust['TxnTaxDetail']['TaxLine'][0]['TaxLineDetail']['TaxRateRef']['value']))
+
+                if cust['TxnTaxDetail']['TaxLine'][0]['TaxLineDetail']['TaxRateRef']['value']:
+                    qb_tax_id = cust['TxnTaxDetail']['TaxLine'][0]['TaxLineDetail']['TaxRateRef']['value']
+                    record = self.env['account.tax']
+                    tax = record.search([('qbo_tax_rate_id', '=', qb_tax_id), ('type_tax_use', '=', 'sale')])
+                    if tax:
+                        custom_tax_id = [[6, False, [tax.id]]]
+                        _logger.info("TAX ATTACHED {}".format(tax.id))
+                    else:
+                        custom_tax_id = [[6, False, []]]
+            else:
+                custom_tax_id = [[6, False, []]]
+        else:
+            custom_tax_id = [[6, False, []]]
+        return custom_tax_id
+
     def odoo_create_invoice_line_dict(self, cust, invoice_obj, type,qbo_inv_id=''):
         _logger.info("Attempting to create Invoice Line Dictionary")
         inv_line_data = []
         discount = 0
-
+        custom_discount_tax_id = False
         for i in cust.get('Line'):
 
             dict_ol = {}
@@ -510,6 +557,7 @@ class AccountInvoice(models.Model):
                         tax = record.search([('qbo_tax_id', '=', qb_tax_id), ('type_tax_use', '=', 'sale')])
                         if tax:
                             custom_tax_id = [[6, False, [tax.id]]]
+                            custom_discount_tax_id = custom_tax_id
                             _logger.info(_('\n\n\n custom_tax_idcustom_tax_idcustom_tax_idcustom_tax_idcustom_tax_id %s' %custom_tax_id))
                             # [[6, False, [2]]]
                             _logger.info("TAX ATTACHED {}".format(tax.id))
@@ -527,6 +575,7 @@ class AccountInvoice(models.Model):
                         tax = record.search([('qbo_tax_rate_id', '=', qb_tax_id), ('type_tax_use', '=', 'sale')])
                         if tax:
                             custom_tax_id = [[6, False, [tax.id]]]
+                            custom_discount_tax_id = custom_tax_id
                             _logger.info(_('\n\n\n custom_tax_idcustom_tax_idcustom_tax_idcustom_tax_idcustom_tax_id %s' %custom_tax_id))
                             # [[6, False, [2]]]
                             _logger.info("TAX ATTACHED {}".format(tax.id))
@@ -1104,6 +1153,8 @@ class AccountInvoice(models.Model):
                         dict_discount['exclude_from_invoice_tab'] = False
                         dict_discount['quantity'] = 1
                         dict_discount['price_unit'] = -j.get('Amount')
+                        if custom_discount_tax_id:
+                            dict_discount['tax_ids'] = custom_discount_tax_id
                         inv_line_data.append(dict_discount)
         _logger.info("INVOICE LINE DATA SENDING FOR CREATION IS --LATER -> {}".format(inv_line_data))
 
