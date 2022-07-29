@@ -445,10 +445,10 @@ class ProductProductShopify(models.Model):
     shopify_vendor = fields.Char()
     shopify_collections = fields.Char()
 
-    def action_create_shopify_product(self):
-        data = get_protmpl_vals(self, {})
+    def action_create_shopify_product(self, instance_obj):
+        data = get_protmpl_product_product_vals(self, instance_obj)
         _logger.info("data ===>>>", data)
-        shopify_pt_request(self, data, 'create')
+        shopify_pt_request_create_product_by_instance(self, data, 'create', instance_obj)
 
     def action_update_shopify_product(self):
         data = get_protmpl_vals(self, {})

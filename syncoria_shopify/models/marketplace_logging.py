@@ -21,7 +21,7 @@ class ShopifyMultiStores(models.Model):
 
     name = fields.Char('Name')
     shopify_instance_id = fields.Many2one("marketplace.instance", string="Shopify Instance ID", required=True, readonly=True)
-    product_id = fields.Many2one("product.product", string="Product Id", required=True, readonly=True)
+    product_id = fields.Many2one("product.product", string="Product", required=True, readonly=True)
     shopify_id = fields.Char(string="Shopify Id", copy=False, required=True, readonly=True)
     shopify_parent_id = fields.Char(string="Shopify Parent Id", copy=False, required=True, readonly=True)
     shopify_inventory_id = fields.Char(string="Shopify Inventory Id", copy=False, required=True, readonly=True)
