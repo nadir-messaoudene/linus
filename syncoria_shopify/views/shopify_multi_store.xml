@@ -23,6 +23,7 @@
                     <field name="name" />
                     <field name="shopify_instance_id" />
                     <field name="product_id" />
+                    <field name="product_tmpl_id" />
                     <field name="shopify_id" />
                     <field name="shopify_parent_id" />
                     <field name="shopify_inventory_id" />
@@ -40,6 +41,7 @@
                             <field name="name" />
                             <field name="shopify_instance_id" />
                             <field name="product_id" />
+                            <field name="product_tmpl_id" />
                             <field name="shopify_id" />
                             <field name="shopify_parent_id" />
                             <field name="shopify_inventory_id" />

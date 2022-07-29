@@ -21,15 +21,16 @@ class ShopifyMultiStores(models.Model):
 
     name = fields.Char('Name')
     shopify_instance_id = fields.Many2one("marketplace.instance", string="Shopify Instance ID", required=True, readonly=True)
-    product_id = fields.Many2one("product.product", string="Product", required=True, readonly=True)
+    product_id = fields.Many2one("product.product", string="Product", readonly=True)
+    product_tmpl_id = fields.Many2one("product.template", string="Product Template", readonly=True)
     shopify_id = fields.Char(string="Shopify Id", copy=False, required=True, readonly=True)
-    shopify_parent_id = fields.Char(string="Shopify Parent Id", copy=False, required=True, readonly=True)
+    shopify_parent_id = fields.Char(string="Shopify Parent Id", copy=False, readonly=True)
     shopify_inventory_id = fields.Char(string="Shopify Inventory Id", copy=False, required=True, readonly=True)
 
     _sql_constraints = [
         (
-            'unique_shopifyinstance_byproductid',
-            'UNIQUE(shopify_instance_id, product_id)',
-            'Only one instance assigned by one product variant',
-        ),
+            'unique_shopifyinstance_byshopifyid',
+            'UNIQUE(shopify_instance_id, shopify_id)',
+            'Only one instance exist only one shopify id.',
+        )
     ]

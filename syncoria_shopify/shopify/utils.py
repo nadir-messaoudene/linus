@@ -269,7 +269,12 @@ def get_protmpl_product_product_vals(record, instance_obj):
         variant = {}
 
         #Product ID
-        variant["product_id"] = record.product_tmpl_id.shopify_id
+        default_marketplace_instance_id = get_marketplace(record)
+        if default_marketplace_instance_id == instance_obj:
+            variant["product_id"] = record.product_tmpl_id.shopify_id
+        else:
+            prod_mapping = record.env['shopify.multi.store'].sudo().search([('product_tmpl_id', '=', record.product_tmpl_id.id), ('shopify_instance_id', '=', instance_obj.id)], limit=1)
+            variant["product_id"] = prod_mapping.shopify_parent_id
         variant["sku"] = record.default_code
 
         #Price
@@ -416,6 +421,14 @@ def update_product_images(record, product_data, req_type, marketplace_instance_o
         marketplace_instance_id = record.shopify_instance_id
         if marketplace_instance_obj:
             marketplace_instance_id = marketplace_instance_obj
+            
+            #Product ID
+            default_marketplace_instance_id = get_marketplace(record)
+            product_tmpl_shopify_id = product_data.shopify_id
+            if default_marketplace_instance_id != marketplace_instance_id:
+                prod_mapping = record.env['shopify.multi.store'].sudo().search([('product_tmpl_id', '=', record.product_tmpl_id.id), ('shopify_instance_id', '=', instance_obj.id)], limit=1)
+                product_tmpl_shopify_id = prod_mapping.shopify_parent_id
+
         version = marketplace_instance_id.marketplace_api_version or '2021-01'
         url = marketplace_instance_id.marketplace_host
         if req_type == 'create':
@@ -423,11 +436,11 @@ def update_product_images(record, product_data, req_type, marketplace_instance_o
             # url += '/admin/api/%s/variants/%s.json' % (
             #     version, record.shopify_id)
             url += '/admin/api/%s/products/%s/images.json' % (
-                version, product_data.shopify_id)
+                version, product_tmpl_shopify_id)
         if req_type == 'update':
             type_req = 'PUT'
             url += '/admin/api/%s/products/%s/images/%s.json' % (
-                version, product_data.shopify_id,record.shopify_image_id)
+                version, product_tmpl_shopify_id,record.shopify_image_id)
         headers = {
             'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password,
             'Content-Type': 'application/json'
@@ -597,7 +610,11 @@ def shopify_pt_request_create_product_by_instance(record, data, req_type, market
 
     if req_type == 'create' and 'product.product' in str(record):
         type_req = 'POST'
-        url += '/admin/api/%s/products/%s/variants.json' % (version, record.product_tmpl_id.shopify_id)
+        if record.product_tmpl_id.shopify_id and (record.product_tmpl_id.shopify_instance_id and record.product_tmpl_id.shopify_instance_id.id == marketplace_instance_id.id):
+            url += '/admin/api/%s/products/%s/variants.json' % (version, record.product_tmpl_id.shopify_id)
+        else:
+            prod_mapping = record.env['shopify.multi.store'].sudo().search([('product_tmpl_id', '=', record.product_tmpl_id.id), ('shopify_instance_id', '=', marketplace_instance_id.id)], limit=1)
+            url += '/admin/api/%s/products/%s/variants.json' % (version, prod_mapping.shopify_parent_id)
     else:
         return
 
@@ -635,6 +652,7 @@ def shopify_pt_request_create_product_by_instance(record, data, req_type, market
                 'name': created_products.get("variant").get('sku'),
                 'shopify_instance_id': marketplace_instance_id.id,
                 'product_id': record.id,
+                'product_tmpl_id': record.product_tmpl_id.id,
                 'shopify_id': created_products.get("variant").get('id'),
                 'shopify_parent_id': created_products.get("variant").get('product_id'),
                 'shopify_inventory_id': created_products.get("variant").get('inventory_item_id')
