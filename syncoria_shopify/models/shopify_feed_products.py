@@ -1394,6 +1394,7 @@ class ShopifyFeedProducts(models.Model):
                     'name': product.get('sku'),
                     'shopify_instance_id': self.instance_id.id,
                     'product_id': product_id.id,
+                    'product_tmpl_id': product_id.product_tmpl_id.id,
                     'shopify_id': product.get('id'),
                     'shopify_parent_id': product.get('product_id'),
                     'shopify_inventory_id': product.get('inventory_item_id')
