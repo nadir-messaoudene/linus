@@ -666,7 +666,13 @@ class ShopifyFeedOrders(models.Model):
 
                             
                         if not product_missing and order_vals['partner_id']:
-                            
+                            note_attributes = i.get('note_attributes')
+                            customer_reference = False
+                            for note_attribute in note_attributes:
+                                if note_attribute.get('name') == 'ShipEarly Order ID':
+                                    customer_reference = note_attribute.get('value')
+                            if customer_reference:
+                                order_vals['client_order_ref'] = customer_reference
                             order_id = self.env['sale.order'].sudo().create(order_vals)
                             log_msg = "Sale Order Created-{} for Feed Order-{}".format(order_id, self)
                             msg_body += '\n' + log_msg + '\n'
@@ -691,6 +697,13 @@ class ShopifyFeedOrders(models.Model):
                     current_order_id = OrderObj.search(
                         [('shopify_id', '=', i['id'])], order='id desc', limit=1)
                     current_order_id.write({"shopify_instance_id": marketplace_instance_id.id})
+                    note_attributes = i.get('note_attributes')
+                    customer_reference = False
+                    for note_attribute in note_attributes:
+                        if note_attribute.get('name') == 'ShipEarly Order ID':
+                            customer_reference = note_attribute.get('value')
+                    if customer_reference:
+                        current_order_id.write({"client_order_ref": customer_reference})
                     if i.get("cancel_reason") and i.get('cancelled_at'):
                         current_order_id.action_cancel()
                     all_shopify_orders += current_order_id
