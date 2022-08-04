@@ -134,6 +134,7 @@ class StockPicking(models.Model):
                     "id": source_warehouse
                 },
                 "referenceNum": self.name,
+                "poNum": self.sale_id.client_order_ref,
                 "notes": self.warehouse_instruction if self.warehouse_instruction else "",
                 "shippingNotes": self.carrier_instruction if self.carrier_instruction else "",
                 "billingCode": "Prepaid",

@@ -594,7 +594,7 @@ class SaleOrderShopify(models.Model):
                     revasal_wizard.sudo().reverse_moves()
                     refund_move_id = account_move.search([('invoice_origin', '=', rec.name), ('move_type', "=", "out_refund")])
 
-                if refund_move_id and refund_move_id.state != 'posted':
+                if refund_move_id and refund_move_id.state == 'draft':
                     refund_move_id.action_post()
                     message += "\nCredit Note-{} Posted for Sale Order-{}".format(refund_move_id, rec)
                 try:
