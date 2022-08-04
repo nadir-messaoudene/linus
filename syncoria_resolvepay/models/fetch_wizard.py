@@ -20,6 +20,7 @@ class ResolvepayFetch(models.Model):
             params = {'limit': 100, 'page': i}
             url = instance.instance_baseurl + 'customers'
             res = instance.get_data(url, params)
+            time.sleep(0.5)
             if res.get('data'):
                 data = res.get('data')
                 if data.get('count') > 0:
