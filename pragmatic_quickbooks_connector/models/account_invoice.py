@@ -253,8 +253,29 @@ class AccountPayment(models.Model):
             for payment in Payments:
                 payment_obj = False
                 count = count+1
-                _logger.info(_('\n\nPayment1 : %s %s'%(count, payment)))
+                _logger.info(_('\n\nPayment %s : %s'%(count, payment)))
                 last_imported_id = payment.get('Id')
+                payment_obj_rec = self.search([('qbo_payment_id', '=', payment.get("Id"))])
+                if payment_obj_rec:
+                    _logger.info(payment_obj_rec)
+                    lines = payment.get('Line')
+                    if len(lines) == 0:
+                        if payment.get('PrivateNote'):
+                            _logger.info('private note :' + payment.get('PrivateNote'))
+                            payment_obj_rec.qbo_invoice_name = payment.get('PrivateNote')
+                    else:
+                        for line in lines:
+                            if len(line.get('LinkedTxn')) > 1:
+                                raise ValidationError('LinkedTxn > 1')
+                            if line.get('LinkedTxn')[0].get('TxnType') == 'Invoice':
+                                any = line.get('LineEx').get('any')
+                                for i in any:
+                                    if i.get('value').get('Name') == 'txnReferenceNumber':
+                                        qbo_inv_name = i.get('value').get('Value')
+                                        _logger.info('payment_ref:' + payment.get('PaymentRefNum') if payment.get('PaymentRefNum') else False)
+                                        _logger.info('qbo_inv_name:' + qbo_inv_name)
+                                        payment_obj_rec.qbo_invoice_name = qbo_inv_name
+                continue
 
                 if payment.get('TotalAmt'):
                     invoice = False
