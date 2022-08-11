@@ -48,8 +48,9 @@ class SaleOrder(models.Model):
     @api.depends('picking_ids.carrier_tracking_ref')
     def _get_delivery_tracking(self):
         for order in self:
-            if len(order.picking_ids) > 0:
-                order.last_carrier_tracking_ref = order.picking_ids.sorted()[-1].carrier_tracking_ref
+            pickings = order.picking_ids.filtered(lambda l: l.picking_type_id.code != 'internal')
+            if len(pickings) > 0:
+                order.last_carrier_tracking_ref = pickings[-1].carrier_tracking_ref
             else: 
                 order.last_carrier_tracking_ref = ''
 
@@ -58,5 +59,5 @@ class SaleOrder(models.Model):
         if not to_update:
             return
         for rec in to_update:
-            rec._get_delivery_status()
+            rec._get_delivery_tracking()
     
