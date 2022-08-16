@@ -1,3 +1,6 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_lightspeed_instance,access.lightspeed.instance,model_lightspeed_instance,base.group_user,1,1,1,1
 access_lightspeed_fetch_wizard,access.lightspeed.fetch.wizard,model_lightspeed_fetch_wizard,base.group_user,1,1,1,1
+access_lightspeed_order_feeds,access.lightspeed.order.feeds,model_lightspeed_order_feeds,base.group_user,1,1,1,1
+access_lightspeed_customer_feeds,access.lightspeed.customer.feeds,model_lightspeed_customer_feeds,base.group_user,1,1,1,1
+access_lightspeed_product_feeds,access.lightspeed.product.feeds,model_lightspeed_product_feeds,base.group_user,1,1,1,1

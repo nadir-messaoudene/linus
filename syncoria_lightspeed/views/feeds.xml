@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data>
+        <record id="lightspeed_order_feed_action" model="ir.actions.act_window">
+            <field name="name">Order Feeds</field>
+            <field name="res_model">lightspeed.order.feeds</field>
+            <field name="view_mode">tree,form</field>
+        </record>
 
         <record id="view_lightspeed_order_feeds_tree" model="ir.ui.view">
             <field name="name">view.lightspeed.order.feeds.tree</field>
@@ -21,6 +26,66 @@
                 <form string="Lightspeed Order Feeds">
                     <sheet>
                         <field name="order_data" />
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="lightspeed_customer_feed_action" model="ir.actions.act_window">
+            <field name="name">Customer Feeds</field>
+            <field name="res_model">lightspeed.customer.feeds</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record id="view_lightspeed_customer_feeds_tree" model="ir.ui.view">
+            <field name="name">view.lightspeed.customer.feeds.tree</field>
+            <field name="model">lightspeed.customer.feeds</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name" />
+                    <field name="instance_id" />
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_lightspeed_customer_feeds_form" model="ir.ui.view">
+            <field name="name">view.lightspeed.customer.feeds.form</field>
+            <field name="model">lightspeed.customer.feeds</field>
+            <field name="arch" type="xml">
+                <form string="Lightspeed Customer Feeds">
+                    <sheet>
+                        <field name="customer_data" />
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="lightspeed_product_feed_action" model="ir.actions.act_window">
+            <field name="name">Product Feeds</field>
+            <field name="res_model">lightspeed.product.feeds</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record id="view_lightspeed_product_feeds_tree" model="ir.ui.view">
+            <field name="name">view.lightspeed.product.feeds.tree</field>
+            <field name="model">lightspeed.product.feeds</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name" />
+                    <field name="instance_id" />
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_lightspeed_product_feeds_form" model="ir.ui.view">
+            <field name="name">view.lightspeed.product.feeds.form</field>
+            <field name="model">lightspeed.product.feeds</field>
+            <field name="arch" type="xml">
+                <form string="Lightspeed Product Feeds">
+                    <sheet>
+                        <field name="product_data" />
                     </sheet>
                 </form>
             </field>

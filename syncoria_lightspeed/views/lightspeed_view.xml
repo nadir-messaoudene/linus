@@ -58,6 +58,7 @@
             name="Fetch Wizard"
             id="lightspeed_fetch_wizard_menu"
             parent="lightspeed_fetch_feed_menu"
+            sequence="1"
             action="action_lightspeed_fetch_wizard"
         />
 
@@ -69,17 +70,17 @@
 
         <menuitem id="lightspeed_feeds_order_menu"
             parent="lightspeed_feeds_parent_menu"
-            name="Order Feeds"
+            name="Order Feeds" action="lightspeed_order_feed_action"
         />
 
         <menuitem id="lightspeed_feeds_customer_menu"
             parent="lightspeed_feeds_parent_menu"
-            name="Customer Feeds"
+            name="Customer Feeds" action="lightspeed_customer_feed_action"
         />
 
         <menuitem id="lightspeed_feeds_product_menu"
             parent="lightspeed_feeds_parent_menu"
-            name="Product Feeds"
+            name="Product Feeds" action="lightspeed_product_feed_action"
         />
 
     </data>
