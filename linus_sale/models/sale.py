@@ -3,7 +3,7 @@
 
 from datetime import datetime, timedelta
 from functools import partial
-from itertools import groupby
+from itertools import count, groupby
 import json
 
 from odoo import api, fields, models, SUPERUSER_ID, _
@@ -26,22 +26,31 @@ class SaleOrder(models.Model):
         ('done', 'Done'),
         ('cancel', 'Cancelled')
         ], string='Delivery Status', default='none', compute='_get_delivery_status', store=True)
+    count_backorder = fields.Integer('Back Orders Count', compute='_get_delivery_status', store=True)
 
     last_carrier_tracking_ref = fields.Char(string='Tracking Reference',compute='_get_delivery_tracking', store=True)
 
     @api.depends('picking_ids.state')
     def _get_delivery_status(self):
+        print('_get_delivery_status')
         for order in self:
-            if len(order.picking_ids) > 0:
-                order.delivery_status = order.picking_ids.sorted()[-1].state
+            pickings = order.picking_ids.filtered(lambda l: l.picking_type_id.code != 'internal')
+            backorders = pickings.backorder_ids
+            pickings = sorted(pickings, key=lambda x: x.id)
+            if len(pickings) > 0:
+                order.delivery_status = pickings[-1].state
             else: 
                 order.delivery_status = 'none'
+            
+            order.count_backorder = len(backorders)
+            
 
     @api.depends('picking_ids.carrier_tracking_ref')
     def _get_delivery_tracking(self):
         for order in self:
-            if len(order.picking_ids) > 0:
-                order.last_carrier_tracking_ref = order.picking_ids.sorted()[-1].carrier_tracking_ref
+            pickings = order.picking_ids.filtered(lambda l: l.picking_type_id.code != 'internal')
+            if len(pickings) > 0:
+                order.last_carrier_tracking_ref = pickings[-1].carrier_tracking_ref
             else: 
                 order.last_carrier_tracking_ref = ''
 
@@ -50,5 +59,5 @@ class SaleOrder(models.Model):
         if not to_update:
             return
         for rec in to_update:
-            rec._get_delivery_status()
+            rec._get_delivery_tracking()
     
