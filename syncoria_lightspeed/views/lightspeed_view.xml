@@ -48,5 +48,39 @@
         <menuitem id="lightspeed_dashboard" name="Dashboard" parent="lightspeed_root" />
         <menuitem id="lightspeed_instance" action="lightspeed_instance_action" parent="lightspeed_dashboard" />
 
+        <menuitem
+            name="Synchronize"
+            id="lightspeed_fetch_feed_menu"
+            parent="lightspeed_root"
+        />
+
+        <menuitem
+            name="Fetch Wizard"
+            id="lightspeed_fetch_wizard_menu"
+            parent="lightspeed_fetch_feed_menu"
+            action="action_lightspeed_fetch_wizard"
+        />
+
+        <menuitem id="lightspeed_feeds_parent_menu"
+            parent="lightspeed_fetch_feed_menu"
+            sequence="5"
+            name="Feeds"
+        />
+
+        <menuitem id="lightspeed_feeds_order_menu"
+            parent="lightspeed_feeds_parent_menu"
+            name="Order Feeds"
+        />
+
+        <menuitem id="lightspeed_feeds_customer_menu"
+            parent="lightspeed_feeds_parent_menu"
+            name="Customer Feeds"
+        />
+
+        <menuitem id="lightspeed_feeds_product_menu"
+            parent="lightspeed_feeds_parent_menu"
+            name="Product Feeds"
+        />
+
     </data>
 </odoo>
