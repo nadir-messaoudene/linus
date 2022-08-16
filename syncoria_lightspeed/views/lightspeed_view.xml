@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="lightspeed_instance_action" model="ir.actions.act_window">
+            <field name="name">Instance</field>
+            <field name="res_model">lightspeed.instance</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record id="view_lightspeed_instance_tree" model="ir.ui.view">
+            <field name="name">lightspeed.instance.tree</field>
+            <field name="model">lightspeed.instance</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_lightspeed_instance_form" model="ir.ui.view">
+            <field name="name">lightspeed.instance.form</field>
+            <field name="model">lightspeed.instance</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button string="Get Access Token" class="btn btn-primary" name="check_connection" type="object" />
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <widget name="web_ribbon" title="Draft" bg_color="bg-warning" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+					    <widget name="web_ribbon" title="Error" bg_color="bg-danger" attrs="{'invisible': [('state', '!=', 'error')]}"/>
+					    <widget name="web_ribbon" title="Connected" bg_color="bg-success" attrs="{'invisible': [('state', '!=', 'validate')]}"/>
+                        <group>
+                            <field name="name" />
+                            <field name="client_id" />
+                            <field name="client_secret" />
+                            <field name="account_id" />
+                            <field name="refresh_token" />
+                            <field name="access_token" />
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <menuitem id="lightspeed_root" name="Lightspeed" web_icon="syncoria_lightspeed,static/description/icon.png"/>
+
+        <menuitem id="lightspeed_dashboard" name="Dashboard" parent="lightspeed_root" />
+        <menuitem id="lightspeed_instance" action="lightspeed_instance_action" parent="lightspeed_dashboard" />
+
+    </data>
+</odoo>
