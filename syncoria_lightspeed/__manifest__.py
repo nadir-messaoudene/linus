@@ -1,6 +1,6 @@
 {
     'name': 'Lightspeed Connector',
-    'depends': ['base'],
+    'depends': ['base', 'account'],
     'data': [
         'security/ir.model.access.csv',
         'views/fetch_wizard.xml',

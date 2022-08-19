@@ -23,7 +23,8 @@
             <field name="arch" type="xml">
                 <form>
                     <header>
-                        <button string="Get Access Token" class="btn btn-primary" name="check_connection" type="object" />
+                        <button string="Check Connection" class="btn btn-primary" name="check_connection" type="object"/>
+                        <button string="Get Access Token" class="btn btn-primary" name="get_access_token" type="object" attrs="{'invisible': [('state', '!=', 'validate')]}"/>
                         <field name="state" widget="statusbar"/>
                     </header>
                     <sheet>
@@ -32,12 +33,32 @@
 					    <widget name="web_ribbon" title="Connected" bg_color="bg-success" attrs="{'invisible': [('state', '!=', 'validate')]}"/>
                         <group>
                             <field name="name" />
-                            <field name="client_id" />
-                            <field name="client_secret" />
-                            <field name="account_id" />
-                            <field name="refresh_token" />
-                            <field name="access_token" />
+                            <field name="client_id" attrs="{'readonly': [('state', '=', 'validate')]}"/>
+                            <field name="client_secret" attrs="{'readonly': [('state', '=', 'validate')]}"/>
+                            <field name="account_id" attrs="{'readonly': [('state', '=', 'validate')]}"/>
+                            <field name="refresh_token" attrs="{'readonly': [('state', '=', 'validate')]}"/>
+                            <field name="access_token" attrs="{'readonly': [('state', '=', 'validate')]}"/>
+                            <field name="base_url" attrs="{'readonly': [('state', '=', 'validate')]}"/>
                         </group>
+                        <notebook>
+                            <page name="lightspeed_shop" string="Shop">
+                                <field name="shop_ids">
+                                    <tree create="0" delete="0">
+                                        <field name="name"></field>
+                                        <field name="shop_id"></field>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page name="lightspeed_payment" string="Payment Mapping">
+                                <field name="payment_ids">
+                                    <tree create="0" delete="0" editable="top">
+                                        <field name="name" readonly="1"></field>
+                                        <field name="payment_type_id" readonly="1"></field>
+                                        <field name="journal_id"></field>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
                     </sheet>
                 </form>
             </field>

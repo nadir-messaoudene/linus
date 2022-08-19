@@ -14,14 +14,14 @@
                                 <field name="fetch_type" widget="radio" required="1" />
                             </group>
                             <group>
-                                <field name="date_from" widget="date" attrs="{'invisible': [('fetch_type', '!=', 'date')], 'required': [('fetch_type', '=', 'date')]}"/>
-                                <field name="date_to" widget="date" attrs="{'invisible': [('fetch_type', '!=', 'date')], 'required': [('fetch_type', '=', 'date')]}"/>
+                                <field name="date_from" widget="datetime" attrs="{'invisible': [('fetch_type', '!=', 'date')], 'required': [('fetch_type', '=', 'date')]}"/>
+                                <field name="date_to" widget="datetime" attrs="{'invisible': [('fetch_type', '!=', 'date')], 'required': [('fetch_type', '=', 'date')]}"/>
                             </group>
                         </group>
                         <p>The operation may take some time to complete. It depends on the number of records.
                             Please wait patiently.</p>
                         <footer>
-<!--                            <button string='Fetch Feed Orders' name="shopify_fetch_feed_orders" type="object" class="btn-primary" />-->
+                            <button string='Fetch Orders' name="lightspeed_fetch_orders" type="object" class="btn-primary" />
                             <button string="Cancel" class="btn-default" special="cancel"/>
                         </footer>
                     </sheet>

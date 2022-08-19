@@ -4,3 +4,5 @@ access_lightspeed_fetch_wizard,access.lightspeed.fetch.wizard,model_lightspeed_f
 access_lightspeed_order_feeds,access.lightspeed.order.feeds,model_lightspeed_order_feeds,base.group_user,1,1,1,1
 access_lightspeed_customer_feeds,access.lightspeed.customer.feeds,model_lightspeed_customer_feeds,base.group_user,1,1,1,1
 access_lightspeed_product_feeds,access.lightspeed.product.feeds,model_lightspeed_product_feeds,base.group_user,1,1,1,1
+access_lightspeed_shop,access.lightspeed.shop,model_lightspeed_shop,base.group_user,1,1,1,1
+access_lightspeed_payment,access.lightspeed.payment,model_lightspeed_payment,base.group_user,1,1,1,1

@@ -16,5 +16,8 @@ class FetchWizard(models.TransientModel):
 
     instance_id = fields.Many2one(string='Lightspeed Instance', comodel_name='lightspeed.instance')
 
-    date_from = fields.Date('From')
-    date_to = fields.Date('To')
+    date_from = fields.Datetime('From')
+    date_to = fields.Datetime('To')
+
+    def lightspeed_fetch_orders(self):
+        self.instance_id.fetch_orders(self.date_from, self.date_to)
