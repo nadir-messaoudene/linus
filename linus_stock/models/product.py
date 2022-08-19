@@ -47,13 +47,13 @@ class Product(models.Model):
             warehouse = [warehouse]
         # filter by location and/or warehouse
         if warehouse:
-            # w_ids = set(Warehouse.browse(_search_ids('stock.warehouse', warehouse)).mapped('view_location_id').ids)
-            # if location:
-            #     l_ids = _search_ids('stock.location', location)
-            #     location_ids = w_ids & l_ids
-            # else:
-            #     location_ids = w_ids
-            location_ids = _search_ids('stock.location', warehouse)
+            w_ids = set(Warehouse.browse(_search_ids('stock.warehouse', warehouse)).mapped('view_location_id').ids)
+            if location:
+                l_ids = _search_ids('stock.location', location)
+                location_ids = w_ids & l_ids
+            else:
+                location_ids = w_ids
+            # location_ids = _search_ids('stock.location', warehouse)
         else:
             if location:
                 location_ids = _search_ids('stock.location', location)
