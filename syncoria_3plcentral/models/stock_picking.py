@@ -201,6 +201,22 @@ class StockPicking(models.Model):
             print("update_picking_from_3pl")
             instance = self.env['instance.3pl'].search([], limit=1)
             if record.picking_type_id.code == 'incoming':
+                url = "https://secure-wms.com/inventory/receivers/{}".format(record.threeplId)
+                headers = {
+                    'Host': 'secure-wms.com',
+                    'Accept-Language': 'en-US,en;q=0.8',
+                    'Content-Type': 'application/json; charset=utf-8',
+                    'Accept': 'application/hal+json',
+                    'Authorization': 'Bearer ' + str(instance.access_token)
+                }
+                response = requests.request("GET", url, headers=headers, data={})
+                print(response.status_code)
+                if response.status_code == 200:
+                    response = json.loads(response.text)
+                    print(response)
+                    status = response.get('readOnly').get('status')
+                    if status == 2:
+                        record.action_cancel()
                 return
             if not record.threeplId:
                 raise UserError("The transfer does not have 3PL ID (Maybe it hasn't been exported)")
