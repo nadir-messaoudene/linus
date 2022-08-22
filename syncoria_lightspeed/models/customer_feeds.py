@@ -117,3 +117,4 @@ class LightspeedCustomerFeeds(models.Model):
         for feed in self:
             _logger.info('Start evaluating feeds for customer: {}'.format(feed.name))
 
+

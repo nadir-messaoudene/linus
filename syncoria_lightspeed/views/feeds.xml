@@ -62,28 +62,30 @@
                     </header>
                     <sheet>
                         <group>
-                            <field name="lightspeed_customer_id" />
-                            <field name="first_name" />
-                            <field name="last_name" />
-                            <field name="company" />
-                            <field name="vat_number" />
-                        </group>
-                        <group>
-                            <field name="lightspeed_contact_id" />
-                            <field name="street1" />
-                            <field name="street2" />
-                            <field name="city" />
-                            <field name="state_name" />
-                            <field name="state_code" />
-                            <field name="zip" />
-                            <field name="country" />
-                            <field name="country_code" />
-                        </group>
-                        <group>
-                            <field name="phone" />
-                            <field name="mobile" />
-                            <field name="email" />
-                            <field name="website" />
+                            <group>
+                                <field name="lightspeed_customer_id" />
+                                <field name="first_name" />
+                                <field name="last_name" />
+                                <field name="company" />
+                                <field name="vat_number" />
+                            </group>
+                            <group>
+                                <field name="lightspeed_contact_id" />
+                                <field name="street1" />
+                                <field name="street2" />
+                                <field name="city" />
+                                <field name="state_name" />
+                                <field name="state_code" />
+                                <field name="zip" />
+                                <field name="country" />
+                                <field name="country_code" />
+                            </group>
+                            <group>
+                                <field name="phone" />
+                                <field name="mobile" />
+                                <field name="email" />
+                                <field name="website" />
+                            </group>
                         </group>
                         <group>
                             <field name="customer_data" />
