@@ -51,10 +51,10 @@ class LightspeedInstance(models.Model):
             response = requests.request("POST", url, data=payload)
             res = json.loads(response.text)
             if response.status_code == 200:
-                logging.info(res)
+                _logger.info(res)
                 return res
             else:
-                logging.info(res)
+                _logger.info(res)
                 self.state = 'error'
                 raise ValidationError(res)
         except Exception as e:
@@ -68,10 +68,10 @@ class LightspeedInstance(models.Model):
             response = requests.request("GET", url, headers=headers)
             res = json.loads(response.text)
             if response.status_code == 200:
-                logging.info(res)
+                _logger.info(res)
                 return res
             else:
-                logging.info(res)
+                _logger.info(res)
                 self.state = 'error'
                 raise ValidationError(res)
         except Exception as e:
@@ -121,7 +121,25 @@ class LightspeedInstance(models.Model):
                 sale_list = [res.get('Sale')]
             else:
                 sale_list = res.get('Sale')
-            feeds = self.env['lightspeed.order.feeds'].create_feeds(sale_list)
+            try:
+                feeds = self.env['lightspeed.order.feeds'].with_context(instance_id=self).create_feeds(sale_list)
+            except Exception as e:
+                _logger.info(e)
+                raise ValidationError(e)
+
+    def fetch_customers(self):
+        res = self.get_request(self.base_url + 'Customer.json' + '?load_relations=["Contact"]')
+        if res.get('Customer'):
+            if type(res.get('Customer')) is dict:
+                customer_list = [res.get('Customer')]
+            else:
+                customer_list = res.get('Customer')
+            try:
+                feeds = self.env['lightspeed.customer.feeds'].with_context(instance_id=self).create_feeds(customer_list)
+                feeds.evaluate_feed()
+            except Exception as e:
+                _logger.info(e)
+                raise ValidationError(e)
 
 
 class LightspeedShop(models.Model):

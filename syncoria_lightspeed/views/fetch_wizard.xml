@@ -21,7 +21,7 @@
                         <p>The operation may take some time to complete. It depends on the number of records.
                             Please wait patiently.</p>
                         <footer>
-                            <button string='Fetch Orders' name="lightspeed_fetch_orders" type="object" class="btn-primary" />
+                            <button string='Fetch Orders' name="lightspeed_fetch_objects" type="object" class="btn-primary" />
                             <button string="Cancel" class="btn-default" special="cancel"/>
                         </footer>
                     </sheet>
