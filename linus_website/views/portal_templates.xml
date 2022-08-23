@@ -106,5 +106,16 @@
             <xpath expr="//div[@id='product_full_description']" position="replace">
             </xpath>
         </template>
+
+        <template id="portal_my_home_purchase_inherit" name="Show Requests for Quotation / Purchase Orders Inherit" inherit_id="purchase.portal_my_home_purchase">
+            <xpath expr='//t[@t-call="portal.portal_docs_entry"][last()]' position="replace">
+            </xpath>
+            <xpath expr='//t[@t-call="portal.portal_docs_entry"][last()]' position="replace">
+            </xpath>
+        </template>
+        <template id="portal_layout_remove_edit" inherit_id="portal.portal_layout">
+            <xpath expr="//a[@href='/my/account']" position="replace">
+            </xpath>
+        </template>
     </data>
 </odoo>
