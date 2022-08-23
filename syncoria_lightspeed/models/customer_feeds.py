@@ -115,6 +115,37 @@ class LightspeedCustomerFeeds(models.Model):
     def evaluate_feed(self):
         _logger.info(self)
         for feed in self:
-            _logger.info('Start evaluating feeds for customer: {}'.format(feed.name))
-
-
+            try:
+                _logger.info('Start evaluating feeds for customer: {}'.format(feed.name))
+                feed.message = ''
+                vals = dict(
+                    type='contact',
+                    name=feed.name,
+                    street=feed.street1,
+                    street2=feed.street2,
+                    city=feed.city,
+                    zip=feed.zip,
+                    email=feed.email,
+                    phone=feed.phone,
+                    mobile=feed.mobile,
+                    website=feed.website,
+                    lightspeed_customer_id=feed.lightspeed_customer_id
+                )
+                country_id = self.env['res.country'].search([('code', '=', feed.country_code)])
+                if country_id:
+                    vals['country_id'] = country_id.id
+                state_id = self.env['res.country.state'].search([('code', '=', feed.state_code), ('country_id', '=', country_id.id)])
+                if state_id:
+                    vals['state_id'] = state_id.id
+                res_partner = self.env['res.partner'].search([('lightspeed_customer_id', '=', feed.lightspeed_customer_id)])
+                _logger.info(vals)
+                if res_partner:
+                    res_partner.write(vals)
+                else:
+                    res_partner = self.env['res.partner'].create(vals)
+                feed.state = 'done'
+            except Exception as e:
+                self.state = 'error'
+                self.message = e
+                _logger.info(e)
+                raise ValidationError(e)

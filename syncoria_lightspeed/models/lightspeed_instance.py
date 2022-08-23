@@ -123,6 +123,7 @@ class LightspeedInstance(models.Model):
                 sale_list = res.get('Sale')
             try:
                 feeds = self.env['lightspeed.order.feeds'].with_context(instance_id=self).create_feeds(sale_list)
+                feeds.evaluate_feed()
             except Exception as e:
                 _logger.info(e)
                 raise ValidationError(e)
@@ -137,6 +138,16 @@ class LightspeedInstance(models.Model):
             try:
                 feeds = self.env['lightspeed.customer.feeds'].with_context(instance_id=self).create_feeds(customer_list)
                 feeds.evaluate_feed()
+                return {
+                    'name': 'Lightspeed Customers',
+                    'type': 'ir.actions.act_window',
+                    'view_type': 'form',
+                    'view_mode': 'tree,form',
+                    'res_model': 'res.partner',
+                    'view_id': False,
+                    'domain': [('lightspeed_customer_id', '!=', '')],
+                    'target': 'current',
+                }
             except Exception as e:
                 _logger.info(e)
                 raise ValidationError(e)

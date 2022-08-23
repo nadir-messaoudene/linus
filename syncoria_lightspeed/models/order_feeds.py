@@ -75,6 +75,7 @@ class LightspeedOrderFeeds(models.Model):
                 'ship_to_id': sale.get('shipToID')
             }
             customer_feed_id = self.env['lightspeed.customer.feeds'].create_feed(sale.get('Customer'))
+            customer_feed_id.evaluate_feed()
             feed_id = self.search([('name', '=', sale.get('saleID'))])
             if feed_id:
                 feed.write(vals)
@@ -86,3 +87,22 @@ class LightspeedOrderFeeds(models.Model):
             self.message = e
             _logger.info(e)
             raise ValidationError(e)
+
+    def evaluate_feed(self):
+        _logger.info(self)
+        for feed in self:
+            try:
+                _logger.info('Start evaluating feeds for order: {}'.format(feed.ticket_number))
+                feed.message = ''
+                res_partner = self.env['res.partner'].search([('lightspeed_customer_id', '=', feed.lightspeed_customer_id)])
+                _logger.info(vals)
+                if res_partner:
+                    res_partner.write(vals)
+                else:
+                    res_partner = self.env['res.partner'].create(vals)
+                feed.state = 'done'
+            except Exception as e:
+                self.state = 'error'
+                self.message = e
+                _logger.info(e)
+                raise ValidationError(e)

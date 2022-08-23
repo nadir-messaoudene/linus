@@ -21,6 +21,6 @@ class FetchWizard(models.TransientModel):
 
     def lightspeed_fetch_objects(self):
         if self.object_to_fetch == 'order':
-            self.instance_id.fetch_orders(self.date_from, self.date_to)
+            return self.instance_id.fetch_orders(self.date_from, self.date_to)
         elif self.object_to_fetch == 'customer':
-            self.instance_id.fetch_customers()
+            return self.instance_id.fetch_customers()
