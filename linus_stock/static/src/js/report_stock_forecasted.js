@@ -9,7 +9,7 @@ odoo.define('linus_stock.stock_forecast', require => {
          * @override
          */
         init: function (parent, action, options) {
-            console.log("init inherit")
+//            console.log("init inherit")
             this._super.apply(this, arguments);
             this.context = action.context;
             console.log(this.context)
@@ -26,14 +26,26 @@ odoo.define('linus_stock.stock_forecast', require => {
                 method: 'get_warehouses',
                 context: this.context,
             }).then((res) => {
-                console.log(res)
+//                console.log(res)
                 const active_warehouse = res.find(w => w.id == action.context.warehouse);
                 if (!active_warehouse){
-                    console.log('if (!this.active_warehouse){ INIT')
+//                    console.log('if (!this.active_warehouse){ INIT')
                     action.context.warehouse = res[0].id;
                 }
             });
             this.context = action.context;
+        },
+
+        _onClickUnreserve: function(ev) {
+            const model = ev.target.getAttribute('model');
+            const modelId = parseInt(ev.target.getAttribute('model-id'));
+            console.log("-->>>>>>>>>>>>>>")
+            console.log(this.context)
+            return this._rpc( {
+                model,
+                args: [[modelId], this.context],
+                method: 'do_unreserve'
+            }).then(() => this._reloadReport());
         },
     }
     StockReplenishReport.include(ReplenishReportInherit)
