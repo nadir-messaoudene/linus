@@ -2,6 +2,7 @@ import json
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 import logging
+
 _logger = logging.getLogger(__name__)
 
 
@@ -26,7 +27,7 @@ class LightspeedOrderFeeds(models.Model):
                    ('error', 'Error')],
         default='draft'
     )
-    completed = fields.Boolean('Completed')
+    completed = fields.Boolean(string='Completed')
     sale_id = fields.Char(string='Sale ID')
     reference_number = fields.Char(string='Reference Number')
     reference_number_source = fields.Char(string='Reference Number Source')
@@ -94,7 +95,8 @@ class LightspeedOrderFeeds(models.Model):
             try:
                 _logger.info('Start evaluating feeds for order: {}'.format(feed.ticket_number))
                 feed.message = ''
-                res_partner = self.env['res.partner'].search([('lightspeed_customer_id', '=', feed.lightspeed_customer_id)])
+                res_partner = self.env['res.partner'].search(
+                    [('lightspeed_customer_id', '=', feed.lightspeed_customer_id)])
                 _logger.info(vals)
                 if res_partner:
                     res_partner.write(vals)
@@ -106,3 +108,21 @@ class LightspeedOrderFeeds(models.Model):
                 self.message = e
                 _logger.info(e)
                 raise ValidationError(e)
+
+
+class OrderLineFeed(models.Model):
+    _name = 'order.line.feed'
+    _description = 'Order Line Feed'
+
+    order_feed_id = fields.Many2one('order.feed', string='Order Feed ID')
+    lightspeed_sale_line_id = fields.Char(string='Sale Line ID')
+    unit_qty = fields.Integer(string='Unit Qty')
+    unit_price = fields.Float(string='Unit Price')
+    is_layaway = fields.Boolean(string='Is Layaway')
+    is_workorder = fields.Boolean(string='is Workorder')
+    is_specialorder = fields.Boolean(string='Is Special Order')
+    total_amount = fields.Float(string='Cal Total Amount')
+    subtotal_amount = fields.Float(string='Cal Subtotal Amount')
+    tax1_amount = fields.Float(string='calcTax1')
+    tax2_amount = fields.Float(string='calcTax2')
+
