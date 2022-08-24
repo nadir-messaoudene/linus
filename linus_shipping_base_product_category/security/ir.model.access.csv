@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_delivery_price_rule_categ_price,access_delivery.price.rule.categ.price,model_delivery_price_rule_categ_price,base.group_erp_manager,1,1,1,1
+access_delivery_price_rule_categ_price_public,access_delivery.price.rule.categ.price,model_delivery_price_rule_categ_price,,1,0,0,0
+

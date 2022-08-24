@@ -8,6 +8,19 @@
             <field name="company_id" position="after">
                 <field name="is_category" />
             </field>
+
+        </field>
+    </record>
+
+    <record id="view_delivery_price_rule_tree_linus_inherit" model="ir.ui.view">
+        <field name="name">delivery.price.rule.tree</field>
+        <field name="model">delivery.price.rule</field>
+        <field name="inherit_id" ref="delivery.view_delivery_price_rule_tree"/>
+        <field name="arch" type="xml">
+            <field name="name" position="after">
+                <field name="description" optional="hide"/>
+                <field name="formula" optional="hide"/>
+            </field>
         </field>
     </record>
 </odoo>

@@ -8,10 +8,40 @@
             <xpath expr="//form/group[2]" position="inside">
                 <field name="description" attrs="{'invisible': [('parent.is_category', '=', False)], 'required': [('parent.is_category', '=', True)]}"/>
                 <label for="description" string="Product Category"/>
-                <div>
-                    <field name="categ_ids" widget="many2many_tags" class="oe_inline" attrs="{'invisible': [('parent.is_category', '=', False)], 'required': [('parent.is_category', '=', True)]}"/>
+                <div attrs="{'invisible': [('parent.is_category', '=', False)], 'required': [('parent.is_category', '=', True)]}">
+                    <field name="categ_price_ids">
+                        <tree editable="bottom">
+                            <field name="categ_id"/>
+                            <field name="price_unit"/>
+                            <field name="discount"/>
+                            <field name="list_price"/>
+                        </tree>
+                    </field>
+                </div>
+                <field name="formula"/>
+
+            </xpath>
+            <xpath expr="//field[@name='max_value']" position="after">
+                <field name="combine"/>
+            </xpath>
+            <xpath expr="//label[@for='list_base_price']" position="before">
+                <label for="variable_2" string="Condition" attrs="{'invisible': [('combine','=', False)], 'required': [('combine', '!=', False)]}"/>
+                <div class="o_row">
+                    <field name="variable_2" attrs="{'invisible': [('combine','=', False)], 'required': [('combine', '!=', False)]}"/>
+                    <field name="operator_2" attrs="{'invisible': [('combine','=', False)], 'required': [('combine', '!=', False)]}"/>
+                    <field name="max_value_2" attrs="{'invisible': [('combine','=', False)], 'required': [('combine', '!=', False)]}"/>
+                    <field name="combine_1" attrs="{'invisible': [('combine','=', False)]}"/>
+                </div>
+                <label for="variable_3" string="Condition" attrs="{'invisible': [('combine_1','=', False)], 'required': [('combine_1', '!=', False)]}"/>
+                <div class="o_row">
+                    <field name="variable_3" attrs="{'invisible': [('combine_1','=', False)], 'required': [('combine_1', '!=', False)]}"/>
+                    <field name="operator_3" attrs="{'invisible': [('combine_1','=', False)], 'required': [('combine_1', '!=', False)]}"/>
+                    <field name="max_value_3" attrs="{'invisible': [('combine_1','=', False)], 'required': [('combine_1', '!=', False)]}"/>
                 </div>
             </xpath>
+
+
+
         </field>
     </record>
 </odoo>
