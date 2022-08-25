@@ -136,6 +136,9 @@ class PriceRuleCateg(models.Model):
     rule_id = fields.Many2one('delivery.price.rule', 'Rule', required=True, ondelete='cascade')
     categ_id = fields.Many2one('product.category', string='Product Category')
     discount = fields.Float(string='Discount (%)', digits='Discount', default=0.0)
+    variable_factor = fields.Selection(
+        [('weight', 'Weight'), ('volume', 'Volume'), ('wv', 'Weight * Volume'), ('price', 'Price'),
+         ('quantity', 'Quantity')], 'Variable Factor', related='rule_id.variable_factor')
     price_unit = fields.Float('Unit Price', required=True, digits='Product Price', default=0.0)
     list_price = fields.Float('Price', required=False, compute='_compute_discount_list_price', store=True)
 

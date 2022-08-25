@@ -11,10 +11,11 @@
                 <div attrs="{'invisible': [('parent.is_category_base_shipment', '=', False)], 'required': [('parent.is_category_base_shipment', '=', True)]}">
                     <field name="categ_price_ids">
                         <tree editable="bottom">
-                            <field name="categ_id"/>
-                            <field name="price_unit"/>
-                            <field name="discount"/>
-                            <field name="list_price"/>
+                            <field name="categ_id" options="{'no_open': True, 'no_create': True}"/>
+                            <field name="variable_factor" invisible="1"/>
+                            <field name="price_unit" attrs="{'invisible': [('variable_factor', '=', 'price')]}"/>
+                            <field name="discount" attrs="{'invisible': [('variable_factor', '=', 'price')]}"/>
+                            <field name="list_price" attrs="{'invisible': [('variable_factor', '=', 'price')]}"/>
                         </tree>
                     </field>
                 </div>
