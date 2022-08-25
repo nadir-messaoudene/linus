@@ -13,7 +13,7 @@ _logger = logging.getLogger(__name__)
 class DeliveryCarrier(models.Model):
     _inherit = 'delivery.carrier'
 
-    is_category = fields.Boolean(default=False)
+    is_category_base_shipment = fields.Boolean(default=False)
 
     def _get_price_available(self, order):
         self.ensure_one()
@@ -38,7 +38,7 @@ class DeliveryCarrier(models.Model):
 
         total = self._compute_currency(order, total, 'pricelist_to_company')
 
-        if self.is_category:
+        if self.is_category_base_shipment:
             categ_ids = list(set([line.product_id.categ_id for line in order.order_line if not line.is_delivery]))
             categ_qty_list = []
             for categ_id in categ_ids:
@@ -65,6 +65,7 @@ class DeliveryCarrier(models.Model):
                 price_dict = self._get_price_dict(total, weight, volume, quantity)
                 test = safe_eval(line.formula, price_dict)
                 if test:
+                    rulewise_price = 0.0
                     for categ_price_id in line.categ_price_ids:
                         current_categ_qty = sum([categ_qty['product_qty'] for categ_qty in categ_qty_list if
                                                  categ_qty['categ_id'].id == categ_price_id.categ_id.id])
@@ -72,10 +73,12 @@ class DeliveryCarrier(models.Model):
                         price_dict = self._get_price_dict(total, weight, volume, quantity)
                         price += line.list_base_price + (line.list_price + categ_price_id.list_price) * price_dict[
                             line.variable_factor]
+                        rulewise_price += line.list_base_price + (line.list_price + categ_price_id.list_price) * price_dict[
+                            line.variable_factor]
                     criteria_found = True
                     so_description_list.append(
-                        ((line.description or '') + ': ' + str(price and order.currency_id.symbol or '') + (
-                                (categ_price_id.list_price > 0) and str(price) or 'Free')))
+                        ((line.description or '') + ': ' + str(rulewise_price and order.currency_id.symbol or '') + (
+                                (rulewise_price) and str(rulewise_price) or 'Free')))
             else:
                 criteria_found = True
                 break

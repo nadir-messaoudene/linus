@@ -13,14 +13,3 @@ class SaleOrder(models.Model):
     delivery_carrier_desc = fields.Text()
 
 
-class SaleOrderLine(models.Model):
-    _inherit = 'sale.order.line'
-
-    product_categ_id = fields.Many2one('product.category', string='Product Category',
-                                       compute='_compute_product_categ_id', store=True)
-
-    @api.depends('product_id')
-    def _compute_product_categ_id(self):
-        for line in self:
-            if line.product_id:
-                line.product_categ_id = line.product_id.categ_id.id

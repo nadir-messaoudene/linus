@@ -2,7 +2,7 @@
 <odoo>
     <template id="payment_delivery_methods" inherit_id="website_sale_delivery.payment_delivery_methods">
         <t t-if="delivery.website_description" position="before">
-            <t t-if="order.delivery_carrier_desc and delivery.is_category">
+            <t t-if="order.delivery_carrier_desc and delivery.is_category_base_shipment">
                 <t t-foreach="order.delivery_carrier_desc.split(',')[:-1]" t-as="desc">
                     <br/>
                     <div t-attf-class="#{badge_class}"><span t-esc="desc"/></div>

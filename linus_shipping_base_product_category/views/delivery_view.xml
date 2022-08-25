@@ -6,7 +6,7 @@
         <field name="inherit_id" ref="delivery.view_delivery_carrier_form" />
         <field name="arch" type="xml">
             <field name="company_id" position="after">
-                <field name="is_category" />
+                <field name="is_category_base_shipment" />
             </field>
 
         </field>
