@@ -54,22 +54,28 @@ class DeliveryCarrier(models.Model):
         return self._get_price_from_picking(total, weight, volume, quantity)
 
     def _get_price_order_from_picking(self, total, weight, volume, quantity, categ_qty_list, order):
-
+        price = 0.0
         if self.free_over and total >= self.amount:
             return 0
         vp_price, vp_so_description_list = self._get_price_order_from_picking_price(total, weight, volume, quantity,
                                                                                     categ_qty_list, order)
-        print('vp_price, vp_so_description_list', vp_price, vp_so_description_list)
+        # print('vp_price, vp_so_description_list', vp_price, vp_so_description_list)
 
         vq_price, vq_so_description_list = self._get_price_order_from_picking_qty(total, weight, volume, quantity,
                                                                                   categ_qty_list, order)
-        print('vq_price, vq_so_description_list', vq_price, vq_so_description_list)
-        price = vp_price + vq_price
-        so_description_list = vp_so_description_list + vq_so_description_list
-        so_description_text = ''
-        for so_description in so_description_list:
-            so_description_text += so_description + ', '
-        order.write({'delivery_carrier_desc': so_description_text})
+        # print('vq_price, vq_so_description_list', vq_price, vq_so_description_list)
+        price += vp_price + vq_price
+        if price > 0:
+            so_description_list = vp_so_description_list + vq_so_description_list
+            so_description_text = ''
+            for so_description in so_description_list:
+                so_description_text += so_description + ', '
+            order.write({'delivery_carrier_desc': so_description_text})
+            criteria_found = True
+            print('price', price)
+        if not criteria_found:
+            print('INSIDE')
+            raise UserError(_("No price rule matching this order; delivery cost cannot be computed."))
         return price
 
     def _get_price_order_from_picking_price(self, total, weight, volume, quantity, categ_qty_list, order):
@@ -93,16 +99,16 @@ class DeliveryCarrier(models.Model):
                                                    categ_qty['categ_id'].id == categ_price_id.categ_id.id])
                         total += current_categ_price
                     price_dict = self._get_price_dict(total, weight, volume, quantity)
-                    price += line.list_base_price + categ_price_id.list_price + line.list_price * price_dict[
+                    price += line.list_base_price + line.list_price * price_dict[
                         line.variable_factor]
-                    rulewise_price += line.list_base_price + categ_price_id.list_price + line.list_price * price_dict[
+                    rulewise_price += line.list_base_price  + line.list_price * price_dict[
                         line.variable_factor]
                     criteria_found = True
                     so_description_list.append(
                         ((line.description or '') + ': ' + str(rulewise_price and order.currency_id.symbol or '') + (
                                 (rulewise_price) and str(rulewise_price) or 'Free')))
-        if not criteria_found:
-            raise UserError(_("No price rule matching this order; delivery cost cannot be computed."))
+        # if not criteria_found:
+        #     raise UserError(_("No price rule matching this order; delivery cost cannot be computed."))
         return price, so_description_list
 
     def _get_price_order_from_picking_qty(self, total, weight, volume, quantity, categ_qty_list, order):
@@ -135,6 +141,6 @@ class DeliveryCarrier(models.Model):
                     so_description_list.append(
                         ((line.description or '') + ': ' + str(rulewise_price and order.currency_id.symbol or '') + (
                                 (rulewise_price) and str(rulewise_price) or 'Free')))
-        if not criteria_found:
-            raise UserError(_("No price rule matching this order; delivery cost cannot be computed."))
+        # if not criteria_found:
+        #     raise UserError(_("No price rule matching this order; delivery cost cannot be computed."))
         return price, so_description_list
