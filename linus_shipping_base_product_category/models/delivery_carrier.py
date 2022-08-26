@@ -55,6 +55,7 @@ class DeliveryCarrier(models.Model):
 
     def _get_price_order_from_picking(self, total, weight, volume, quantity, categ_qty_list, order):
         price = 0.0
+        criteria_found = False
         if self.free_over and total >= self.amount:
             return 0
         vp_price, vp_so_description_list = self._get_price_order_from_picking_price(total, weight, volume, quantity,
