@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 # Part of Syncoria. See LICENSE file for full copyright and licensing details.
 
-from odoo import models, fields, api
+from odoo import models, fields, api, _
+from odoo.exceptions import UserError, ValidationError
 
 
 class PriceRule(models.Model):
@@ -147,3 +148,5 @@ class PriceRuleCateg(models.Model):
         for line in self:
             price_reduce = line.price_unit * (1 - (line.discount or 0.0) / 100.0)
             line.list_price = price_reduce
+
+
