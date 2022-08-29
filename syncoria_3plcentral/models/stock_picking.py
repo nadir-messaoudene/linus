@@ -137,7 +137,7 @@ class StockPicking(models.Model):
                 "poNum": self.sale_id.client_order_ref if self.sale_id.client_order_ref else "",
                 "notes": self.warehouse_instruction if self.warehouse_instruction else "",
                 "shippingNotes": self.carrier_instruction if self.carrier_instruction else "",
-                "billingCode": "Prepaid",
+                "billingCode": "BillThirdParty",
                 "routingInfo": {
                     "carrier": self.carrier_services_3pl_id.carrier_3pl_id.name,
                     "mode": self.carrier_services_3pl_id.code,
