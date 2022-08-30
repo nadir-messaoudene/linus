@@ -23,13 +23,13 @@
             <field name="arch" type="xml">
                 <xpath expr="//form/sheet/notebook/page[@id='invoice_tab']/field/form/sheet/group[1]/field[@name='quantity']"
                        position="after">
-                    <field name="country_of_origin_id" domain="country_of_origin_domain"/>
+                    <field name="country_of_origin_id" domain="country_of_origin_domain" optional="hide"/>
                     <field name="country_of_origin_domain" invisible="1"/>
                 </xpath>
 
                 <xpath expr="//form/sheet/notebook/page[@id='invoice_tab']/field/tree/field[@name='account_id']"
                        position="after">
-                    <field name="country_of_origin_id" domain="country_of_origin_domain"/>
+                    <field name="country_of_origin_id" domain="country_of_origin_domain" optional="hide"/>
                     <field name="country_of_origin_domain" invisible="1"/>
                 </xpath>
 
