@@ -15,5 +15,30 @@
                 </xpath>
             </field>
 	    </record>
+
+        <record id="view_account_move_form_linus_account" model="ir.ui.view">
+            <field name="name">view.account.move.form.linus.account</field>
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="account.view_move_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//form/sheet/notebook/page[@id='invoice_tab']/field/form/sheet/group[1]/field[@name='quantity']"
+                       position="after">
+                    <field name="country_of_origin_id" domain="country_of_origin_domain"/>
+                    <field name="country_of_origin_domain" invisible="1"/>
+                </xpath>
+
+                <xpath expr="//form/sheet/notebook/page[@id='invoice_tab']/field/tree/field[@name='account_id']"
+                       position="after">
+                    <field name="country_of_origin_id" domain="country_of_origin_domain"/>
+                    <field name="country_of_origin_domain" invisible="1"/>
+                </xpath>
+
+                <xpath expr="//form/sheet/notebook/page[@id='aml_tab']/field/tree/field[@name='account_id']"
+                       position="after">
+                    <field name="country_of_origin_id" domain="country_of_origin_domain" invisible="1"/>
+                    <field name="country_of_origin_domain" invisible="1"/>
+                </xpath>
+            </field>
+	    </record>
     </data>
 </odoo>
