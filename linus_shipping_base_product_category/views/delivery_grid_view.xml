@@ -6,12 +6,43 @@
         <field name="inherit_id" ref="delivery.view_delivery_price_rule_form" />
         <field name="arch" type="xml">
             <xpath expr="//form/group[2]" position="inside">
-                <field name="description" attrs="{'invisible': [('parent.is_category', '=', False)], 'required': [('parent.is_category', '=', True)]}"/>
-                <label for="description" string="Product Category"/>
-                <div>
-                    <field name="categ_ids" widget="many2many_tags" class="oe_inline" attrs="{'invisible': [('parent.is_category', '=', False)], 'required': [('parent.is_category', '=', True)]}"/>
+                <field name="description" attrs="{'invisible': [('parent.is_category_base_shipment', '=', False)], 'required': [('parent.is_category_base_shipment', '=', True)]}"/>
+                <label for="description" string="Product Category" attrs="{'invisible': [('parent.is_category_base_shipment', '=', False)]}"/>
+                <div attrs="{'invisible': [('parent.is_category_base_shipment', '=', False)], 'required': [('parent.is_category_base_shipment', '=', True)]}">
+                    <field name="categ_price_ids">
+                        <tree editable="bottom">
+                            <field name="categ_id" options="{'no_open': True, 'no_create': True}"/>
+                            <field name="variable_factor" invisible="1"/>
+                            <field name="price_unit" attrs="{'invisible': [('variable_factor', '=', 'price')]}"/>
+                            <field name="discount" attrs="{'invisible': [('variable_factor', '=', 'price')]}"/>
+                            <field name="list_price" attrs="{'invisible': [('variable_factor', '=', 'price')]}"/>
+                        </tree>
+                    </field>
+                </div>
+                <field name="formula"/>
+
+            </xpath>
+            <xpath expr="//field[@name='max_value']" position="after">
+                <field name="combine" attrs="{'invisible': [('parent.is_category_base_shipment', '=', False)]}"/>
+            </xpath>
+            <xpath expr="//label[@for='list_base_price']" position="before">
+                <label for="variable_2" string="Condition" attrs="{'invisible': [ '|', ('combine','=', False), ('parent.is_category_base_shipment', '=', False)], 'required': [('combine', '!=', False)]}"/>
+                <div class="o_row" attrs="{'invisible': [ '|', ('combine','=', False), ('parent.is_category_base_shipment', '=', False)], 'required': [('combine', '!=', False)]}">
+                    <field name="variable_2"/>
+                    <field name="operator_2"/>
+                    <field name="max_value_2"/>
+                    <field name="combine_1"/>
+                </div>
+                <label for="variable_3" string="Condition" attrs="{'invisible': [('combine_1','=', False)], 'required': [('combine_1', '!=', False)]}"/>
+                <div class="o_row" attrs="{'invisible': [('combine_1','=', False)], 'required': [('combine_1', '!=', False)]}">
+                    <field name="variable_3"/>
+                    <field name="operator_3"/>
+                    <field name="max_value_3"/>
                 </div>
             </xpath>
+
+
+
         </field>
     </record>
 </odoo>

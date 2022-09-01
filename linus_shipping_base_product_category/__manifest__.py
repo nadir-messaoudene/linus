@@ -11,6 +11,7 @@
     'images': [
     ],
     'data': [
+        'security/ir.model.access.csv',
         'views/delivery_view.xml',
         'views/delivery_grid_view.xml',
         'views/website_sale_delivery_templates.xml',
