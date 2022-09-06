@@ -15,7 +15,7 @@ from odoo.tools import float_is_zero, html_keep_url, is_html_empty, date_utils
 class AccountMove(models.Model):
     _inherit = "account.move"
 
-    last_payment_date = fields.Date(string='Last Payment Date', compute='_compute_payments_widget_reconciled_info')
+    last_payment_date = fields.Date(string='Last Payment Date', compute='_compute_payments_widget_reconciled_info', store=True)
 
     @api.depends('move_type', 'line_ids.amount_residual')
     def _compute_payments_widget_reconciled_info(self):
