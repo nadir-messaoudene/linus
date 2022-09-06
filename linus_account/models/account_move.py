@@ -10,8 +10,28 @@ from odoo import api, fields, models, SUPERUSER_ID, _
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tools.misc import formatLang
 from odoo.osv import expression
-from odoo.tools import float_is_zero, html_keep_url, is_html_empty
+from odoo.tools import float_is_zero, html_keep_url, is_html_empty, date_utils
 
+class AccountMove(models.Model):
+    _inherit = "account.move"
+
+    last_payment_date = fields.Date(string='Last Payment Date', compute='_compute_payments_widget_reconciled_info')
+
+    @api.depends('move_type', 'line_ids.amount_residual')
+    def _compute_payments_widget_reconciled_info(self):
+        for move in self:
+            payments_widget_vals = {'title': _('Less Payment'), 'outstanding': False, 'content': []}
+
+            if move.state == 'posted' and move.is_invoice(include_receipts=True):
+                payments_widget_vals['content'] = move._get_reconciled_info_JSON_values()
+
+            if payments_widget_vals['content']:
+                move.invoice_payments_widget = json.dumps(payments_widget_vals, default=date_utils.json_default)
+                last_payment_date = payments_widget_vals['content'][-1]['date']
+                move.last_payment_date = last_payment_date
+            else:
+                move.invoice_payments_widget = json.dumps(False)
+                move.last_payment_date = None
 
 class AccountMoveLine(models.Model):
     _inherit = "account.move.line"
