@@ -17,6 +17,11 @@ class AccountMove(models.Model):
 
     last_payment_date = fields.Date(string='Last Payment Date', compute='_compute_payments_widget_reconciled_info', store=True)
 
+    @api.depends('amount_residual')
+    def compute_amount_paid(self):
+        for move in self:
+            move.amount_paid = move.amount_total_signed - move.amount_residual
+
     @api.depends('move_type', 'line_ids.amount_residual')
     def _compute_payments_widget_reconciled_info(self):
         for move in self:
