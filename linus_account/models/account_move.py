@@ -15,7 +15,12 @@ from odoo.tools import float_is_zero, html_keep_url, is_html_empty, date_utils
 class AccountMove(models.Model):
     _inherit = "account.move"
 
-    last_payment_date = fields.Date(string='Last Payment Date',compute='_compute_payments_widget_reconciled_info', store=True)
+    last_payment_date = fields.Date(string='Last Payment Date', compute='_compute_payments_widget_reconciled_info', store=True)
+
+    @api.depends('amount_residual')
+    def compute_amount_paid(self):
+        for move in self:
+            move.amount_paid = move.amount_total_signed - move.amount_residual
 
     @api.depends('move_type', 'line_ids.amount_residual')
     def _compute_payments_widget_reconciled_info(self):
@@ -32,8 +37,6 @@ class AccountMove(models.Model):
             else:
                 move.invoice_payments_widget = json.dumps(False)
                 move.last_payment_date = None
-    
-
 
 class AccountMoveLine(models.Model):
     _inherit = "account.move.line"
