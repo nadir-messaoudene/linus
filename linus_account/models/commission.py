@@ -16,7 +16,7 @@ class AccountMove(models.Model):
     _inherit = "account.move"
 
     amount_paid = fields.Float('Amount Paid', compute='compute_amount_paid', store=True)
-    shopify_tag_ids = fields.Many2many('crm.tag', string="Shopify Tags")
+    shopify_tag_ids = fields.Many2many('crm.tag', string="Shopify Tags (SO)")
 
 class SaleOrder(models.Model):
     _inherit = "sale.order"
