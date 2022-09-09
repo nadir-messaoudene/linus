@@ -333,11 +333,11 @@ class ShopifyFeedOrders(models.Model):
                 domain = [('shopify_instance_id', '=' , self.instance_id.id)]
                 domain += [('shopify_id', '=' , shopify_id)]
                 domain += [('marketplace_type', '=' , 'shopify')]
-                partner_id = res_partner.search(domain, limit=1)
+                partner_id = res_partner.search(domain, order='id asc', limit=1)
 
                 if not partner_id:
                     domain = [('shopify_id', '=', shopify_id)]
-                    partner_id = res_partner.search(domain, limit=1)
+                    partner_id = res_partner.search(domain, order='id asc', limit=1)
                     if not partner_id:
                         customer_vals = self.shopify_customer(customer, self.env, shipping=False)
                         partner_id = res_partner.create(customer_vals)
