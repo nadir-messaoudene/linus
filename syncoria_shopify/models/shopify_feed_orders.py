@@ -113,6 +113,7 @@ class ShopifyFeedOrders(models.Model):
         customer['email']=values.get('email') or ""
         customer['shopify_id']=values.get('id') or ""
         customer['marketplace_type']='shopify'
+        customer['shopify_instance_id']=self.instance_id.id
         customer['active']=True
         customer['type']='contact'
         customer['shopify_accepts_marketing']=values.get(
@@ -332,11 +333,14 @@ class ShopifyFeedOrders(models.Model):
                 domain = [('shopify_instance_id', '=' , self.instance_id.id)]
                 domain += [('shopify_id', '=' , shopify_id)]
                 domain += [('marketplace_type', '=' , 'shopify')]
-                partner_id = res_partner.search(domain, limit=1)
+                partner_id = res_partner.search(domain, order='id asc', limit=1)
 
                 if not partner_id:
-                    customer_vals = self.shopify_customer(customer, self.env, shipping=False)
-                    partner_id = res_partner.create(customer_vals)
+                    domain = [('shopify_id', '=', shopify_id)]
+                    partner_id = res_partner.search(domain, order='id asc', limit=1)
+                    if not partner_id:
+                        customer_vals = self.shopify_customer(customer, self.env, shipping=False)
+                        partner_id = res_partner.create(customer_vals)
 
                 if partner_id:
                     partner_invoice_id = self.get_partner_invoice_id(sp_order_dict, partner_id)
@@ -380,7 +384,6 @@ class ShopifyFeedOrders(models.Model):
 
                 order_exists = OrderObj.search(
                         [('shopify_id', '=', i['id'])], order='id desc', limit=1)
-
                 if not order_exists and i['confirmed'] == True:
                     # Process Only Shopify Confirmed Orders
                     # check the customer associated with the order, if the customer is new,
@@ -394,7 +397,11 @@ class ShopifyFeedOrders(models.Model):
 
                     product_missing = False
                     order_vals = self.get_sale_order_vals(marketplace_instance_id, customer_id, i)
-
+                    order_vals.update({
+                        'partner_id': partner_id.id,
+                        'partner_invoice_id': partner_invoice_id.id,
+                        'partner_shipping_id': partner_shipping_id.id,
+                    })
                     for tax in i['tax_lines']:
                         search_domain = [('name', 'like', tax['title']),
                                         ('amount', '=', tax['rate'] * 100),

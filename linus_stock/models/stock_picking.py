@@ -23,4 +23,8 @@ class StockPicking(models.Model):
             self.move_lines.filtered(lambda l: l.product_id.id == args[0].get('active_id'))._do_unreserve()
         else:
             self.move_lines._do_unreserve()
+<<<<<<< HEAD
         self.package_level_ids.filtered(lambda p: not p.move_ids).unlink()
+=======
+        self.package_level_ids.filtered(lambda p: not p.move_ids).unlink()
+>>>>>>> origin/main

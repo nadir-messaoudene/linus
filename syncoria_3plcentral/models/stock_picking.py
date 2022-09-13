@@ -137,7 +137,7 @@ class StockPicking(models.Model):
                 "poNum": self.sale_id.client_order_ref if self.sale_id.client_order_ref else "",
                 "notes": self.warehouse_instruction if self.warehouse_instruction else "",
                 "shippingNotes": self.carrier_instruction if self.carrier_instruction else "",
-                "billingCode": "Prepaid",
+                "billingCode": "BillThirdParty",
                 "routingInfo": {
                     "carrier": self.carrier_services_3pl_id.carrier_3pl_id.name,
                     "mode": self.carrier_services_3pl_id.code,
@@ -196,32 +196,84 @@ class StockPicking(models.Model):
         else:
             raise UserError("Only Order in Waiting and Ready state can be pushed to 3PL.")
 
+    def update_purchase_order_3pl_receipt(self, record, instance):
+        try:
+            url = "https://secure-wms.com/inventory/receivers/{}".format(record.threeplId)
+            headers = {
+                'Host': 'secure-wms.com',
+                'Accept-Language': 'en-US,en;q=0.8',
+                'Content-Type': 'application/json; charset=utf-8',
+                'Accept': 'application/hal+json',
+                'Authorization': 'Bearer ' + str(instance.access_token)
+            }
+            response = requests.request("GET", url, headers=headers, data={})
+            print(response.status_code)
+            if response.status_code == 200:
+                response = json.loads(response.text)
+                print(response)
+                status = response.get('readOnly').get('status')
+                if status == 2:
+                    record.action_cancel()
+                elif status == 1:
+                    _links = response.get('_links')
+                    if _links:
+                        base_url = 'https://secure-wms.com'
+                        if 'http://api.3plcentral.com/rels/inventory/receiveritems' in _links:
+                            receiver_items = _links.get('http://api.3plcentral.com/rels/inventory/receiveritems').get('href')
+                            if '{?detail}' in receiver_items:
+                                receiver_items = receiver_items.replace('{?detail}', '?detail=all')
+                            full_url = base_url + receiver_items
+                            headers = {
+                                'Host': 'secure-wms.com',
+                                'Accept-Language': 'en-US,en;q=0.8',
+                                'Content-Type': 'application/json; charset=utf-8',
+                                'Accept': 'application/hal+json',
+                                'Authorization': 'Bearer ' + str(instance.access_token)
+                            }
+                            response = requests.request("GET", full_url, headers=headers, data={})
+                            if response.status_code == 200:
+                                response = json.loads(response.text)
+                                item_list = response.get('_embedded',{}).get('http://api.3plCentral.com/rels/inventory/receiveritem',{})
+                                if item_list:
+                                    for item in item_list:
+                                        item_3pl_id = item.get('itemIdentifier').get('id')
+                                        item_sku = item.get('itemIdentifier').get('sku')
+                                        item_qty = item.get('qty')
+                                        res_item = record.move_line_ids_without_package.filtered(
+                                            lambda l: l.product_id.product_3pl_id == str(item_3pl_id))
+                                        if not res_item:
+                                            raise UserError('Can not find the product with 3pl id:{} [{}]'.format(item_3pl_id, item_sku))
+                                        else:
+                                            if res_item.product_id.default_code != item_sku:
+                                                raise ValidationError(
+                                                    'SKU does not match {} >< {}'.format(res_item.default_code, item_sku))
+                                        if res_item.qty_done != item_qty:
+                                            res_item.write({'qty_done': item_qty})
+                                    res_dict = record.button_validate()
+                                    if type(res_dict) != bool:
+                                        self.env['stock.backorder.confirmation'].with_context(
+                                            res_dict['context']).process()
+        except Exception as e:
+            raise ValidationError(e)
+
     def update_picking_from_3pl(self):
         for record in self:
             print("update_picking_from_3pl")
             instance = self.env['instance.3pl'].search([], limit=1)
-            if record.picking_type_id.code == 'incoming':
-                url = "https://secure-wms.com/inventory/receivers/{}".format(record.threeplId)
-                headers = {
-                    'Host': 'secure-wms.com',
-                    'Accept-Language': 'en-US,en;q=0.8',
-                    'Content-Type': 'application/json; charset=utf-8',
-                    'Accept': 'application/hal+json',
-                    'Authorization': 'Bearer ' + str(instance.access_token)
-                }
-                response = requests.request("GET", url, headers=headers, data={})
-                print(response.status_code)
-                if response.status_code == 200:
-                    response = json.loads(response.text)
-                    print(response)
-                    status = response.get('readOnly').get('status')
-                    if status == 2:
-                        record.action_cancel()
-                return
             if not record.threeplId:
                 raise UserError("The transfer does not have 3PL ID (Maybe it hasn't been exported)")
             if not record.state == 'push_3pl':
                 raise UserError("Only 'Push To 3PL' orders can be updated")
+            """
+            HANDLE PURCHASE ORDER
+            """
+            if record.picking_type_id.code == 'incoming':
+                return self.update_purchase_order_3pl_receipt(record, instance)
+
+            """
+            HANDLE DELIVERY ORDER
+            """
+
             url = "https://secure-wms.com/orders/{}".format(record.threeplId)
 
             headers = {
