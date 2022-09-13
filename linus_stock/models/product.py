@@ -1,10 +1,8 @@
-<<<<<<< HEAD
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 from odoo import models
 
-=======
 import operator as py_operator
 from ast import literal_eval
 from collections import defaultdict
@@ -66,7 +64,6 @@ class Product(models.Model):
                 location_ids = set(Warehouse.search([]).mapped('view_location_id').ids)
 
         return self._get_domain_locations_new(location_ids, compute_child=self.env.context.get('compute_child', True))
->>>>>>> origin/main
 
 
 class ProductTemplate(models.Model):
