@@ -20,9 +20,7 @@ class AccountPaymentRegister(models.TransientModel):
 
     @api.depends('payment_method_line_id')
     def _compute_suitable_payment_token_ids(self):
-        print('INHERTI _compute_suitable_payment_token_ids')
         for wizard in self:
-            print(wizard.payment_method_line_id)
             if wizard.can_edit_wizard and wizard.use_electronic_payment_method:
                 related_partner_ids = (
                         wizard.partner_id
