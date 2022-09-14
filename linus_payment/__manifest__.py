@@ -11,6 +11,7 @@
     'images': [
     ],
     'data': [
+        'views/account_payment_register_views.xml',
     ],
     'license': 'OPL-1',
     'support': "support@syncoria.com",
