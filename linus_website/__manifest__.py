@@ -7,11 +7,12 @@
     'website': "http://www.syncoria.com",
     'category': 'Uncategorized',
     'version': '1.0',
-    'depends': ['base', 'website'],
+    'depends': ['base', 'website', 'sale', 'account', 'payment_authorize'],
     'images': [
     ],
     'data': [
         'views/portal_templates.xml',
+        'views/product.xml'
     ],
     'license': 'OPL-1',
     'support': "support@syncoria.com",
