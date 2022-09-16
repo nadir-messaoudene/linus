@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    <data>
+        <record id="view_account_payment_register_form_linus_account" model="ir.ui.view">
+            <field name="name">view.account.payment.register.form.inherit.payment.linus.account</field>
+            <field name="model">account.payment.register</field>
+            <field name="inherit_id" ref="account.view_account_payment_register_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='payment_token_id']" position="before">
+                    <field name="suitable_payment_token_ids" attrs="{'invisible': ['|', ('use_electronic_payment_method', '!=', True), '|', ('can_edit_wizard', '=', False), '&amp;', ('can_group_payments', '=', True), ('group_payment', '=', False)]}">
+                        <tree>
+                            <field name="name"/>
+                            <field name="acquirer_id"/>
+                        </tree>
+                    </field>
+                </xpath>
+            </field>
+	    </record>
+    </data>
+</odoo>
