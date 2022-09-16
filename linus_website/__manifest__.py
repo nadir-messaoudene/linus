@@ -12,6 +12,7 @@
     ],
     'data': [
         'views/portal_templates.xml',
+        'views/product.xml'
     ],
     'license': 'OPL-1',
     'support': "support@syncoria.com",

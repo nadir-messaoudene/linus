@@ -144,5 +144,16 @@
             <xpath expr="//a[@href='/my/account']" position="replace">
             </xpath>
         </template>
+
+        <template id="products_attributes_inherit" name="Attributes &amp; Variants filters Inherit" inherit_id="website_sale.products_attributes">
+            <xpath expr='//select[@name="attrib"]' position="replace">
+                <select class="custom-select css_attribute_select" name="attrib">
+                    <option value="" />
+                    <t t-foreach="a.get_published_values()" t-as="v">
+                        <option t-att-value="'%s-%s' % (a.id,v.id)" t-esc="v.name" t-att-selected="v.id in attrib_set" />
+                    </t>
+                </select>
+            </xpath>
+        </template>
     </data>
 </odoo>
