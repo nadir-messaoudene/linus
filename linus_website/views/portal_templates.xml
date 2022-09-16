@@ -103,7 +103,8 @@
             <xpath expr="//p[@t-field='product.description_sale']" position="replace">
                 <p t-field="product.website_description" class="text-muted my-2" placeholder="A short description that will also appear on documents." />
             </xpath>
-            <xpath expr="//div[@id='product_full_description']" position="replace">
+            <xpath expr="//div[@id='product_full_description']" position="attributes">
+                <attribute name="class">d-none</attribute>
             </xpath>
         </template>
 
