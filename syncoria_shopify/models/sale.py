@@ -490,9 +490,9 @@ class SaleOrderShopify(models.Model):
                     try:
                         if not move_id.shopify_instance_id:
                             move_id.write({'shopify_instance_id' : rec.shopify_instance_id.id})
-                        if move_id.shopify_instance_id:
-                            for line in move_id.invoice_line_ids:
-                                line.analytic_account_id =  move_id.shopify_instance_id.analytic_account_id.id
+                        # if move_id.shopify_instance_id:
+                        #     for line in move_id.invoice_line_ids:
+                        #         line.analytic_account_id =  move_id.shopify_instance_id.analytic_account_id.id
                     except Exception as e:
                         _logger.warning("Update Analytic Accounts Exception-{}".format(e.args))
                     ################################################################################################
