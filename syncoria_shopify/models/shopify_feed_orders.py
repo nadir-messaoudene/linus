@@ -808,8 +808,8 @@ class ShopifyFeedOrders(models.Model):
                 shopify_order.shopify_invoice_register_payments()
                 shopify_order.process_shopify_credit_note()
                 shopify_order.shopify_credit_note_register_payments()
-            if shopify_order and shopify_order.state not in ['draft'] and marketplace_instance_id.auto_create_fulfilment == True:
-                shopify_order.process_shopify_fulfilment()
+            # if shopify_order and shopify_order.state not in ['draft'] and marketplace_instance_id.auto_create_fulfilment == True:
+            #     shopify_order.process_shopify_fulfilment()
             shopify_order._cr.commit()
 
 
