@@ -15,7 +15,10 @@ class ProductAttributeInherit(models.Model):
         values = self.env['product.attribute.value']
         product_tmpl_ids = self.product_tmpl_ids.filtered(lambda p: p.is_published)
         for product_template in self.product_tmpl_ids.filtered(lambda p: p.is_published):
-            attribute_values = product_template.attribute_line_ids.filtered(lambda l: l.attribute_id == self).value_ids
+            product_active_attribute_values = product_template.product_variant_ids\
+                .product_template_attribute_value_ids.filtered(lambda l: l.attribute_id == self)
+            attribute_values = product_active_attribute_values.mapped('product_attribute_value_id')
+            # attribute_values = product_template.attribute_line_ids.filtered(lambda l: l.attribute_id == self).value_ids
             valid_attribute_values = attribute_values.filtered(lambda l: l not in product_template.exclude_product_template_value_ids)
             for val in valid_attribute_values:
                 if val not in values:
@@ -29,7 +32,9 @@ class ProductTemplateAttributeValueInherit(models.Model):
     def _only_active(self):
         if self.env.context.get('website_id'):
             product_template = self.mapped('product_tmpl_id')
-            return self.filtered(lambda ptav: ptav.product_attribute_value_id not in product_template.exclude_product_template_value_ids)
+            product_active_attribute_values = product_template.product_variant_ids \
+                .product_template_attribute_value_ids
+            return self.filtered(lambda ptav: ptav in product_active_attribute_values and ptav.product_attribute_value_id not in product_template.exclude_product_template_value_ids)
         return self.filtered(lambda ptav: ptav.ptav_active)
 
 
