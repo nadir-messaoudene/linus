@@ -605,15 +605,11 @@ class ShopifyFeedOrders(models.Model):
                     tags = i.get('tags').split(",")
                     try:
                         tag_ids = []
-                        if "B2B" in tags:
-                            tag_b2b = self.env['crm.tag'].sudo().search([('name', '=', 'B2B')])
-                            if tag_b2b:
-                                order_vals['tag_ids'] = [(4, tag_b2b.id)]
-                        else:
-                            tag_b2c = self.env['crm.tag'].sudo().search([('name', '=', 'B2C')])
-                            if tag_b2c:
-                                order_vals['tag_ids'] = [(4, tag_b2c.id)]
                         for tag in tags:
+                            if "B2B" in tag:
+                                tag_b2b = self.env['crm.tag'].sudo().search([('name', '=', 'B2B')])
+                                if tag_b2b:
+                                    order_vals['tag_ids'] = [(4, tag_b2b.id)]
                             tag_id = self.env['crm.tag'].search(
                                 [('name', '=', tag)])
                             if not tag_id and tag != "":
@@ -621,6 +617,10 @@ class ShopifyFeedOrders(models.Model):
                             if tag_id:
                                 tag_ids.append((4,tag_id.id))
                         order_vals['shopify_tag_ids'] = tag_ids
+                        if not order_vals.get('tag_ids'):
+                            tag_b2c = self.env['crm.tag'].sudo().search([('name', '=', 'B2C')])
+                            if tag_b2c:
+                                order_vals['tag_ids'] = [(4, tag_b2c.id)]
                     except Exception as e:
                         _logger.warning(e)
 
