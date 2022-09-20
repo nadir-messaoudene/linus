@@ -69,7 +69,7 @@ def get_protmpl_vals(record, values):
     VariantObj = record.env['product.product'].sudo()
     data = {}
     product = {}
-    body_html = record.description_sale or ''
+    body_html = record.website_description or record.description_sale or ''
 
     product.update({
         "title": record.name,

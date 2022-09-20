@@ -7,7 +7,7 @@
     'website': "http://www.syncoria.com",
     'category': 'Uncategorized',
     'version': '1.0',
-    'depends': ['base', 'website', 'sale', 'account', 'payment_authorize'],
+    'depends': ['base', 'website', 'sale', 'account', 'payment_authorize', 'website_sale'],
     'images': [
     ],
     'data': [

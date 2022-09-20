@@ -605,15 +605,11 @@ class ShopifyFeedOrders(models.Model):
                     tags = i.get('tags').split(",")
                     try:
                         tag_ids = []
-                        if "B2B" in tags:
-                            tag_b2b = self.env['crm.tag'].sudo().search([('name', '=', 'B2B')])
-                            if tag_b2b:
-                                order_vals['tag_ids'] = [(4, tag_b2b.id)]
-                        else:
-                            tag_b2c = self.env['crm.tag'].sudo().search([('name', '=', 'B2C')])
-                            if tag_b2c:
-                                order_vals['tag_ids'] = [(4, tag_b2c.id)]
                         for tag in tags:
+                            if "B2B" in tag:
+                                tag_b2b = self.env['crm.tag'].sudo().search([('name', '=', 'B2B')])
+                                if tag_b2b:
+                                    order_vals['tag_ids'] = [(4, tag_b2b.id)]
                             tag_id = self.env['crm.tag'].search(
                                 [('name', '=', tag)])
                             if not tag_id and tag != "":
@@ -621,6 +617,10 @@ class ShopifyFeedOrders(models.Model):
                             if tag_id:
                                 tag_ids.append((4,tag_id.id))
                         order_vals['shopify_tag_ids'] = tag_ids
+                        if not order_vals.get('tag_ids'):
+                            tag_b2c = self.env['crm.tag'].sudo().search([('name', '=', 'B2C')])
+                            if tag_b2c:
+                                order_vals['tag_ids'] = [(4, tag_b2c.id)]
                     except Exception as e:
                         _logger.warning(e)
 
@@ -808,8 +808,8 @@ class ShopifyFeedOrders(models.Model):
                 shopify_order.shopify_invoice_register_payments()
                 shopify_order.process_shopify_credit_note()
                 shopify_order.shopify_credit_note_register_payments()
-            if shopify_order and shopify_order.state not in ['draft'] and marketplace_instance_id.auto_create_fulfilment == True:
-                shopify_order.process_shopify_fulfilment()
+            # if shopify_order and shopify_order.state not in ['draft'] and marketplace_instance_id.auto_create_fulfilment == True:
+            #     shopify_order.process_shopify_fulfilment()
             shopify_order._cr.commit()
 
 
