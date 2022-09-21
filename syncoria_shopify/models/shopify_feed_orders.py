@@ -261,8 +261,7 @@ class ShopifyFeedOrders(models.Model):
         partner_shipping_id = partner_id
         if sp_order_dict.get('shipping_address'):
             shipping_address = sp_order_dict.get('shipping_address', {})
-
-            partner_shipping_id = partner_id.child_ids.filtered(lambda l:l.type == 'delivery')
+            partner_shipping_id = partner_id.child_ids.filtered(lambda l:l.type == 'delivery' and l.street.lower() == shipping_address.get('address1', '').lower() and l.zip.lower() == shipping_address.get('zip', '').lower() and l.phone == shipping_address.get('phone', ''))
             if partner_shipping_id:
                 country_domain = [('name', '=', shipping_address.get(
                     'country'))] if shipping_address.get('country') else []
@@ -278,6 +277,9 @@ class ShopifyFeedOrders(models.Model):
                 state_id = self.env['res.country.state'].sudo().search(
                     state_domain, limit=1)
                 if not no_name:
+                    if len(partner_shipping_id) > 1:
+                        self.message_post(body='There are multiple contacts with the same delivery address.')
+                        raise ValidationError('There are multiple contacts with the same delivery address.')
                     partner_shipping_id.write({
                         'name': shipping_address.get('name', None),
                         'street': shipping_address.get('address1'),
@@ -297,6 +299,7 @@ class ShopifyFeedOrders(models.Model):
                         'street': shipping_address.get('address1'),
                         'street2': shipping_address.get('address2'),
                         'zip': shipping_address.get('zip'),
+                        'phone': shipping_address.get('phone'),
                         'country_id': country_id.id,
                         'state_id': state_id.id,
                         'city': shipping_address.get('city'),
@@ -963,7 +966,7 @@ class ShopifyFeedOrders(models.Model):
         azip = checkout.get('zip')
         if partner:
             delivery = partner.child_ids.filtered(
-                lambda c: (c.street == street or c.street2 == street2 or c.zip == azip) and c.type == contact_type)
+                lambda c: (c.street == street or c.street2 == street2 or c.zip == azip) and c.type == contact_type and c.phone == checkout.get('phone'))
 
             country_domain = [('name', '=', checkout.get(
                 'country'))] if checkout.get('country') else []
@@ -985,6 +988,7 @@ class ShopifyFeedOrders(models.Model):
                     'street': street,
                     'street2': street2,
                     'zip': azip,
+                    'phone': checkout.get('phone'),
                     'country_id': country_id.id,
                     'state_id': state_id.id,
                     'city': checkout.get('city', None),
