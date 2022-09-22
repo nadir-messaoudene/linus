@@ -245,7 +245,7 @@ class AccountInvoice(models.Model):
             headers['accept'] = 'application/json'
             headers['Content-Type'] = 'text/plain'
             # query = "select * from invoice WHERE Id = '186075'"
-            query = "select * from invoice WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
+            query = "select * from invoice WHERE Id > '%s' AND TxnDate >= '%s' AND TxnDate <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
                 company.quickbooks_last_invoice_imported_id, company.date_from, company.date_to, company.start, company.limit)
             # query = "select * from invoice WHERE Id = '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (119, company.start, company.limit)
             data = requests.request('GET', company.url + str(company.realm_id) + "/query?query=" + query,headers=headers)
@@ -383,6 +383,12 @@ class AccountInvoice(models.Model):
                                     else:
 
                                         _logger.error("Invoice line was not created.")
+                                    print(cust)
+                                    linked_document = cust.get('LinkedTxn', {})
+                                    for document in linked_document:
+                                        if document.get('TxnType') == 'Payment':
+                                            payment_id = document.get('TxnId')
+                                            company.import_payment(payment_id)
                                 else:
                                     _logger.error("NO ACCOUNT ID WAS ATTACHED !")
                             else:
@@ -390,6 +396,7 @@ class AccountInvoice(models.Model):
 
 
                         else:
+                            continue
                             _logger.info("Begin updating taxes!")
                             # for invoice_line in account_invoice.invoice_line_ids:
                             #     invoice_line.unlink()

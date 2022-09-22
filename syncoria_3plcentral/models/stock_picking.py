@@ -16,6 +16,11 @@ class Location(models.Model):
 
     is_manual_validate = fields.Boolean("Is Manual Validate", default=False)
 
+class StockMoveLine(models.Model):
+    _inherit = "stock.move.line"
+
+    checked_qty_3pl = fields.Boolean(string='Checked Qty?', default=False)
+
 class StockPicking(models.Model):
     _inherit = "stock.picking"
 
@@ -313,13 +318,16 @@ class StockPicking(models.Model):
                         item_odoo_id = self.env['product.product'].search([('product_3pl_id', '=', item_3pl_id)])
                         if not item_odoo_id:
                             raise UserError('Can not find the product with 3pl id: ' + str(item_3pl_id))
-                        res_item = record.move_line_ids_without_package.filtered(lambda l: l.product_id == item_odoo_id)
+                        res_item = record.move_line_ids_without_package.filtered(lambda l: l.product_id == item_odoo_id and not l.checked_qty_3pl)
+                        if len(res_item) > 1:
+                            res_item = res_item[0]
                         if not res_item:
                             raise UserError(
                                 'Can not find move_line_ids_without_package with product_id: ' + str(item_odoo_id.id))
                         if res_item.qty_done != item_qty:
                             dict_item_to_create_backorder_lines[item_odoo_id.id] = res_item.qty_done - item_qty
                             res_item.write({'qty_done': item_qty})
+                        res_item.write({'checked_qty_3pl': True})
                     res_dict = record.button_validate()
                     if type(res_dict) != bool:
                         self.env['stock.backorder.confirmation'].with_context(res_dict['context']).process()

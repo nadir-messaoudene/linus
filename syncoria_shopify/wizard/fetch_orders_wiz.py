@@ -1050,7 +1050,7 @@ class OrderFetchWizard(models.Model):
             # delivery = partner.child_ids.filtered(
             #     lambda c: c.street == street or c.street2 == street2 or c.zip == azip)
             delivery = partner.child_ids.filtered(
-                lambda c: (c.street == street or c.street2 == street2 or c.zip == azip) and c.type == contact_type)
+                lambda c: (c.street == street or c.street2 == street2 or c.zip == azip) and c.type == contact_type and c.phone == checkout.get('phone'))
 
             country_domain = [('name', '=', checkout.get(
                 'country'))] if checkout.get('country') else []
