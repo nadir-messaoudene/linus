@@ -693,7 +693,7 @@ class ResCompany(models.Model):
             _logger.warning(_('Empty data'))
             raise UserError("Empty data")
 
-    def import_payment(self):
+    def import_payment(self, id=None):
         company = self.env['res.users'].search([('id', '=', self._uid)]).company_id
         company = self.env['res.company'].browse(1)
         #         self.ensure_one()
@@ -702,6 +702,8 @@ class ResCompany(models.Model):
         # company.last_imported_payment_id, company.date_from, company.date_to, company.start, company.limit)
         query = "select * from Payment WHERE Id > '%s' AND TxnDate  >= '%s' AND TxnDate  <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
         company.last_imported_payment_id, company.date_from, company.date_to, company.start, company.limit)
+        if id:
+            query = "select * from Payment WHERE Id = '%s'" % id
         url_str = self.get_import_query_url()
         url = url_str.get('url') + '/query?%squery=%s' % (
             'minorversion=' + url_str.get('minorversion') + '&' if url_str.get('minorversion') else '', query)
