@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="inherit_product_pricelist_form_view_linus_sale" model="ir.ui.view">
+            <field name="name">inherit.product.pricelist.form.linus.sale</field>
+            <field name="model">product.pricelist</field>
+            <field name="inherit_id" ref="product.product_pricelist_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//group[@name='pricelist_settings']" position="after">
+                    <group name="pricelist_linus_extend">
+                        <field name="apply_over"/>
+                    </group>
+                </xpath>
+                <xpath expr="//page[@name='pricelist_rules']/field[@name='item_ids']" position="after">
+                    <label for='combination_ids' name='Combination' attrs="{'invisible': [('apply_over', '=', False)]}"/>
+                    <field name="combination_ids" context="{'default_pricelist_id': id}" attrs="{'invisible': [('apply_over', '=', False)]}">
+                        <tree editable='bottom'>
+                            <field name='combine_number'/>
+                            <field name='item_id' domain='pricelist_item_domain'/>
+                            <field name='pricelist_item_domain' invisible="1"/>
+                        </tree>
+                    </field>
+                </xpath>
+            </field>
+	    </record>
+    </data>
+</odoo>

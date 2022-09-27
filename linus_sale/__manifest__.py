@@ -7,11 +7,13 @@
     'website': "http://www.syncoria.com",
     'category': 'Uncategorized',
     'version': '1.0',
-    'depends': ['base', 'sale', 'sale_stock'],
+    'depends': ['base', 'sale', 'sale_stock', 'web_domain_field'],
     'images': [
     ],
     'data': [
-        'views/sale_order_view.xml'
+        'security/ir.model.access.csv',
+        'views/sale_order_view.xml',
+        'views/product_pricelist_views.xml'
     ],
     'license': 'OPL-1',
     'support': "support@syncoria.com",
