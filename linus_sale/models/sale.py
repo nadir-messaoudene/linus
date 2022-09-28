@@ -92,6 +92,7 @@ class PricelistItem(models.Model):
 
 class PricelistItemCombination(models.Model):
     _name = "product.pricelist.item.combination"
+    _order = 'combine_number ASC'
 
     pricelist_item_domain = fields.Char(compute='compute_category_domain', string="Pricelist Domain", readonly=True, store=False)
     item_id = fields.Many2one('product.pricelist.item', 'Item')
