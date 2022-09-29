@@ -55,42 +55,7 @@ class PricelistItem(models.Model):
             else:
                 item.price = _("%(percentage)s %% discount and %(price)s surcharge", percentage=item.price_discount, price=item.price_surcharge)
 
-    def _is_applicable_for(self, product, qty_in_product_uom):
-        self.ensure_one()
-        product.ensure_one()
-        res = True
-
-        is_product_template = product._name == 'product.template'
-        if self.min_quantity and  qty_in_product_uom < self.min_quantity:
-            res = False
-
-        elif self.categ_id:
-            # Applied on a specific category
-            cat = product.categ_id
-            while cat:
-                if cat.id == self.categ_id.id:
-                    break
-                cat = cat.parent_id
-            if not cat:
-                res = False
-        else:
-            # Applied on a specific product template/variant
-            if is_product_template:
-                if self.product_tmpl_id and product.id != self.product_tmpl_id.id:
-                    res = False
-                elif self.product_id and not (
-                    product.product_variant_count == 1
-                    and product.product_variant_id.id == self.product_id.id
-                ):
-                    # product self acceptable on template if has only one variant
-                    res = False
-            else:
-                if self.product_tmpl_id and product.product_tmpl_id.id != self.product_tmpl_id.id:
-                    res = False
-                elif self.product_id and product.id != self.product_id.id:
-                    res = False
-
-        return res
+    
 class PricelistItemCombination(models.Model):
     _name = "product.pricelist.item.combination"
     _order = 'combine_number ASC'
@@ -153,30 +118,30 @@ class Pricelist(models.Model):
 class SaleOrderLine(models.Model):
     _inherit = "sale.order.line"
 
-    # def _get_display_price(self, product):
-    #     def combine_applied(order_lines, categories):
-    #         if self.product_id.categ_id in categories or self.product_id.categ_id in categories.child_id:
-    #             return True
-    #         return False
+    def _get_display_price(self, product):
+        def combine_applied(order_lines, categories):
+            if self.product_id.categ_id in categories or self.product_id.categ_id in categories.child_id:
+                return True
+            return False
 
-    #     def calculate_product_qty(order_lines, pricelist=False, combine_applied=False):
-    #         qty = 0
-    #         if pricelist.combination_ids and combine_applied:
-    #             for order_line in order_lines:
-    #                if order_line.product_id.categ_id in pricelist.combination_ids.item_id.categ_id or order_line.product_id.categ_id in pricelist.combination_ids.item_id.categ_id.child_id:
-    #                     qty += order_line.product_uom_qty
-    #         else:
-    #             for order_line in order_lines:
-    #                 if order_line.product_id.categ_id == self.product_id.categ_id or order_line.product_id.categ_id.parent_id == self.product_id.categ_id.parent_id:
-    #                     qty += order_line.product_uom_qty
-    #         return qty
-    #     qty = product._context.get('quantity')
-    #     if self.order_id.pricelist_id.apply_over:
-    #         qty = calculate_product_qty(self.order_id._get_update_prices_lines(), 
-    #                                     self.order_id.pricelist_id,
-    #                                     combine_applied(self.order_id._get_update_prices_lines(), self.order_id.pricelist_id.combination_ids.item_id.categ_id))
+        def calculate_product_qty(order_lines, pricelist=False, combine_applied=False):
+            qty = 0
+            if pricelist.combination_ids and combine_applied:
+                for order_line in order_lines:
+                   if order_line.product_id.categ_id in pricelist.combination_ids.item_id.categ_id or order_line.product_id.categ_id in pricelist.combination_ids.item_id.categ_id.child_id:
+                        qty += order_line.product_uom_qty
+            else:
+                for order_line in order_lines:
+                    if order_line.product_id.categ_id == self.product_id.categ_id or order_line.product_id.categ_id.parent_id == self.product_id.categ_id.parent_id:
+                        qty += order_line.product_uom_qty
+            return qty
+        qty = product._context.get('quantity')
+        if self.order_id.pricelist_id.apply_over:
+            qty = calculate_product_qty(self.order_id._get_update_prices_lines(), 
+                                        self.order_id.pricelist_id,
+                                        combine_applied(self.order_id._get_update_prices_lines(), self.order_id.pricelist_id.combination_ids.item_id.categ_id))
 
-    #     return super()._get_display_price(product.with_context(quantity=qty))
+        return super()._get_display_price(product.with_context(quantity=qty))
         
     @api.onchange('product_id', 'price_unit', 'product_uom', 'product_uom_qty', 'tax_id')
     def _onchange_discount(self):
