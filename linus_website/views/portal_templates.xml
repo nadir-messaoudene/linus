@@ -178,10 +178,10 @@
             </xpath>
         </template>
 
-        <template id="cart_total_inherit" name="Cart Total Inherit" inherit_id="website_sale.total">
-            <xpath expr='//tr[@id="order_total"]/td/strong' position="replace">
-                <strong>Total before Shipping:</strong>
-            </xpath>
-        </template>
+<!--        <template id="cart_total_inherit" name="Cart Total Inherit" inherit_id="website_sale.total">-->
+<!--            <xpath expr='//tr[@id="order_total"]/td/strong' position="replace">-->
+<!--                <strong>Total before Shipping:</strong>-->
+<!--            </xpath>-->
+<!--        </template>-->
     </data>
 </odoo>
