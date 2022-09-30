@@ -33,8 +33,8 @@ class ProductTemplateAttributeValueInherit(models.Model):
         if self.env.context.get('website_id'):
             product_template = self.mapped('product_tmpl_id')
             product_active_attribute_values = product_template.product_variant_ids \
-                .product_template_attribute_value_ids
-            return self.filtered(lambda ptav: ptav in product_active_attribute_values and ptav.product_attribute_value_id not in product_template.exclude_product_template_value_ids)
+                .product_template_attribute_value_ids.product_attribute_value_id
+            return self.filtered(lambda ptav: ptav.product_attribute_value_id in product_active_attribute_values and ptav.product_attribute_value_id not in product_template.exclude_product_template_value_ids)
         return self.filtered(lambda ptav: ptav.ptav_active)
 
 
