@@ -50,7 +50,7 @@ class Product(models.Model):
             warehouse = [warehouse]
         # filter by location and/or warehouse
         if warehouse:
-            if self.env.context.get('website_id'):
+            if self.env.context.get('website_id') and not self._context.get('active_model'):
                 w_ids = set(Warehouse.browse(_search_ids('stock.warehouse', warehouse)).mapped('view_location_id').ids)
                 if location:
                     l_ids = _search_ids('stock.location', location)
