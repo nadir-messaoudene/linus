@@ -161,20 +161,20 @@
             <xpath expr='//th[hasclass("td-price")]' position="replace">
                 <th class="text-center td-price">Unit Price</th>
                 <th class="text-center td-subtotal">Subtotal</th>
-                <th class="text-center td-discount">Discount</th>
+<!--                <th class="text-center td-discount">Discount</th>-->
             </xpath>
             <xpath expr='//tbody//td[hasclass("td-action")]' position="before">
                 <td class="text-center td-subtotal">
                     <span t-esc="line.price_subtotal" style="white-space: nowrap;" t-options="{'widget': 'monetary', 'display_currency': website_sale_order.currency_id}" />
                 </td>
-                <td class="text-center td-discount">
-                    <t t-if="website_sale_order.pricelist_id.discount_policy=='with_discount'">
-                        <span t-esc="'%.2f' % ((1 - line.price_unit / line.product_id.list_price) * 100)" />%
-                    </t>
-                    <t t-else="">
-                        <span t-field="line.discount" />%
-                    </t>
-                </td>
+<!--                <td class="text-center td-discount">-->
+<!--                    <t t-if="website_sale_order.pricelist_id.discount_policy=='with_discount'">-->
+<!--                        <span t-esc="'%.2f' % ((1 - line.price_unit / line.product_id.list_price) * 100)" />%-->
+<!--                    </t>-->
+<!--                    <t t-else="">-->
+<!--                        <span t-field="line.discount" />%-->
+<!--                    </t>-->
+<!--                </td>-->
             </xpath>
         </template>
 
