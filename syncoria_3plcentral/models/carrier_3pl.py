@@ -8,7 +8,7 @@ class Carrier3PL(models.Model):
     _description = "Carrier 3PL"
 
     name = fields.Char(string='Name', required=True)
-    account_number = fields.Char(string='Account Number', required=True)
+    account_number = fields.Char(string='Account Number')
     instance_3pl_id = fields.Many2one('instance.3pl', 'Instance')
     service_ids = fields.One2many('carrier.services.3pl', 'carrier_3pl_id', string='Carriers')
 
