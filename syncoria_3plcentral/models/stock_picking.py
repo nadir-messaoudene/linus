@@ -105,7 +105,6 @@ class StockPicking(models.Model):
             raise UserError("Please select 3PL Carrier and Service.")
         if not self.partner_id.street or not self.partner_id.city or not self.partner_id.state_id.code or not self.partner_id.zip or not self.partner_id.country_id.code:
             raise ValidationError("Please check shipping address.")
-        print("export_picking_to_3pl")
         if self.state in ('waiting', 'confirmed', 'assigned'):
             instance = self.env['instance.3pl'].search([], limit=1)
             url = "https://secure-wms.com/orders"
@@ -119,15 +118,16 @@ class StockPicking(models.Model):
             if not flag:
                 raise UserError("Please modify 'Done' quantity before pushing to 3PL.")
             # END Make sure have done line(s)
-            for line in self.move_line_ids_without_package:
-                if line.qty_done > 0:
+            for move_line in self.move_line_ids_without_package:
+                if move_line.qty_done > 0:
                     orderItems.append(
                             {
                             "itemIdentifier": {
-                                "sku": line.product_id.default_code
+                                "sku": move_line.product_id.default_code
                             },
-                            "qty": line.qty_done
-                            }
+                            "qty": move_line.qty_done,
+                            "externalId": str(move_line.id),
+                            },
                     )
             # END orderItems
             
@@ -212,10 +212,8 @@ class StockPicking(models.Model):
                 'Authorization': 'Bearer ' + str(instance.access_token)
             }
             response = requests.request("GET", url, headers=headers, data={})
-            print(response.status_code)
             if response.status_code == 200:
                 response = json.loads(response.text)
-                print(response)
                 status = response.get('readOnly').get('status')
                 if status == 2:
                     record.action_cancel()
@@ -244,10 +242,11 @@ class StockPicking(models.Model):
                                         item_3pl_id = item.get('itemIdentifier').get('id')
                                         item_sku = item.get('itemIdentifier').get('sku')
                                         item_qty = item.get('qty')
-                                        res_item = record.move_line_ids_without_package.filtered(
-                                            lambda l: l.product_id.product_3pl_id == str(item_3pl_id))
+                                        # res_item = record.move_line_ids_without_package.filtered(
+                                        #     lambda l: l.product_id.product_3pl_id == str(item_3pl_id))
+                                        res_item = record.move_line_ids_without_package.filtered(lambda l: l.id == int(item.get('externalId')))
                                         if not res_item:
-                                            raise UserError('Can not find the product with 3pl id:{} [{}]'.format(item_3pl_id, item_sku))
+                                            raise UserError('Can not find the product with 3PL ID: {} [{}][Move Line ID: {}]'.format(item_3pl_id, item_sku, item.get('externalId')))
                                         else:
                                             if res_item.product_id.default_code != item_sku:
                                                 raise ValidationError(
@@ -289,15 +288,11 @@ class StockPicking(models.Model):
                 'Authorization': 'Bearer ' + str(instance.access_token)
             }
             response = requests.request("GET", url, headers=headers, data={})
-            print(response.status_code)
             if response.status_code == 200:
                 response = json.loads(response.text)
-                print(response)
                 is_closed = response.get('readOnly').get('isClosed')
                 status = response.get('readOnly').get('status')
                 fully_allocated = response.get('readOnly').get('fullyAllocated')
-                print(is_closed)
-                print(status)
                 # CANCEL ORDER
                 if is_closed and status == 2:
                     if record.state == 'push_3pl':
@@ -318,9 +313,10 @@ class StockPicking(models.Model):
                         item_odoo_id = self.env['product.product'].search([('product_3pl_id', '=', item_3pl_id)])
                         if not item_odoo_id:
                             raise UserError('Can not find the product with 3pl id: ' + str(item_3pl_id))
-                        res_item = record.move_line_ids_without_package.filtered(lambda l: l.product_id == item_odoo_id and not l.checked_qty_3pl)
-                        if len(res_item) > 1:
-                            res_item = res_item[0]
+                        # res_item = record.move_line_ids_without_package.filtered(lambda l: l.product_id == item_odoo_id and not l.checked_qty_3pl)
+                        res_item = record.move_line_ids_without_package.filtered(lambda l: l.id == int(item.get('externalId')))
+                        # if len(res_item) > 1:
+                        #     res_item = res_item[0]
                         if not res_item:
                             raise UserError(
                                 'Can not find move_line_ids_without_package with product_id: ' + str(item_odoo_id.id))
@@ -361,7 +357,7 @@ class StockPicking(models.Model):
             instance = self.env['instance.3pl'].search([], limit=1)
             url = "https://secure-wms.com/inventory/receivers"
             orderItems = []
-            for line in self.move_ids_without_package:
+            for line in self.move_line_ids_without_package:
                 if not line.product_id.default_code:
                     raise UserError('SKU on product must exist')
                 orderItems.append(
@@ -370,6 +366,7 @@ class StockPicking(models.Model):
                             "sku": line.product_id.default_code
                         },
                         "qty": line.product_uom_qty,
+                        'externalId': str(line.id),
                     }
                 )
             payload = json.dumps({
@@ -444,6 +441,7 @@ class StockPicking(models.Model):
             bo_to_assign.action_assign()
         return backorders
 
+    #Show "Product Avail" for Stock Picking once pushed 3PL
     # @api.depends('state', 'picking_type_code', 'scheduled_date', 'move_lines', 'move_lines.forecast_availability',
     #              'move_lines.forecast_expected_date')
     # def _compute_products_availability(self):
