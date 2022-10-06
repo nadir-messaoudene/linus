@@ -11,7 +11,7 @@
                 <xpath expr="//header" position="inside">
                     <button name="get_order_fullfillments" string="Fetch Fulfilment" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
                     <button name="process_shopify_fulfilment" string="Process Fulfilment" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
-
+                    <button name="process_shopify_refunds" string="Process Refunds" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
                 </xpath>
                 <xpath expr="//notebook" position="inside">
                     <page string="Shopify">

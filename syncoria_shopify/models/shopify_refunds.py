@@ -123,3 +123,4 @@ class ShopifyRefundsTransaction(models.Model):
     shopify_refund_is_process = fields.Boolean(string="Is processed", default=False)
     shopify_refund_exchange_rate = fields.Char(string='Exchange Rate', readonly=1)
     shopify_refund_currency = fields.Char(string='Currency', readonly=1)
+    processed_in_odoo = fields.Boolean(string='Processed in Odoo', readonly=1)
