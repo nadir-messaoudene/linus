@@ -26,7 +26,6 @@
                 <form>
                     <header>
                         <button string="Get Access Token" class="btn btn-primary" name="upsert_access_token" type="object" attrs="{'invisible': [('access_token','!=',False)]}"/>
-                        <button string="Get Access Token" class="btn btn-primary" name="upsert_access_token" type="object" />
                         <button string="Connect" class="btn btn-primary" name="action_connect" type="object" attrs="{'invisible': [('access_token','=',False)]}"/>
                         <button string="Map Products" class="btn btn-primary" name="map_products" type="object"/>
                     </header>

@@ -126,7 +126,7 @@ class Instance3PL(models.Model):
                     if len(service_ids) > 0:
                         value['service_ids'] = service_ids
                     self.env['carriers.3pl'].create(value)
-            except:
+            except Exception as e:
                 raise UserError("Can not connect 3PL Central server.")
 
     def action_connect(self):
