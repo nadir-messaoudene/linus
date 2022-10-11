@@ -242,9 +242,10 @@ class StockPicking(models.Model):
                                         item_3pl_id = item.get('itemIdentifier').get('id')
                                         item_sku = item.get('itemIdentifier').get('sku')
                                         item_qty = item.get('qty')
-                                        # res_item = record.move_line_ids_without_package.filtered(
-                                        #     lambda l: l.product_id.product_3pl_id == str(item_3pl_id))
-                                        res_item = record.move_line_ids_without_package.filtered(lambda l: l.id == int(item.get('externalId')))
+                                        res_item = record.move_line_ids_without_package.filtered(
+                                            lambda l: l.product_id.product_3pl_id == str(item_3pl_id))
+                                        if not len(res_item) == 1:
+                                            res_item = record.move_line_ids_without_package.filtered(lambda l: l.id == int(item.get('externalId')))
                                         if not res_item:
                                             raise UserError('Can not find the product with 3PL ID: {} [{}][Move Line ID: {}]'.format(item_3pl_id, item_sku, item.get('externalId')))
                                         else:
@@ -313,10 +314,10 @@ class StockPicking(models.Model):
                         item_odoo_id = self.env['product.product'].search([('product_3pl_id', '=', item_3pl_id)])
                         if not item_odoo_id:
                             raise UserError('Can not find the product with 3pl id: ' + str(item_3pl_id))
-                        # res_item = record.move_line_ids_without_package.filtered(lambda l: l.product_id == item_odoo_id and not l.checked_qty_3pl)
-                        res_item = record.move_line_ids_without_package.filtered(lambda l: l.id == int(item.get('externalId')))
-                        # if len(res_item) > 1:
-                        #     res_item = res_item[0]
+                        res_item = record.move_line_ids_without_package.filtered(lambda l: l.product_id == item_odoo_id)
+                        if not len(res_item) == 1:
+                            res_item = record.move_line_ids_without_package.filtered(
+                                lambda l: l.id == int(item.get('externalId')))
                         if not res_item:
                             raise UserError(
                                 'Can not find move_line_ids_without_package with product_id: ' + str(item_odoo_id.id))
