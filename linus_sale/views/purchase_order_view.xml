@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    <data>
+        <record id="purchase_order_view_tree_sale_linus" model="ir.ui.view">
+            <field name="name">purchase.order.view.tree.sale.linus</field>
+            <field name="model">purchase.order</field>
+            <field name="inherit_id" ref="purchase.purchase_order_view_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='invoice_status']" position="after">
+                    <field name='delivery_status' optional='hide'/>
+                    <field name='count_backorder' optional='hide'/>
+                </xpath>
+            </field>
+	    </record>
+
+    </data>
+</odoo>
