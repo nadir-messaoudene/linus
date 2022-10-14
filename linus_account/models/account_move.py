@@ -12,6 +12,18 @@ from odoo.tools.misc import formatLang
 from odoo.osv import expression
 from odoo.tools import float_is_zero, html_keep_url, is_html_empty, date_utils
 
+class ResPartner(models.Model):
+    _inherit = "res.partner"
+
+    def action_update(self):
+        self._cr.execute("select id from RES_PARTNER where team_id is  null and parent_id is not null")
+        all_attrib = self._cr.fetchall()
+        for i in all_attrib:
+            partner = self.env['res.partner'].browse(i)
+            if partner.parent_id.team_id:
+                partner.team_id = partner.parent_id.team_id
+        # if not to_update:
+        #     return
 class AccountMove(models.Model):
     _inherit = "account.move"
 
@@ -43,7 +55,13 @@ class AccountMoveLine(models.Model):
 
     country_of_origin_id = fields.Many2one('res.country', string='Country of Origin')
     country_of_origin_domain = fields.Char(compute="compute_country_of_origin_domain", readonly=True, store=False)
-
+    
+    def create(self, values):
+        res = super(AccountMoveLine,self).create(values)
+        for line in res:
+            line.country_of_origin_id = line._get_country_of_origin()
+        return res
+    
     @api.depends('product_id')
     def compute_country_of_origin_domain(self):
         print("compute_country_of_origin_domain")
