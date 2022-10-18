@@ -46,6 +46,15 @@
                         </group>
                     </page>
                 </xpath>
+                <xpath expr="//header" position="inside">
+                    <button name="button_validate"
+                            attrs="{'invisible': [('state', 'not in', ('push_3pl'))]}"
+                            string="Validate"
+                            type="object"
+                            class="oe_highlight"
+                            groups="stock.group_stock_user"
+                            confirm="Some operations will be completed automatically from 3PL. Are you sure you want to continue validating this transfer?"/>
+                </xpath>
             </field>
         </record>
 
