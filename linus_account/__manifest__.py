@@ -13,6 +13,7 @@
     'data': [
         'views/account_payment_view.xml',
         'views/product_view.xml',
+        'views/account_view.xml'
     ],
     'license': 'OPL-1',
     'support': "support@syncoria.com",
