@@ -21,11 +21,11 @@ class AccountInvoice(models.Model):
         [('inclusive', 'Tax Inclusive'), ('exclusive', 'Tax Exclusive'), ('notapplicable', 'Not Applicable')],
         string='Tax Status', default="exclusive")
 
-    @api.model
-    def create(self, vals):
-        _logger.info('Invoice Create Vals Before: {}'.format(vals))
-        res = super(AccountInvoice, self).create(vals)
-        return res
+    # @api.model
+    # def create(self, vals):
+    #     _logger.info('Invoice Create Vals Before: {}'.format(vals))
+    #     res = super(AccountInvoice, self).create(vals)
+    #     return res
 
     @api.model
     def _fields_view_get(self, view_id=None, view_type='form', toolbar=False, submenu=False):

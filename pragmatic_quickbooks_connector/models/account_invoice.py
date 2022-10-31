@@ -132,16 +132,16 @@ class AccountPayment(models.Model):
     qbo_bankacc_ref_name = fields.Many2one('account.account',string = 'Bank Account Reference Name')
     qbo_cc_ref_name = fields.Many2one('account.account',string = 'CC Account Reference Name')
 
-    @api.model
-    def create(self, vals_list):
-        if vals_list.get('payment_type'):
-            if vals_list.get('payment_type')=='outbound':
-                if vals_list.get('partner_type') and vals_list.get('partner_id'):
-                    vals_list.update({'destination_account_id': self.env['res.partner'].search([('id', '=', vals_list.get('partner_id'))],
-                                                                                          limit=1).property_account_payable_id.id})
-                    vals_list['partner_type'] ='supplier'
-            res = super(AccountPayment, self).create(vals_list)
-        return res
+    # @api.model
+    # def create(self, vals_list):
+    #     if vals_list.get('payment_type'):
+    #         if vals_list.get('payment_type')=='outbound':
+    #             if vals_list.get('partner_type') and vals_list.get('partner_id'):
+    #                 vals_list.update({'destination_account_id': self.env['res.partner'].search([('id', '=', vals_list.get('partner_id'))],
+    #                                                                                       limit=1).property_account_payable_id.id})
+    #                 vals_list['partner_type'] ='supplier'
+    #         res = super(AccountPayment, self).create(vals_list)
+    #     return res
 
     @api.model
     def _prepare_payment_dict(self, payment):

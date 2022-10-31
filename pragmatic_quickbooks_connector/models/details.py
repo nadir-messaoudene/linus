@@ -16,196 +16,196 @@ class SaleOrder(models.Model):
         [('inclusive', 'Tax Inclusive'), ('exclusive', 'Tax Exclusive'), ('notapplicable', 'Not Applicable')],
         string='Tax Status', default="exclusive")
 
-    @api.model
-    def create(self, vals):
-        # #print('\n\n<------------Inside Create Function----------->')
-        # print("VALS  :  ",vals)
-        discount_per = 0.0
-        res = super(SaleOrder, self).create(vals)
-        # #print("RES ------------> ",res)
-
-        if res.check:
-            if res.discount_type and res.amount:
-
-                # Create Account for Discount
-                account_id = self.env['account.account'].search([('name', '=', 'Discount')])
-                # #print("ACC : ------------> ",account_id)
-                # #print("===============================================================================================")
-                if not account_id:
-                    create_account = account_id.create({
-                        'code': 171274,
-                        'name': 'Discount',
-                        'user_type_id': 6,
-                    })
-                    #print("-------------> ",create_account)
-
-                # Create Discount Product
-                res_product = self.env['product.product'].search([('is_discount_product', '=', True)], limit=1)
-                if not res_product:
-                    create_product = res_product.create({
-                        'name': 'Discount',
-                        'is_discount_product': True,
-                        'taxes_id':0,
-                        # 'price': -self.amount,
-                        'type': 'service',
-                    })
-                    #print("DISCOUNT PRODUCT CREATED ----------------> ",create_product)
-
-                #Add Product line
-                res_product = self.env['product.product'].search([('is_discount_product', '=', True)], limit=1)
-                if not res_product:
-                    raise UserError("There is no discount product available, Please add discount product")
-
-                account = self.env['account.account'].search([('name', '=', 'Discount')])
-                #print("ACCOUNT ID --------------------------> ",account)
-                if res.discount_type == 'percentage':
-                    #print("-------------111111111111")
-
-                    # discount_per = (res.total*(res.amount/100))
-                    #print("PERCENTAGE --------------> ",res.total,res.percentage_amt)
-                    sale_order_line = {
-                                'product_id': res_product.id,
-                                'account_id': account.id,
-                                'order_id': res.id,
-                                'name': 'Discount',
-                                'price_unit': -res.percentage_amt,
-                                'tax_id':0,
-                            }
-                    so_line_id = self.env['sale.order.line'].create(sale_order_line)
-                else:
-                    #print("---------------222222222222")
-                    sale_order_line = {
-                        'product_id': res_product.id,
-                        'account_id': account.id,
-                        'order_id': res.id,
-                        'name': 'Discount',
-                        'price_unit': -res.amount,
-                        'tax_id': 0,
-                    }
-                    so_line_id = self.env['sale.order.line'].create(sale_order_line)
-            else:
-                _logger.info(_("Please select discount type and amount"))
-                # raise Warning("Please select discount type and amount")
-        #print("NO DISCOUNT ADDED TO THE GIVEN PRODUCT")
-        return res
+    # @api.model
+    # def create(self, vals):
+    #     # #print('\n\n<------------Inside Create Function----------->')
+    #     # print("VALS  :  ",vals)
+    #     discount_per = 0.0
+    #     res = super(SaleOrder, self).create(vals)
+    #     # #print("RES ------------> ",res)
+    #
+    #     if res.check:
+    #         if res.discount_type and res.amount:
+    #
+    #             # Create Account for Discount
+    #             account_id = self.env['account.account'].search([('name', '=', 'Discount')])
+    #             # #print("ACC : ------------> ",account_id)
+    #             # #print("===============================================================================================")
+    #             if not account_id:
+    #                 create_account = account_id.create({
+    #                     'code': 171274,
+    #                     'name': 'Discount',
+    #                     'user_type_id': 6,
+    #                 })
+    #                 #print("-------------> ",create_account)
+    #
+    #             # Create Discount Product
+    #             res_product = self.env['product.product'].search([('is_discount_product', '=', True)], limit=1)
+    #             if not res_product:
+    #                 create_product = res_product.create({
+    #                     'name': 'Discount',
+    #                     'is_discount_product': True,
+    #                     'taxes_id':0,
+    #                     # 'price': -self.amount,
+    #                     'type': 'service',
+    #                 })
+    #                 #print("DISCOUNT PRODUCT CREATED ----------------> ",create_product)
+    #
+    #             #Add Product line
+    #             res_product = self.env['product.product'].search([('is_discount_product', '=', True)], limit=1)
+    #             if not res_product:
+    #                 raise UserError("There is no discount product available, Please add discount product")
+    #
+    #             account = self.env['account.account'].search([('name', '=', 'Discount')])
+    #             #print("ACCOUNT ID --------------------------> ",account)
+    #             if res.discount_type == 'percentage':
+    #                 #print("-------------111111111111")
+    #
+    #                 # discount_per = (res.total*(res.amount/100))
+    #                 #print("PERCENTAGE --------------> ",res.total,res.percentage_amt)
+    #                 sale_order_line = {
+    #                             'product_id': res_product.id,
+    #                             'account_id': account.id,
+    #                             'order_id': res.id,
+    #                             'name': 'Discount',
+    #                             'price_unit': -res.percentage_amt,
+    #                             'tax_id':0,
+    #                         }
+    #                 so_line_id = self.env['sale.order.line'].create(sale_order_line)
+    #             else:
+    #                 #print("---------------222222222222")
+    #                 sale_order_line = {
+    #                     'product_id': res_product.id,
+    #                     'account_id': account.id,
+    #                     'order_id': res.id,
+    #                     'name': 'Discount',
+    #                     'price_unit': -res.amount,
+    #                     'tax_id': 0,
+    #                 }
+    #                 so_line_id = self.env['sale.order.line'].create(sale_order_line)
+    #         else:
+    #             _logger.info(_("Please select discount type and amount"))
+    #             # raise Warning("Please select discount type and amount")
+    #     #print("NO DISCOUNT ADDED TO THE GIVEN PRODUCT")
+    #     return res
 
     # @api.multi
-    def write(self, vals):
-        discount_per = 0.0
-        #print("\n\n\n\n\nIN WRITE----------------->")
-        res = super(SaleOrder, self).write(vals)
-        #print("VALS ------------> ",vals)
-        # #print("RES ------------> ",res)
-        # #print(" ------------> ",res)
-
-        if vals.get('check'):
-            #print("CHECK : ",vals.get('check'))
-            if vals.get('discount_type') and vals.get('amount'):
-                #print("DISCOUNT TYPE : ",vals.get('discount_type'),vals.get('amount'))
-
-                # Search for Sale orders on which discount is applied
-                if vals.get('quickbook_id'):
-                    qb_id = vals.get('quickbook_id')
-                    #print("QBO Id : ",qb_id)
-                    sale_order = self.env['sale.order'].search([('quickbook_id','=',qb_id)])
-                    #print("ACC INV : ", sale_order)
-
-                # Create Account for Discount
-                account_id = self.env['account.account'].search([('name', '=', 'Discount')])
-                # #print("ACC : ",account_id)
-                #print("===============================================================================================")
-                if not account_id:
-                    create_account = account_id.create({
-                        'code': 171274,
-                        'name': 'Discount',
-                        'user_type_id': 6,
-                    })
-                #print("\nACC ------------->>>>>>>. ",account_id)
-
-                # Create Discount Product
-                res_product = self.env['product.product'].search([('is_discount_product', '=', True)], limit=1)
-                if not res_product:
-                    create_product = res_product.create({
-                        'name': 'Discount',
-                        'is_discount_product': True,
-                        'taxes_id':0,
-                        # 'price': -self.amount,
-                        'type': 'service',
-                    })
-                #print("\nPRO ------------->>>>>>>>. ",res_product)
-
-                product = self.env['product.product'].search([('is_discount_product', '=', True)], limit=1)
-                discount_line = self.env['sale.order.line'].search([('product_id','=',product.id),('order_id','=',sale_order.id)],limit=1)
-                #print("DISCOUNT LINE : ",discount_line,product)
-
-                if not discount_line:
-                    # Add Product line
-                    res_product = self.env['product.product'].search([('is_discount_product', '=', True)], limit=1)
-                    if not res_product:
-                        raise UserError("There is no discount product available, Please add discount product")
-                    account = self.env['account.account'].search([('name', '=', 'Discount')])
-                    #print("ACCOUNT : ------------> ",account)
-                    if vals.get('discount_type') == 'percentage':
-                        # discount_per = (res.amount_total * (res.amount / 100))
-                        sale_order_line = {
-                            'product_id': res_product.id,
-                            'account_id': account.id,
-                            'order_id': sale_order.id,
-                            'name': 'Discount',
-                            'price_unit': -vals.get('percentage_amt'),
-                            'tax_id': 0,
-                        }
-                        so_line_id = self.env['sale.order.line'].create(sale_order_line)
-                        if so_line_id:
-                            _logger.info("Discount created Successfully...!!!!!!!!!!!!!!!!")
-                    else:
-                        sale_order_line = {
-                            'product_id': res_product.id,
-                            'account_id': account.id,
-                            'order_id': sale_order.id,
-                            'name': 'Discount',
-                            'price_unit': -vals.get('amount'),
-                            'tax_id': 0,
-                        }
-                        so_line_id = self.env['sale.order.line'].create(sale_order_line)
-                        if so_line_id:
-                            _logger.info("Discount created Successfully...!!!!!!!!!!!!!!!!")
-                else:
-                    #print("IN ELSE---------------->")
-                    res_product = self.env['product.product'].search([('is_discount_product', '=', True)], limit=1)
-                    if not res_product:
-                        raise UserError("There is no discount product available, Please add discount product")
-                    account = self.env['account.account'].search([('name', '=', 'Discount')])
-
-                    if vals.get('discount_type') == 'percentage':
-                        # discount_per = (res.amount_total * (res.amount / 100))
-                        sale_order_line = {
-                            'product_id': res_product.id,
-                            'account_id': account.id,
-                            'order_id': sale_order.id,
-                            'name': 'Discount',
-                            'price_unit': -vals.get('percentage_amt'),
-                            'tax_id': 0,
-                        }
-                        so_line_id = discount_line.write(sale_order_line)
-                        if so_line_id:
-                            _logger.info("Discount updated Successfully...!!!!!!!!!!!!!!!!")
-                    else:
-                        sale_order_line = {
-                            'product_id': res_product.id,
-                            'account_id': account.id,
-                            'order_id': sale_order.id,
-                            'name': 'Discount',
-                            'price_unit': -vals.get('amount'),
-                            'tax_id': 0,
-                        }
-                        so_line_id = discount_line.write(sale_order_line)
-                        if so_line_id:
-                            _logger.info("Discount updated Successfully...!!!!!!!!!!!!!!!!")
-            else:
-                _logger.info(_("Please select discount type and amount"))
-                # raise Warning("Please select discount type and amount")
-        return res
+    # def write(self, vals):
+    #     discount_per = 0.0
+    #     #print("\n\n\n\n\nIN WRITE----------------->")
+    #     res = super(SaleOrder, self).write(vals)
+    #     #print("VALS ------------> ",vals)
+    #     # #print("RES ------------> ",res)
+    #     # #print(" ------------> ",res)
+    #
+    #     if vals.get('check'):
+    #         #print("CHECK : ",vals.get('check'))
+    #         if vals.get('discount_type') and vals.get('amount'):
+    #             #print("DISCOUNT TYPE : ",vals.get('discount_type'),vals.get('amount'))
+    #
+    #             # Search for Sale orders on which discount is applied
+    #             if vals.get('quickbook_id'):
+    #                 qb_id = vals.get('quickbook_id')
+    #                 #print("QBO Id : ",qb_id)
+    #                 sale_order = self.env['sale.order'].search([('quickbook_id','=',qb_id)])
+    #                 #print("ACC INV : ", sale_order)
+    #
+    #             # Create Account for Discount
+    #             account_id = self.env['account.account'].search([('name', '=', 'Discount')])
+    #             # #print("ACC : ",account_id)
+    #             #print("===============================================================================================")
+    #             if not account_id:
+    #                 create_account = account_id.create({
+    #                     'code': 171274,
+    #                     'name': 'Discount',
+    #                     'user_type_id': 6,
+    #                 })
+    #             #print("\nACC ------------->>>>>>>. ",account_id)
+    #
+    #             # Create Discount Product
+    #             res_product = self.env['product.product'].search([('is_discount_product', '=', True)], limit=1)
+    #             if not res_product:
+    #                 create_product = res_product.create({
+    #                     'name': 'Discount',
+    #                     'is_discount_product': True,
+    #                     'taxes_id':0,
+    #                     # 'price': -self.amount,
+    #                     'type': 'service',
+    #                 })
+    #             #print("\nPRO ------------->>>>>>>>. ",res_product)
+    #
+    #             product = self.env['product.product'].search([('is_discount_product', '=', True)], limit=1)
+    #             discount_line = self.env['sale.order.line'].search([('product_id','=',product.id),('order_id','=',sale_order.id)],limit=1)
+    #             #print("DISCOUNT LINE : ",discount_line,product)
+    #
+    #             if not discount_line:
+    #                 # Add Product line
+    #                 res_product = self.env['product.product'].search([('is_discount_product', '=', True)], limit=1)
+    #                 if not res_product:
+    #                     raise UserError("There is no discount product available, Please add discount product")
+    #                 account = self.env['account.account'].search([('name', '=', 'Discount')])
+    #                 #print("ACCOUNT : ------------> ",account)
+    #                 if vals.get('discount_type') == 'percentage':
+    #                     # discount_per = (res.amount_total * (res.amount / 100))
+    #                     sale_order_line = {
+    #                         'product_id': res_product.id,
+    #                         'account_id': account.id,
+    #                         'order_id': sale_order.id,
+    #                         'name': 'Discount',
+    #                         'price_unit': -vals.get('percentage_amt'),
+    #                         'tax_id': 0,
+    #                     }
+    #                     so_line_id = self.env['sale.order.line'].create(sale_order_line)
+    #                     if so_line_id:
+    #                         _logger.info("Discount created Successfully...!!!!!!!!!!!!!!!!")
+    #                 else:
+    #                     sale_order_line = {
+    #                         'product_id': res_product.id,
+    #                         'account_id': account.id,
+    #                         'order_id': sale_order.id,
+    #                         'name': 'Discount',
+    #                         'price_unit': -vals.get('amount'),
+    #                         'tax_id': 0,
+    #                     }
+    #                     so_line_id = self.env['sale.order.line'].create(sale_order_line)
+    #                     if so_line_id:
+    #                         _logger.info("Discount created Successfully...!!!!!!!!!!!!!!!!")
+    #             else:
+    #                 #print("IN ELSE---------------->")
+    #                 res_product = self.env['product.product'].search([('is_discount_product', '=', True)], limit=1)
+    #                 if not res_product:
+    #                     raise UserError("There is no discount product available, Please add discount product")
+    #                 account = self.env['account.account'].search([('name', '=', 'Discount')])
+    #
+    #                 if vals.get('discount_type') == 'percentage':
+    #                     # discount_per = (res.amount_total * (res.amount / 100))
+    #                     sale_order_line = {
+    #                         'product_id': res_product.id,
+    #                         'account_id': account.id,
+    #                         'order_id': sale_order.id,
+    #                         'name': 'Discount',
+    #                         'price_unit': -vals.get('percentage_amt'),
+    #                         'tax_id': 0,
+    #                     }
+    #                     so_line_id = discount_line.write(sale_order_line)
+    #                     if so_line_id:
+    #                         _logger.info("Discount updated Successfully...!!!!!!!!!!!!!!!!")
+    #                 else:
+    #                     sale_order_line = {
+    #                         'product_id': res_product.id,
+    #                         'account_id': account.id,
+    #                         'order_id': sale_order.id,
+    #                         'name': 'Discount',
+    #                         'price_unit': -vals.get('amount'),
+    #                         'tax_id': 0,
+    #                     }
+    #                     so_line_id = discount_line.write(sale_order_line)
+    #                     if so_line_id:
+    #                         _logger.info("Discount updated Successfully...!!!!!!!!!!!!!!!!")
+    #         else:
+    #             _logger.info(_("Please select discount type and amount"))
+    #             # raise Warning("Please select discount type and amount")
+    #     return res
 
 
 class SalerOderLine(models.Model):
@@ -447,12 +447,12 @@ class Invoice(models.Model):
 class InvoiceLine(models.Model):
     _inherit = 'account.move.line'
     
-    @api.model_create_multi
-    def create(self,vals):
-        _logger.info("\nACC MOVE LINE INVVals :--------------------------------------------------------------> {} ".format(vals))
-        res=super(InvoiceLine,self).create(vals)
-        # _logger.info("Inv res :--------------------> {} ".format(res))
-        return res
+    # @api.model_create_multi
+    # def create(self,vals):
+    #     _logger.info("\nACC MOVE LINE INVVals :--------------------------------------------------------------> {} ".format(vals))
+    #     res=super(InvoiceLine,self).create(vals)
+    #     # _logger.info("Inv res :--------------------> {} ".format(res))
+    #     return res
 
     qb_id = fields.Integer(string="QuickBooks Id",copy=False)
 
