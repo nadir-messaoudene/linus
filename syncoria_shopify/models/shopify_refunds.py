@@ -65,8 +65,8 @@ class ShopifyRefunds(models.Model):
     shopify_currency_exchange_adjustment = fields.Char(string='Currency Exchange Adjustment', readonly=1)
     shopify_amount = fields.Char(string='Amount', readonly=1)
     shopify_currency = fields.Char(string='Currency', readonly=1)
-    
 
+    processed_in_odoo = fields.Boolean(string='Processed in Odoo', readonly=1)
 
 class ShopifyRefundsTransaction(models.Model):
     _name = 'shopify.refunds.transaction'
@@ -124,3 +124,4 @@ class ShopifyRefundsTransaction(models.Model):
     shopify_refund_exchange_rate = fields.Char(string='Exchange Rate', readonly=1)
     shopify_refund_currency = fields.Char(string='Currency', readonly=1)
     processed_in_odoo = fields.Boolean(string='Processed in Odoo', readonly=1)
+    move_id = fields.Many2one('account.move', string='Refund MoveId')

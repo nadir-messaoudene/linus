@@ -6,6 +6,8 @@
 
 from locale import currency
 from odoo import models, fields, exceptions, api, _
+from odoo import Command
+
 import re
 import logging
 
@@ -570,44 +572,92 @@ class SaleOrderShopify(models.Model):
         move_id = False
         refund_move_id = False
         for rec in self:
-            success_tran_ids = rec.shopify_refund_transaction_ids.filtered(
-                lambda l: l.shopify_refund_status == 'success' and not l.processed_in_odoo)
+            if rec.shopify_id:
+                refund_ids = rec.shopify_refund_ids.filtered(
+                    lambda l: not l.processed_in_odoo)
+                for refund in refund_ids:
+                    marketplace_instance_id = rec.shopify_instance_id
+                    version = marketplace_instance_id.marketplace_api_version or '2021-01'
+                    url = marketplace_instance_id.marketplace_host + '/admin/api/%s/orders/%s/refunds/%s.json' % (
+                        version, rec.shopify_id, refund.shopify_id)
+                    headers = {'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password}
+                    type_req = 'GET'
+                    try:
+                        refunds_list, next_link = self.env['marketplace.connector'].marketplace_api_call(headers=headers,
+                                                                                                         url=url,
+                                                                                                         type=type_req,
+                                                                                                         marketplace_instance_id=marketplace_instance_id)
+                        print(refunds_list)
+                        refund_dict = refunds_list.get('refund')
+                        refund_line_items = refund_dict.get('refund_line_items')
+                        other_adjustments = refund_dict.get('order_adjustments')
+                        shipping_refund = False
+                        if other_adjustments and len(other_adjustments) > 0:
+                            for adjustment in other_adjustments:
+                                if adjustment.get('kind') == 'shipping_refund':
+                                    shipping_refund = True
+                        item_dict = {}
+                        for item in refund_line_items:
+                            quantity = item.get('quantity')
+                            sku = item.get('line_item').get('sku')
+                            if item_dict.get('sku'):
+                                item_dict[sku] += quantity
+                            else:
+                                item_dict[sku] = quantity
+                        transaction_ids = [str(i['id']) for i in refund_dict.get('transactions')]
+                        success_tran_ids = rec.shopify_refund_transaction_ids.filtered(
+                            lambda l: l.shopify_refund_status == 'success' and not l.processed_in_odoo and l.shopify_refund_id in transaction_ids)
 
-            if success_tran_ids and not rec.shopify_is_refund and rec.state not in ("cancel"):
-                # paid_amount = sum([float(amount) for amount in success_tran_ids.mapped('shopify_refund_amount')])
-                shopify_instance_id = rec.shopify_instance_id
-                move_id = account_move.search([('invoice_origin', '=', rec.name), ('move_type', "=", "out_invoice")])
-                # refund_move_id = account_move.search(
-                #     [('invoice_origin', '=', rec.name), ('move_type', "=", "out_refund")])
-                refund_move_id = False
-                if move_id.payment_state in ['paid', 'in_payment']:
-                    message += "\nCreating for Sale Order-{}".format(rec.name)
+                        if success_tran_ids and not rec.shopify_is_refund and rec.state not in ("cancel"):
+                            paid_amount = sum([float(amount) for amount in success_tran_ids.mapped('shopify_refund_amount')])
+                            shopify_instance_id = rec.shopify_instance_id
+                            move_id = account_move.search(
+                                [('invoice_origin', '=', rec.name), ('move_type', "=", "out_invoice"), ('state', '=', 'posted')])
+                            # refund_move_id = account_move.search(
+                            #     [('invoice_origin', '=', rec.name), ('move_type', "=", "out_refund")])
+                            refund_move_id = False
+                            if move_id.payment_state in ['paid', 'in_payment']:
+                                message += "\nCreating for Sale Order-{}".format(rec.name)
 
-                    wizard_vals = {
-                        'refund_method': 'refund',
-                        'date_mode': 'entry',
-                        'journal_id': shopify_instance_id.marketplace_journal_id.id
-                    }
-                    revasal_wizard = self.env['account.move.reversal'].with_context(
-                        active_model='account.move',
-                        active_ids=move_id.ids).create(wizard_vals)
-                    revasal_wizard.sudo().reverse_moves()
-                    refund_move_id = account_move.search([('invoice_origin', '=', rec.name), ('move_type', "=", "out_refund")], order='id desc', limit=1)
-                    refund_move_id.invoice_line_ids.with_context(check_move_validity=False).unlink()
-                    for success_tran_id in success_tran_ids:
-                        refund_move_id.invoice_line_ids = [(0, 0, {'move_id': refund_move_id.id,
-                                                                   'name': success_tran_id.shopify_refund_message,
-                                                                   'quantity': 1,
-                                                                   'price_unit': success_tran_id.shopify_refund_amount})]
-                        success_tran_id.processed_in_odoo = True
-                if refund_move_id and refund_move_id.state == 'draft':
-                    refund_move_id.action_post()
-                    message += "\nCredit Note-<a href=# data-oe-model=account.move data-oe-id={}>{}</a> Posted for Sale Order-{}".format(refund_move_id.id, refund_move_id.name, rec.name)
-                    rec.message_post(body=message)
-                try:
-                    refund_move_id._cr.commit()
-                except Exception as e:
-                    _logger.warning("Exception-{}".format(e.args))
+                                wizard_vals = {
+                                    'refund_method': 'refund',
+                                    'date_mode': 'entry',
+                                    'journal_id': shopify_instance_id.marketplace_journal_id.id
+                                }
+                                revasal_wizard = self.env['account.move.reversal'].with_context(
+                                    active_model='account.move',
+                                    active_ids=move_id.ids).create(wizard_vals)
+                                revasal_wizard.sudo().reverse_moves()
+                                refund_move_id = account_move.search(
+                                    [('invoice_origin', '=', rec.name), ('move_type', "=", "out_refund")],
+                                    order='id desc', limit=1)
+                                # refund_move_id.invoice_line_ids.with_context(check_move_validity=False).unlink()
+                                for invoice_line in refund_move_id.invoice_line_ids:
+                                    if invoice_line.product_id.default_code in item_dict:
+                                        invoice_line.write({'quantity': item_dict.get(invoice_line.product_id.default_code)})
+                                        item_dict.pop(invoice_line.product_id.default_code, None)
+                                    else:
+                                        # invoice_line.with_context(check_move_validity=False).unlink()
+                                        if shipping_refund and 'delivery' in invoice_line.product_id.name.lower() and invoice_line.product_id.detailed_type == 'service':
+                                            continue
+                                        refund_move_id.invoice_line_ids = [Command.delete(invoice_line.id)]
+                                for tran_id in success_tran_ids:
+                                    tran_id.processed_in_odoo = True
+                                    tran_id.move_id = refund_move_id
+                            refund.processed_in_odoo = True
+                            if refund_move_id and refund_move_id.state == 'draft':
+                                refund_move_id.action_post()
+                                message += "\nCredit Note-<a href=# data-oe-model=account.move data-oe-id={}>{}</a> Posted for Sale Order-{}".format(
+                                    refund_move_id.id, refund_move_id.name, rec.name)
+                                rec.message_post(body=message)
+                            try:
+                                refund_move_id._cr.commit()
+                            except Exception as e:
+                                _logger.warning("Exception-{}".format(e.args))
+                        refund.processed_in_odoo = True
+                    except Exception as e:
+                        _logger.warning("Exception-%s" % (e.args))
+                        raise exceptions.ValidationError(e)
         return refund_move_id, message
 
     def shopify_credit_note_register_payments(self):
@@ -617,11 +667,12 @@ class SaleOrderShopify(models.Model):
         move_id = False
         for rec in self:
             success_tran_ids = rec.shopify_refund_transaction_ids.filtered(
-                lambda l: l.shopify_refund_status == 'success')
-            move_id = account_move.search([('invoice_origin', '=', rec.name), ('move_type', "=", "out_refund")])
+                lambda l: l.shopify_refund_status == 'success' and l.processed_in_odoo)
+            # move_id = account_move.search([('invoice_origin', '=', rec.name), ('move_type', "=", "out_refund"), ('state', '=', 'posted')])
             try:
-                if move_id:
-                    for tran_id in success_tran_ids:
+                for tran_id in success_tran_ids:
+                    if tran_id.move_id and tran_id.move_id.state == 'posted':
+                        move_id = tran_id.move_id
                         shopify_instance_id = tran_id.shopify_instance_id or rec.shopify_instance_id
                         if float(
                                 tran_id.shopify_refund_amount) > 0 and shopify_instance_id and move_id.payment_state != 'in_payment':
@@ -672,6 +723,7 @@ class SaleOrderShopify(models.Model):
             rec.fetch_shopify_refunds()
             if rec and rec.state not in ['draft'] and rec.shopify_instance_id.auto_create_invoice == True:
                 rec.process_shopify_credit_note()
+                rec.shopify_credit_note_register_payments()
 
     def get_order_fullfillments(self):
         for rec in self:
