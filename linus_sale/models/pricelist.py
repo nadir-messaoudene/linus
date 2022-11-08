@@ -19,11 +19,12 @@ class SaleOrder(models.Model):
 
     @api.onchange('order_line')
     def _onchange_order_line_discount(self):
-        for line in self.order_line:
-            #Without_Discount
-            line._onchange_discount()
-            #With_Discount
-            line.product_id_change()
+        if self.pricelist_id.apply_over:
+            for line in self.order_line:
+                #Without_Discount
+                line._onchange_discount()
+                #With_Discount
+                line.product_id_change()
     
     #FRONTEND
     def _cart_update(self, product_id=None, line_id=None, add_qty=0, set_qty=0, **kwargs):
