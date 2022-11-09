@@ -106,7 +106,6 @@
                            type="action"
                            groups="base.group_erp_manager"
                            name="%(action_create_variant_shopify)d"
-                           attrs="{'invisible': [('shopify_id', '!=', False)]}"
                            context="{'default_product_id': active_id}"/>
                     
                     <!-- The "Update in Shopify" has not been develop yet -->
