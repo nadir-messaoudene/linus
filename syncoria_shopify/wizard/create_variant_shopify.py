@@ -47,7 +47,7 @@ class CreateVariantShopifyWizard(models.Model):
             result += ', '.join(l_tmp)
 
         if len(result) > 0:
-            self.note = 'Please notice that Product %s already been created on Store(s) %s. Do not select these Store(s) on the list above.' % (self.product_id.name, result)
+            self.note = 'Please notice that Product: %s already been created on Store(s): %s. Do not select these Store(s) on the list above.' % (self.product_id.name, result)
         else:
             self.note = ''
 
