@@ -119,6 +119,7 @@
                   <group>
                     <field name="payment_term_id" />
                     <field name="marketplace_journal_id" />
+                    <field name="apply_tax" />
                     <field name="marketplace_payment_journal_id" required="1"/>
                     <field name="marketplace_refund_journal_id" required="1"/>
                     <field name="marketplace_inbound_method_id" required="1"/>

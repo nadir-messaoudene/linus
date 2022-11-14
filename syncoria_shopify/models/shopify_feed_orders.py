@@ -543,7 +543,7 @@ class ShopifyFeedOrders(models.Model):
                                 'product_id': prod_rec.id,
                                 'product_uom_qty': line['quantity'],
                                 'price_unit': price_unit,
-                                'tax_id': [(6, 0, product_tax)],
+                                'tax_id': [(6, 0, product_tax)] if marketplace_instance_id.apply_tax else False,
                                 'name': str(prod_rec.name),
                             }
 
@@ -876,7 +876,7 @@ class ShopifyFeedOrders(models.Model):
                     'product_uom_qty': 1,
                     'price_unit': delivery_price,
                     # 'discount': disc_per,
-                    'tax_id': [(6, 0, ship_tax)],
+                    'tax_id': [(6, 0, ship_tax)] if marketplace_instance_id.apply_tax else False,
                 }
                 order_vals['order_line'].append((0, 0, temp))
                 order_vals['carrier_id'] = False
