@@ -77,7 +77,7 @@ class ResPartner(models.Model):
 
     def fetch_customer_resolvepay(self):
         if not self.resolvepay_customer_id:
-            raise ValidationError('Customer does not have Resolve Pay ID. Cannot update customer balance')
+            raise ValidationError('Customer does not have Resolve Pay ID. Cannot update customer balance ' + self.name)
         resolvepay_instance = self.env['resolvepay.instance'].search([('name', '=', 'ResolvePay')])
         url = resolvepay_instance.instance_baseurl + 'customers/' + self.resolvepay_customer_id
         res = resolvepay_instance.get_data(url)

@@ -63,8 +63,10 @@ class Invoice(models.Model):
 
     def resolvepay_fetch_invoice(self):
         for invoice in self:
-            if self.state != 'posted':
-                raise UserError('This invoice is not confirmed'+self.name)
+            if invoice.state == 'cancel':
+                continue
+            if invoice.state == 'draft':
+                raise UserError('This invoice is not confirmed '+invoice.name)
             resolvepay_instance = self.env['resolvepay.instance'].search([('name', '=', 'ResolvePay')])
             url = resolvepay_instance.instance_baseurl + 'invoices'
             complete_url = url + '/' + invoice.resolvepay_invoice_id
@@ -96,7 +98,7 @@ class Invoice(models.Model):
                                 _logger.info(
                                     "Payment-{} Posted for Invoice-{}".format(payment, invoice))
                                 invoice.partner_id.fetch_customer_resolvepay()
-                    if data.get('amount_paid'):
+                    if data.get('amount_paid') and data.get('fully_paid_at'):
                         journal = self.env['account.journal'].search([('code', '=', 'RSP')])
                         if not journal:
                             raise ValidationError('Can not find Resolve Pay journal')
@@ -112,8 +114,7 @@ class Invoice(models.Model):
                             if payment_method_line_id:
                                 payment_dict['payment_method_line_id'] = payment_method_line_id[0].id
                             if invoice.payment_state in ['not_paid', 'partial']:
-                                # pay_ids = self.env['account.payment'].search([]).filtered(
-                                #     lambda p: move_id.id in p.reconciled_invoice_ids.ids)
+
                                 payment_vals = json.loads(invoice.invoice_payments_widget)
                                 total_amount = 0
                                 for payment in payment_vals.get('content'):
@@ -129,76 +130,71 @@ class Invoice(models.Model):
                                     _logger.info(
                                         "Payment-{} Posted for Invoice-{}".format(payment, invoice))
                                     invoice.partner_id.fetch_customer_resolvepay()
-                    if data.get('amount_refunded'):
-                        refund_move_id = self.env['account.move'].search(
-                            [('invoice_origin', '=', data.get('order_number')), ('move_type', "=", "out_refund"), ('state', '=', 'posted')])
-                        if invoice.payment_state in ['paid', 'in_payment', 'partial']:
-                            journal = self.env['account.journal'].search([('code', '=', 'RSP')])
-                            if not refund_move_id:
-                                wizard_vals = {
-                                    'refund_method': 'refund',
-                                    'date': date.today(),
-                                    'journal_id': invoice.journal_id.id
-                                }
-                                reversal_wizard = self.env['account.move.reversal'].with_context(
-                                    active_model='account.move',
-                                    active_ids=move_id.ids).create(wizard_vals)
-                                reversal_wizard.sudo().reverse_moves()
-                                refund_move_id = self.env['account.move'].search(
-                                    [('invoice_origin', '=', data.get('order_number')), ('move_type', "=", "out_refund"), ('state', '=', 'draft')])
-                                if not refund_move_id:
-                                    refund_move_id = self.env['account.move'].search(
-                                        [('invoice_origin', '=', invoice.invoice_origin),
-                                         ('move_type', "=", "out_refund"), ('state', '=', 'draft')])
-                                refund_move_id.resolvepay_invoice_id = ''
-                                refund_move_id.invoice_line_ids.with_context(check_move_validity=False).unlink()
-                                refund_move_id.invoice_line_ids = [(0, 0, {'move_id': refund_move_id.id,
-                                                                       'name': "Refund",
-                                                                       'quantity': 1,
-                                                                       'price_unit': data.get('amount_refunded')})]
-                            else:
-                                total_refund = 0
-                                for refund in refund_move_id:
-                                    total_refund += refund.amount_total
-                                if data.get('amount_refunded') > total_refund:
-                                    wizard_vals = {
-                                        'refund_method': 'refund',
-                                        'date': date.today(),
-                                        'journal_id': invoice.journal_id.id
-                                    }
-                                    reversal_wizard = self.env['account.move.reversal'].with_context(
-                                        active_model='account.move',
-                                        active_ids=move_id.ids).create(wizard_vals)
-                                    reversal_wizard.sudo().reverse_moves()
-                                    refund_move_id = self.env['account.move'].search(
-                                        [('invoice_origin', '=', data.get('order_number')),
-                                         ('move_type', "=", "out_refund"), ('state', '=','draft')], order='id desc', limit=1)
-                                    refund_move_id.resolvepay_invoice_id = ''
-                                    refund_move_id.invoice_line_ids.with_context(check_move_validity=False).unlink()
-                                    refund_move_id.invoice_line_ids = [(0,0, {'move_id': refund_move_id.id,
-                                                                           'name': "Refund",
-                                                                           'quantity': 1,
-                                                                           'price_unit': data.get('amount_refunded') - total_refund})]
-                            if refund_move_id and refund_move_id.state == 'draft':
-                                refund_move_id.action_post()
-                                _logger.info("Credit Note-{} Posted for Invoice-{}".format(refund_move_id, invoice))
-                            if not journal:
-                                raise ValidationError('Can not find Resolve Pay journal')
-                            if journal and refund_move_id:
-                                payment_dict = {
-                                    'journal_id': journal.id,
-                                    'payment_date': date.today(),
-                                }
-                                payment_method_line_id = journal.outbound_payment_method_line_ids
-                                if payment_method_line_id:
-                                    payment_dict['payment_method_line_id'] = payment_method_line_id[0].id
-                                pmt_wizard = self.env['account.payment.register'].with_context(
-                                    active_model='account.move', active_ids=refund_move_id.ids).create(
-                                    payment_dict)
-                                payment = pmt_wizard.action_create_payments()
-                                print("===============>", payment)
-                                _logger.info(
-                                    "Payment-{} Posted for Credit Note-{}".format(payment, refund_move_id))
+                    # if data.get('amount_refunded'):
+                    #     reverse_moves = self.env['account.move'].search([('reversed_entry_id', '=', invoice.id), ('state', '=', 'posted')])
+                    #     if invoice.payment_state in ['paid', 'in_payment', 'partial']:
+                    #         journal = self.env['account.journal'].search([('code', '=', 'RSP')])
+                    #         if not reverse_moves:
+                    #             wizard_vals = {
+                    #                 'refund_method': 'refund',
+                    #                 'date': date.today(),
+                    #                 'journal_id': invoice.journal_id.id
+                    #             }
+                    #             reversal_wizard = self.env['account.move.reversal'].with_context(
+                    #                 active_model='account.move',
+                    #                 active_ids=invoice.ids).create(wizard_vals)
+                    #             reversal_wizard.sudo().reverse_moves()
+                    #             refund_move_id = self.env['account.move'].search(
+                    #                 [('reversed_entry_id', '=', invoice.id), ('state', '=', 'draft')])
+                    #             refund_move_id.resolvepay_invoice_id = ''
+                    #             refund_move_id.invoice_line_ids.with_context(check_move_validity=False).unlink()
+                    #             refund_move_id.invoice_line_ids = [(0, 0, {'move_id': refund_move_id.id,
+                    #                                                    'name': "Refund",
+                    #                                                    'quantity': 1,
+                    #                                                    'price_unit': data.get('amount_refunded')})]
+                    #         else:
+                    #             total_refund = 0
+                    #             for refund in reverse_moves:
+                    #                 total_refund += refund.amount_total
+                    #             if data.get('amount_refunded') > total_refund:
+                    #                 wizard_vals = {
+                    #                     'refund_method': 'refund',
+                    #                     'date': date.today(),
+                    #                     'journal_id': invoice.journal_id.id
+                    #                 }
+                    #                 reversal_wizard = self.env['account.move.reversal'].with_context(
+                    #                     active_model='account.move',
+                    #                     active_ids=invoice.ids).create(wizard_vals)
+                    #                 reversal_wizard.sudo().reverse_moves()
+                    #                 refund_move_id = self.env['account.move'].search(
+                    #                     [('invoice_origin', '=', data.get('order_number')),
+                    #                      ('move_type', "=", "out_refund"), ('state', '=','draft')], order='id desc', limit=1)
+                    #                 refund_move_id.resolvepay_invoice_id = ''
+                    #                 refund_move_id.invoice_line_ids.with_context(check_move_validity=False).unlink()
+                    #                 refund_move_id.invoice_line_ids = [(0,0, {'move_id': refund_move_id.id,
+                    #                                                        'name': "Refund",
+                    #                                                        'quantity': 1,
+                    #                                                        'price_unit': data.get('amount_refunded') - total_refund})]
+                    #         if refund_move_id and refund_move_id.state == 'draft':
+                    #             refund_move_id.action_post()
+                    #             _logger.info("Credit Note-{} Posted for Invoice-{}".format(refund_move_id, invoice))
+                    #         if not journal:
+                    #             raise ValidationError('Can not find Resolve Pay journal')
+                    #         if journal and refund_move_id:
+                    #             payment_dict = {
+                    #                 'journal_id': journal.id,
+                    #                 'payment_date': date.today(),
+                    #             }
+                    #             payment_method_line_id = journal.outbound_payment_method_line_ids
+                    #             if payment_method_line_id:
+                    #                 payment_dict['payment_method_line_id'] = payment_method_line_id[0].id
+                    #             pmt_wizard = self.env['account.payment.register'].with_context(
+                    #                 active_model='account.move', active_ids=refund_move_id.ids).create(
+                    #                 payment_dict)
+                    #             payment = pmt_wizard.action_create_payments()
+                    #             print("===============>", payment)
+                    #             _logger.info(
+                    #                 "Payment-{} Posted for Credit Note-{}".format(payment, refund_move_id))
                 except Exception as e:
                     _logger.info("Exception-{}".format(e))
                     raise ValidationError(e)
