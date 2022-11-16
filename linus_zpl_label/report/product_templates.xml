@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <template id="stock.label_product_product_view">
+            <t t-if="print_format == 'zpl' or print_format == 'zplxprice'">
+		<t t-foreach="quantity.items()" t-as="barcode_and_qty_by_product">
+                <t t-set="product" t-value="barcode_and_qty_by_product[0]"/>
+                <t t-foreach="barcode_and_qty_by_product[1]" t-as="barcode_and_qty">
+                    <t t-set="barcode" t-value="barcode_and_qty[0]"/>
+                    <t t-foreach="range(barcode_and_qty[1])" t-as="qty">
+                        <t t-translation="off">
+                            <t t-if="'Accessories' in product.categ_id.display_name">
+^XA
+                            <t t-if="product.default_code and len(product.default_code) &gt; 15">
+^FT20,40^A0N,30,30^FD<t t-esc="'SKU: '"/><t t-esc="product.default_code[:15]"/>^FS
+^FT20,60^A0N,30,30^FD<t t-esc="'SKU: '"/><t t-esc="product.default_code[15:30]"/>^FS
+</t>
+<t t-else="">
+^FT20,40^A0N,30,30^FD<t t-esc="'SKU: '"/><t t-esc="product.default_code"/>^FS
+</t>
+^FT20,80^A0N,24,24^FD<t t-esc="'Item: '"/><t t-esc="product.name"/>^FS
+                                <t t-if="len(product.product_template_variant_value_ids.filtered(lambda a: a.attribute_id.name in ['Color', 'Size',])) > 0">
+                            <t t-foreach="product.product_template_variant_value_ids.filtered(lambda a: a.attribute_id.name in ['Color', 'Size',])" t-as="variant">
+                                <t t-if="variant.attribute_id.name == 'Color'">
+                                    ^FT20,100^A0N,17,17^FD<t t-esc="str(variant.attribute_id.name).upper()"/><t t-esc="': '"/><t t-if="variant.name!=''"><t t-esc="variant.name"/></t><t t-else=""><t t-esc="'N/A'"/></t>^FS
+                                </t>
+                                <t t-if="len(product.product_template_variant_value_ids.filtered(lambda a: a.attribute_id.name == 'Color')) == 0">
+                                    ^FT20,100^A0N,17,17^FD<t t-esc="'COLOUR: '"/><t t-esc="'N/A'"/>^FS
+                                </t>
+                                <t t-if="variant.attribute_id.name == 'Size'">
+                                    ^FT20,120^A0N,17,17^FD<t t-esc="str(variant.attribute_id.name).upper()"/><t t-esc="': '"/><t t-if="variant.name!=''"><t t-esc="variant.name"/></t><t t-else=""><t t-esc="'N/A'"/></t>^FS
+                                </t>
+                                <t t-if="len(product.product_template_variant_value_ids.filtered(lambda a: a.attribute_id.name == 'Size')) == 0">
+                                    ^FT20,120^A0N,17,17^FD<t t-esc="'SIZE: '"/><t t-esc="'N/A'"/>^FS
+                                </t>
+                            </t>
+                                </t>
+                                <t t-else="">
+                                    ^FT20,100^A0N,17,17^FD<t t-esc="'COLOUR: '"/><t t-esc="'N/A'"/>^FS
+                                    ^FT20,120^A0N,17,17^FD<t t-esc="'SIZE: '"/><t t-esc="'N/A'"/>^FS
+                                </t>
+
+<t t-if="price_included">
+^FO210,100,1
+^CI28
+<t t-if="product.currency_id.position == 'after'">
+^FT430,120^A0N,30,30^FH^FD<t t-esc="product.list_price" t-options='{"widget": "float", "precision": 2}'/><t t-esc="product.currency_id.symbol"/>^FS
+</t>
+<t t-if="product.currency_id.position == 'before'">
+^FT430,120^A0N,30,30^FH^FD<t t-esc="product.currency_id.symbol"/><t t-esc="product.list_price" t-options='{"widget": "float", "precision": 2}'/>^FS
+</t>
+</t>
+<t t-if="barcode">
+^FO50,130^BY4
+^BEN,80,Y,N
+^FD<t t-esc="barcode"/>^FS
+</t>
+^XZ
+                            </t>
+                            <t t-elif="'Bicycles' in product.categ_id.display_name">
+                                ^XA
+                            <t t-if="product.default_code and len(product.default_code) &gt; 15">
+^FT20,40^A0N,30,30^FD<t t-esc="'SKU: '"/><t t-esc="product.default_code[:15]"/>^FS
+^FT20,60^A0N,30,30^FD<t t-esc="'SKU: '"/><t t-esc="product.default_code[15:30]"/>^FS
+</t>
+<t t-else="">
+^FT20,40^A0N,30,30^FD<t t-esc="'SKU: '"/><t t-esc="product.default_code"/>^FS
+</t>
+^FT20,80^A0N,30,30^FD<t t-esc="'Item: '"/><t t-esc="product.name"/>^FS
+                            <t t-if="len(product.product_template_variant_value_ids.filtered(lambda a: a.attribute_id.name in ['Color', 'Size',])) > 0">
+                                <t t-foreach="product.product_template_variant_value_ids.filtered(lambda a: a.attribute_id.name in ['Color', 'Size',])" t-as="variant">
+                                <t t-if="variant.attribute_id.name == 'Color'">
+                                    ^FT20,100^A0N,17,17^FD<t t-esc="str(variant.attribute_id.name).upper()"/><t t-esc="': '"/><t t-if="variant.name!=''"><t t-esc="variant.name"/></t><t t-else=""><t t-esc="'N/A'"/></t>^FS
+                                </t>
+                                    <t t-if="len(product.product_template_variant_value_ids.filtered(lambda a: a.attribute_id.name == 'Color')) == 0">
+                                    ^FT20,100^A0N,17,17^FD<t t-esc="'COLOUR: '"/><t t-esc="'N/A'"/>^FS
+                                </t>
+                                <t t-if="variant.attribute_id.name == 'Size'">
+                                    ^FT140,100^A0N,17,17^FD<t t-esc="str(variant.attribute_id.name).upper()"/><t t-esc="': '"/><t t-if="variant.name!=''"><t t-esc="variant.name"/></t><t t-else=""><t t-esc="'N/A'"/></t>^FS
+                                </t>
+                                    <t t-if="len(product.product_template_variant_value_ids.filtered(lambda a: a.attribute_id.name == 'Size')) == 0">
+                                    ^FT140,100^A0N,17,17^FD<t t-esc="'SIZE: '"/><t t-esc="'N/A'"/>^FS
+                                </t>
+                            </t>
+                            </t>
+                            <t t-else="">
+                                ^FT20,100^A0N,17,17^FD<t t-esc="'COLOUR: '"/><t t-esc="'N/A'"/>^FS
+                                ^FT140,100^A0N,17,17^FD<t t-esc="'SIZE: '"/><t t-esc="'N/A'"/>^FS
+                            </t>
+
+<t t-if="price_included">
+^FO170,120,1
+^CI28
+<t t-if="product.currency_id.position == 'after'">
+^FT430,120^A0N,30,30^FH^FD<t t-esc="product.list_price" t-options='{"widget": "float", "precision": 2}'/><t t-esc="product.currency_id.symbol"/>^FS
+</t>
+<t t-if="product.currency_id.position == 'before'">
+^FT430,120^A0N,30,30^FH^FD<t t-esc="product.currency_id.symbol"/><t t-esc="product.list_price" t-options='{"widget": "float", "precision": 2}'/>^FS
+</t>
+</t>
+<t t-if="barcode">
+^FO50,130^BY4
+^BEN,80,Y,N
+^FD<t t-esc="barcode"/>^FS
+</t>
+^XZ
+                            </t>
+                            <t t-else="">
+                                ^XA
+^FT100,80^A0N,40,30^FD<t t-esc="product.display_name"/>^FS
+<t t-if="product.default_code and len(product.default_code) &gt; 15">
+^FT100,115^A0N,30,24^FD<t t-esc="product.default_code[:15]"/>^FS
+^FT100,150^A0N,30,24^FD<t t-esc="product.default_code[15:30]"/>^FS
+</t>
+<t t-else="">
+^FT100,150^A0N,30,24^FD<t t-esc="product.default_code"/>^FS
+</t>
+<t t-if="price_included">
+^FO600,100,1
+^CI28
+<t t-if="product.currency_id.position == 'after'">
+^A0N,66,48^FH^FD<t t-esc="product.list_price" t-options='{"widget": "float", "precision": 2}'/><t t-esc="product.currency_id.symbol"/>^FS
+</t>
+<t t-if="product.currency_id.position == 'before'">
+^A0N,66,48^FH^FD<t t-esc="product.currency_id.symbol"/><t t-esc="product.list_price" t-options='{"widget": "float", "precision": 2}'/>^FS
+</t>
+</t>
+<t t-if="barcode">
+^FO100,160^BY3
+^BCN,100,Y,N,N
+^FD<t t-esc="barcode"/>^FS
+</t>
+^XZ
+                            </t>
+                        </t>
+                    </t>
+                </t>
+            </t>
+            </t>
+
+            <t t-if="print_format == 'zpl_1_5' or print_format == 'zplxprice_1_5'">
+		<t t-foreach="quantity.items()" t-as="barcode_and_qty_by_product">
+                <t t-set="product" t-value="barcode_and_qty_by_product[0]"/>
+                <t t-foreach="barcode_and_qty_by_product[1]" t-as="barcode_and_qty">
+                    <t t-set="barcode" t-value="barcode_and_qty[0]"/>
+                    <t t-foreach="range(barcode_and_qty[1])" t-as="qty">
+                        <t t-translation="off">
+                            <t t-if="'Accessories' in product.categ_id.display_name">
+^XA
+                            <t t-if="product.default_code and len(product.default_code) &gt; 15">
+^FT20,40^A0N,24,24^FD<t t-esc="'SKU: '"/><t t-esc="product.default_code[:15]"/>^FS
+^FT20,60^A0N,24,24^FD<t t-esc="'SKU: '"/><t t-esc="product.default_code[15:30]"/>^FS
+</t>
+<t t-else="">
+^FT20,40^A0N,24,24^FD<t t-esc="'SKU: '"/><t t-esc="product.default_code"/>^FS
+</t>
+^FT20,80^A0N,24,24^FD<t t-esc="'Item: '"/><t t-esc="product.name"/>^FS
+                                <t t-if="len(product.product_template_variant_value_ids.filtered(lambda a: a.attribute_id.name in ['Color', 'Size',])) > 0">
+                            <t t-foreach="product.product_template_variant_value_ids.filtered(lambda a: a.attribute_id.name in ['Color', 'Size',])" t-as="variant">
+                                <t t-if="variant.attribute_id.name == 'Color'">
+                                    ^FT20,100^A0N,15,15^FD<t t-esc="str(variant.attribute_id.name).upper()"/><t t-esc="': '"/><t t-if="variant.name!=''"><t t-esc="variant.name"/></t><t t-else=""><t t-esc="'N/A'"/></t>^FS
+                                </t>
+                                <t t-if="len(product.product_template_variant_value_ids.filtered(lambda a: a.attribute_id.name == 'Color')) == 0">
+                                    ^FT20,100^A0N,15,15^FD<t t-esc="'COLOUR: '"/><t t-esc="'N/A'"/>^FS
+                                </t>
+                                <t t-if="variant.attribute_id.name == 'Size'">
+                                    ^FT20,120^A0N,15,15^FD<t t-esc="str(variant.attribute_id.name).upper()"/><t t-esc="': '"/><t t-if="variant.name!=''"><t t-esc="variant.name"/></t><t t-else=""><t t-esc="'N/A'"/></t>^FS
+                                </t>
+                                <t t-if="len(product.product_template_variant_value_ids.filtered(lambda a: a.attribute_id.name == 'Size')) == 0">
+                                    ^FT20,120^A0N,15,15^FD<t t-esc="'SIZE: '"/><t t-esc="'N/A'"/>^FS
+                                </t>
+                            </t>
+                                </t>
+                                <t t-else="">
+                                    ^FT20,100^A0N,15,15^FD<t t-esc="'COLOUR: '"/><t t-esc="'N/A'"/>^FS
+                                    ^FT20,120^A0N,15,15^FD<t t-esc="'SIZE: '"/><t t-esc="'N/A'"/>^FS
+                                </t>
+
+<t t-if="price_included">
+^FO210,100,1
+^CI28
+<t t-if="product.currency_id.position == 'after'">
+^FT85,160^A0N,24,24^FH^FD<t t-esc="product.list_price" t-options='{"widget": "float", "precision": 2}'/><t t-esc="product.currency_id.symbol"/>^FS
+</t>
+<t t-if="product.currency_id.position == 'before'">
+^FT85,160^A0N,24,24^FH^FD<t t-esc="product.currency_id.symbol"/><t t-esc="product.list_price" t-options='{"widget": "float", "precision": 2}'/>^FS
+</t>
+</t>
+<t t-if="barcode">
+^FO50,170^BY2
+^BEN,70,Y,N
+^FD<t t-esc="barcode"/>^FS
+</t>
+^XZ
+                            </t>
+                            <t t-elif="'Bicycles' in product.categ_id.display_name">
+                                ^XA
+                            <t t-if="product.default_code and len(product.default_code) &gt; 15">
+^FT20,40^A0N,24,24^FD<t t-esc="'SKU: '"/><t t-esc="product.default_code[:15]"/>^FS
+^FT20,60^A0N,24,24^FD<t t-esc="'SKU: '"/><t t-esc="product.default_code[15:30]"/>^FS
+</t>
+<t t-else="">
+^FT20,40^A0N,24,24^FD<t t-esc="'SKU: '"/><t t-esc="product.default_code"/>^FS
+</t>
+^FT20,80^A0N,24,24^FD<t t-esc="'Item: '"/><t t-esc="product.name"/>^FS
+                            <t t-if="len(product.product_template_variant_value_ids.filtered(lambda a: a.attribute_id.name in ['Color', 'Size',])) > 0">
+                                <t t-foreach="product.product_template_variant_value_ids.filtered(lambda a: a.attribute_id.name in ['Color', 'Size',])" t-as="variant">
+                                <t t-if="variant.attribute_id.name == 'Color'">
+                                    ^FT20,120^A0N,15,15^FD<t t-esc="str(variant.attribute_id.name).upper()"/><t t-esc="': '"/><t t-if="variant.name!=''"><t t-esc="variant.name"/></t><t t-else=""><t t-esc="'N/A'"/></t>^FS
+                                </t>
+                                    <t t-if="len(product.product_template_variant_value_ids.filtered(lambda a: a.attribute_id.name == 'Color')) == 0">
+                                    ^FT20,120^A0N,15,15^FD<t t-esc="'COLOUR: '"/><t t-esc="'N/A'"/>^FS
+                                </t>
+                                <t t-if="variant.attribute_id.name == 'Size'">
+                                    ^FT140,120^A0N,15,15^FD<t t-esc="str(variant.attribute_id.name).upper()"/><t t-esc="': '"/><t t-if="variant.name!=''"><t t-esc="variant.name"/></t><t t-else=""><t t-esc="'N/A'"/></t>^FS
+                                </t>
+                                    <t t-if="len(product.product_template_variant_value_ids.filtered(lambda a: a.attribute_id.name == 'Size')) == 0">
+                                    ^FT140,120^A0N,15,15^FD<t t-esc="'SIZE: '"/><t t-esc="'N/A'"/>^FS
+                                </t>
+                            </t>
+                            </t>
+                            <t t-else="">
+                                ^FT20,100^A0N,15,15^FD<t t-esc="'COLOUR: '"/><t t-esc="'N/A'"/>^FS
+                                ^FT140,100^A0N,15,15^FD<t t-esc="'SIZE: '"/><t t-esc="'N/A'"/>^FS
+                            </t>
+
+<t t-if="price_included">
+^FO170,120,1
+^CI28
+<t t-if="product.currency_id.position == 'after'">
+^FT95,160^A0N,24,24^FH^FD<t t-esc="product.list_price" t-options='{"widget": "float", "precision": 2}'/><t t-esc="product.currency_id.symbol"/>^FS
+</t>
+<t t-if="product.currency_id.position == 'before'">
+^FT95,160^A0N,24,24^FH^FD<t t-esc="product.currency_id.symbol"/><t t-esc="product.list_price" t-options='{"widget": "float", "precision": 2}'/>^FS
+</t>
+</t>
+<t t-if="barcode">
+^FO50,170^BY2
+^BEN,70,Y,N
+^FD<t t-esc="barcode"/>^FS
+</t>
+^XZ
+                            </t>
+                            <t t-else="">
+                                ^XA
+^FT100,80^A0N,40,30^FD<t t-esc="product.display_name"/>^FS
+<t t-if="product.default_code and len(product.default_code) &gt; 15">
+^FT100,115^A0N,30,24^FD<t t-esc="product.default_code[:15]"/>^FS
+^FT100,150^A0N,30,24^FD<t t-esc="product.default_code[15:30]"/>^FS
+</t>
+<t t-else="">
+^FT100,150^A0N,30,24^FD<t t-esc="product.default_code"/>^FS
+</t>
+<t t-if="price_included">
+^FO600,100,1
+^CI28
+<t t-if="product.currency_id.position == 'after'">
+^A0N,66,48^FH^FD<t t-esc="product.list_price" t-options='{"widget": "float", "precision": 2}'/><t t-esc="product.currency_id.symbol"/>^FS
+</t>
+<t t-if="product.currency_id.position == 'before'">
+^A0N,66,48^FH^FD<t t-esc="product.currency_id.symbol"/><t t-esc="product.list_price" t-options='{"widget": "float", "precision": 2}'/>^FS
+</t>
+</t>
+<t t-if="barcode">
+^FO100,160^BY3
+^BCN,100,Y,N,N
+^FD<t t-esc="barcode"/>^FS
+</t>
+^XZ
+                            </t>
+                        </t>
+                    </t>
+                </t>
+            </t>
+            </t>
+        </template>
+    </data>
+</odoo>
