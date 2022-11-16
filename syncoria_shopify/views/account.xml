@@ -1,49 +1,59 @@
 <odoo>
   <data>
 
-        <record id="view_account_payment_form" model="ir.ui.view">
-            <field name="name">view.account.payment.form</field>
-            <field name="model">account.payment</field>
-            <field name="inherit_id" ref="account.view_account_payment_form" />
-            <field name="arch" type="xml">
-                <xpath expr="//sheet" position="inside">
-                    <notebook>
-                        <page string="Shopify Payment" attrs="{ 'invisible' : [('marketplace_type','!=','shopify')] }">
-                            <group>
-                                <group>
-                                    <field name="marketplace_type"/>
-                                    <field name="shopify_id"/>
-                                </group>
-                                <group>
-                                    <field name="shopify_credit_card_bin"/>
-                                    <field name="shopify_avs_result_code"/>
-                                    <field name="shopify_cvv_result_code"/>
-                                    <field name="shopify_credit_card_number"/>
-                                    <field name="shopify_credit_card_company"/>
-                                    <field name="shopify_payment_gateway_names"/>
-                                </group>
-                            </group>
-                        </page>
-                    </notebook>
-                </xpath>
-            </field>
-        </record>
+<!--        <record id="view_account_payment_form" model="ir.ui.view">-->
+<!--            <field name="name">view.account.payment.form</field>-->
+<!--            <field name="model">account.payment</field>-->
+<!--            <field name="inherit_id" ref="account.view_account_payment_form" />-->
+<!--            <field name="arch" type="xml">-->
+<!--                <xpath expr="//sheet" position="inside">-->
+<!--                    <notebook>-->
+<!--                        <page string="Shopify Payment" attrs="{ 'invisible' : [('marketplace_type','!=','shopify')] }">-->
+<!--                            <group>-->
+<!--                                <group>-->
+<!--                                    <field name="marketplace_type"/>-->
+<!--                                    <field name="shopify_id"/>-->
+<!--                                </group>-->
+<!--                                <group>-->
+<!--                                    <field name="shopify_credit_card_bin"/>-->
+<!--                                    <field name="shopify_avs_result_code"/>-->
+<!--                                    <field name="shopify_cvv_result_code"/>-->
+<!--                                    <field name="shopify_credit_card_number"/>-->
+<!--                                    <field name="shopify_credit_card_company"/>-->
+<!--                                    <field name="shopify_payment_gateway_names"/>-->
+<!--                                </group>-->
+<!--                            </group>-->
+<!--                        </page>-->
+<!--                    </notebook>-->
+<!--                </xpath>-->
+<!--            </field>-->
+<!--        </record>-->
         <record id="view_account_move_form_shopify" model="ir.ui.view">
             <field name="name">view.account.move.form.shopify</field>
             <field name="model">account.move</field>
             <field name="inherit_id" ref="account.view_move_form" />
             <field name="arch" type="xml">
                 <xpath expr="//header" position="inside">
-                    <button name="fetch_shopify_payments" string="Fetch Shopify Payments" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
-                    <button name="fetch_shopify_refunds" string="Fetch Shopify Refunds" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
-                    <button name="process_shopify_invoice" string="Process Shopify Invoice" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
-                    <button name="shopify_invoice_register_payments" string="Invoice Register Payments" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
-                    <button name="process_shopify_credit_note" string="Process Shopify Credit" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
-                    <button name="shopify_credit_note_register_payments" string="Register Credit" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />
+<!--                    <button name="fetch_shopify_payments" string="Fetch Shopify Payments" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />-->
+<!--                    <button name="fetch_shopify_refunds" string="Fetch Shopify Refunds" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />-->
+<!--                    <button name="process_shopify_invoice" string="Process Shopify Invoice" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />-->
+                    <button name="shopify_invoice_register_payments" string="Invoice Register Payments" type="object" attrs="{ 'invisible': [('state','in',['in_payment','paid'])] }" />
+<!--                    <button name="process_shopify_credit_note" string="Process Shopify Credit" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />-->
+<!--                    <button name="shopify_credit_note_register_payments" string="Register Credit" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />-->
                 </xpath>
             </field>
         </record>
 
+        <record id="action_fetch_shopify_invoice" model="ir.actions.server">
+            <field name="name">Fetch Shopify Payments</field>
+            <field name="model_id" ref="account.model_account_move" />
+            <field name="binding_model_id" ref="account.model_account_move"/>
+            <field name="state">code</field>
+            <field name="code">
+                if records:
+                    action = records.shopify_invoice_register_payments()
+            </field>
+	    </record>
         <!-- <record model="ir.ui.view" id="syncoria_account_taxes">
         <field name="name">Shopify Taxes</field>
         <field name="model">account.tax</field>
