@@ -9,7 +9,7 @@
                     <t t-set="barcode" t-value="barcode_and_qty[0]"/>
                     <t t-foreach="range(barcode_and_qty[1])" t-as="qty">
                         <t t-translation="off">
-                            <t t-if="'Accessories' in product.categ_id.display_name">
+                            <t t-if="product.categ_id.zpl_label_format=='accessory'">
 ^XA
                             <t t-if="product.default_code and len(product.default_code) &gt; 15">
 ^FT20,40^A0N,30,30^FD<t t-esc="'SKU: '"/><t t-esc="product.default_code[:15]"/>^FS
@@ -57,7 +57,7 @@
 </t>
 ^XZ
                             </t>
-                            <t t-elif="'Bicycles' in product.categ_id.display_name">
+                            <t t-elif="product.categ_id.zpl_label_format=='bicycle'">
                                 ^XA
                             <t t-if="product.default_code and len(product.default_code) &gt; 15">
 ^FT20,40^A0N,30,30^FD<t t-esc="'SKU: '"/><t t-esc="product.default_code[:15]"/>^FS
@@ -145,7 +145,7 @@
                     <t t-set="barcode" t-value="barcode_and_qty[0]"/>
                     <t t-foreach="range(barcode_and_qty[1])" t-as="qty">
                         <t t-translation="off">
-                            <t t-if="'Accessories' in product.categ_id.display_name">
+                            <t t-if="product.categ_id.zpl_label_format=='accessory'">
 ^XA
                             <t t-if="product.default_code and len(product.default_code) &gt; 15">
 ^FT20,40^A0N,24,24^FD<t t-esc="'SKU: '"/><t t-esc="product.default_code[:15]"/>^FS
@@ -193,7 +193,7 @@
 </t>
 ^XZ
                             </t>
-                            <t t-elif="'Bicycles' in product.categ_id.display_name">
+                            <t t-elif="product.categ_id.zpl_label_format=='bicycle'">
                                 ^XA
                             <t t-if="product.default_code and len(product.default_code) &gt; 15">
 ^FT20,40^A0N,24,24^FD<t t-esc="'SKU: '"/><t t-esc="product.default_code[:15]"/>^FS

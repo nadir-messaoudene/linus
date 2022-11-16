@@ -11,6 +11,7 @@
     'images': [
     ],
     'data': [
+        'views/product_category_views.xml',
         'report/product_templates.xml',
     ],
     'license': 'OPL-1',
