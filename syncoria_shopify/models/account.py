@@ -56,7 +56,7 @@ class AccountInvoice(models.Model):
                                 _logger.info("shopify_amount==>>>{}".format(shopify_amount))
                                 journal_id = self.env['account.journal'].search([('gateway', '=', tran_id.shopify_gateway)])
                                 if not journal_id:
-                                    journal_id = shopify_instance_id.marketplace_payment_journal_id.id
+                                    journal_id = shopify_instance_id.marketplace_payment_journal_id
                                 wizard_vals = {
                                     'journal_id': journal_id.id,
                                     'amount': shopify_amount,
