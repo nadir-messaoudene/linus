@@ -50,4 +50,3 @@ class SaleOrder(models.Model):
             return
         for rec in to_update:
             rec._action_get_delivery()
-            
