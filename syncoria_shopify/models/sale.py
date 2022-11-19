@@ -608,45 +608,48 @@ class SaleOrderShopify(models.Model):
                         success_tran_ids = rec.shopify_refund_transaction_ids.filtered(
                             lambda l: l.shopify_refund_status == 'success' and not l.processed_in_odoo and l.shopify_refund_id in transaction_ids)
 
-                        if success_tran_ids and not rec.shopify_is_refund and rec.state not in ("cancel"):
-                            paid_amount = sum([float(amount) for amount in success_tran_ids.mapped('shopify_refund_amount')])
+                        if success_tran_ids and not rec.shopify_is_refund and rec.state != 'cancel':
                             shopify_instance_id = rec.shopify_instance_id
                             move_id = account_move.search(
-                                [('invoice_origin', '=', rec.name), ('move_type', "=", "out_invoice"), ('state', '=', 'posted')])
-                            # refund_move_id = account_move.search(
-                            #     [('invoice_origin', '=', rec.name), ('move_type', "=", "out_refund")])
+                                [('invoice_origin', '=', rec.name), ('move_type', "=", "out_invoice"), ('state', '=', 'posted')], order='id asc', limit=1)
                             refund_move_id = False
                             if move_id.payment_state in ['paid', 'in_payment']:
                                 message += "\nCreating for Sale Order-{}".format(rec.name)
 
                                 wizard_vals = {
                                     'refund_method': 'refund',
-                                    'date_mode': 'entry',
+                                    'date': refund.shopify_processed_at.split('T')[0],
                                     'journal_id': shopify_instance_id.marketplace_journal_id.id
                                 }
                                 revasal_wizard = self.env['account.move.reversal'].with_context(
                                     active_model='account.move',
                                     active_ids=move_id.ids).create(wizard_vals)
                                 revasal_wizard.sudo().reverse_moves()
-                                refund_move_id = account_move.search(
-                                    [('invoice_origin', '=', rec.name), ('move_type', "=", "out_refund")],
-                                    order='id desc', limit=1)
-                                # refund_move_id.invoice_line_ids.with_context(check_move_validity=False).unlink()
+                                refund_move_id = self.env['account.move'].search([('reversed_entry_id', '=', move_id.id), ('state', '=', 'draft')])
                                 for invoice_line in refund_move_id.invoice_line_ids:
                                     if invoice_line.product_id.default_code in item_dict:
                                         invoice_line.write({'quantity': item_dict.get(invoice_line.product_id.default_code)})
                                         item_dict.pop(invoice_line.product_id.default_code, None)
                                     else:
-                                        # invoice_line.with_context(check_move_validity=False).unlink()
                                         if shipping_refund and 'delivery' in invoice_line.product_id.name.lower() and invoice_line.product_id.detailed_type == 'service':
                                             continue
                                         refund_move_id.invoice_line_ids = [Command.delete(invoice_line.id)]
+                                if not item_dict and other_adjustments:
+                                    for adjustment in other_adjustments:
+                                        if adjustment.get('kind') == 'refund_discrepancy':
+                                            if not marketplace_instance_id.refund_discrepancy_account_id:
+                                                raise exceptions.ValidationError('Please set Refund Discrepancy Account')
+                                            refund_move_id.invoice_line_ids = [
+                                                (0, 0, {'account_id': marketplace_instance_id.refund_discrepancy_account_id.id,
+                                                        'name': adjustment.get('reason'),
+                                                        'quantity': 1,
+                                                        'price_unit': -float(adjustment.get('amount'))})]
                                 for tran_id in success_tran_ids:
                                     tran_id.processed_in_odoo = True
                                     tran_id.move_id = refund_move_id
-                            refund.processed_in_odoo = True
                             if refund_move_id and refund_move_id.state == 'draft':
                                 refund_move_id.action_post()
+                                refund.processed_in_odoo = True
                                 message += "\nCredit Note-<a href=# data-oe-model=account.move data-oe-id={}>{}</a> Posted for Sale Order-{}".format(
                                     refund_move_id.id, refund_move_id.name, rec.name)
                                 rec.message_post(body=message)
@@ -654,7 +657,6 @@ class SaleOrderShopify(models.Model):
                                 refund_move_id._cr.commit()
                             except Exception as e:
                                 _logger.warning("Exception-{}".format(e.args))
-                        refund.processed_in_odoo = True
                     except Exception as e:
                         _logger.warning("Exception-%s" % (e.args))
                         raise exceptions.ValidationError(e)
@@ -684,9 +686,11 @@ class SaleOrderShopify(models.Model):
                                     shopify_refund_amount = float(tran_id.shopify_refund_amount)*float(tran_id.shopify_refund_exchange_rate)
                             #######################################################################################################
 
-
+                            journal_id = self.env['account.journal'].search([('gateway', '=', tran_id.shopify_refund_gateway)])
+                            if not journal_id:
+                                journal_id = shopify_instance_id.marketplace_refund_journal_id
                             wizard_vals = {
-                                'journal_id': shopify_instance_id.marketplace_refund_journal_id.id,
+                                'journal_id': journal_id.id,
                                 'amount': shopify_refund_amount,
                                 'payment_date': fields.Datetime.now(),
                             }

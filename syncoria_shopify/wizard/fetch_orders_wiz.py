@@ -568,7 +568,7 @@ class OrderFetchWizard(models.Model):
         FETCH REFUNDS IN THE DATE RANGE
         """
         while True:
-            refund_url += '&financial_status=refunded,partially_refunded'
+            refund_url += '&financial_status=refunded,partially_refunded&status=any'
             fetched_orders, next_link = self.env['marketplace.connector'].shopify_api_call(headers=headers,
                                                                                            url=refund_url, type=type_req,
                                                                                            marketplace_instance_id=marketplace_instance_id,

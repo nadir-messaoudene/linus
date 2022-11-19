@@ -95,7 +95,7 @@ class ModelName(models.Model):
         required=True,
         domain=[('payment_type','=','outbound')]
     )
-
+    refund_discrepancy_account_id = fields.Many2one('account.account', string='Refund Discrepancy Account')
     debit_account_id = fields.Many2one(
         comodel_name='account.account',
         string='Debit Account',

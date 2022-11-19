@@ -124,6 +124,7 @@
                     <field name="marketplace_refund_journal_id" required="1"/>
                     <field name="marketplace_inbound_method_id" required="1"/>
                     <field name="marketplace_outbound_method_id" required="1"/>
+                    <field name="refund_discrepancy_account_id" required="1"/>
                     <!-- <field name="debit_account_id" />
                     <field name="credit_account_id" /> -->
                   </group>
