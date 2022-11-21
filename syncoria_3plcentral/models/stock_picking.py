@@ -48,7 +48,28 @@ class StockPicking(models.Model):
 
     carriers_3pl_id = fields.Many2one('carriers.3pl', 'Carrier', domain="[('instance_3pl_id', '=', 1)]")
     carrier_services_3pl_id = fields.Many2one('carrier.services.3pl', 'Service', domain="[('carrier_3pl_id', '=', carriers_3pl_id)]")
+    carrier_customer_account_3pl_domain = fields.Char(compute="compute_carrier_customer_account_3pl_domain", readonly=True, store=False)
+    carrier_customer_account_3pl_id = fields.Many2one('carriers.3pl.customer.account', 'Customer Account')
     ship_by_3pl = fields.Boolean("Ship by 3PL", compute="_compute_ship_by_3pl")
+
+    @api.depends('carriers_3pl_id', 'partner_id')
+    def compute_carrier_customer_account_3pl_domain(self):
+        print("compute_carrier_customer_account_3pl_domain")
+        for rec in self:
+            result = []
+            if rec.carriers_3pl_id:
+                if rec.partner_id:
+                    for i in rec.carriers_3pl_id.customer_account_ids:
+                        if i.is_default == True or i.partner_id.id == rec.partner_id.id or (rec.partner_id.parent_id and (i.partner_id.id in rec.partner_id.parent_id.child_ids.ids or i.partner_id.id == rec.partner_id.parent_id.id)):
+                            result.append(i.id)
+                if len(result) == 0:
+                    result = rec.carriers_3pl_id.customer_account_ids.filtered(lambda l: l.is_default == True).ids
+                    rec.carrier_customer_account_3pl_id = None
+            rec.carrier_customer_account_3pl_domain = json.dumps([('id', 'in', result)])
+            if len(result) > 0:
+                rec.carrier_customer_account_3pl_id = result[0]
+            else:
+                rec.carrier_customer_account_3pl_id = None
 
     def action_update_3pl_pickings(self):
         to_update = self.env['stock.picking'].search([('state', '=', 'push_3pl')])
@@ -146,7 +167,7 @@ class StockPicking(models.Model):
                 "routingInfo": {
                     "carrier": self.carrier_services_3pl_id.carrier_3pl_id.name,
                     "mode": self.carrier_services_3pl_id.code,
-                    "account": self.carrier_services_3pl_id.carrier_3pl_id.account_number,
+                    "account": self.carrier_customer_account_3pl_id.name if self.carrier_customer_account_3pl_id else "",
                 },
                 "shipTo": {
                     "companyName": self.partner_id.name,
