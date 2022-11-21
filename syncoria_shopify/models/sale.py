@@ -608,7 +608,7 @@ class SaleOrderShopify(models.Model):
                         success_tran_ids = rec.shopify_refund_transaction_ids.filtered(
                             lambda l: l.shopify_refund_status == 'success' and not l.processed_in_odoo and l.shopify_refund_id in transaction_ids)
 
-                        if success_tran_ids and not rec.shopify_is_refund and rec.state != 'cancel':
+                        if success_tran_ids and not rec.shopify_is_refund:
                             shopify_instance_id = rec.shopify_instance_id
                             move_id = account_move.search(
                                 [('invoice_origin', '=', rec.name), ('move_type', "=", "out_invoice"), ('state', '=', 'posted')], order='id asc', limit=1)
@@ -633,7 +633,9 @@ class SaleOrderShopify(models.Model):
                                     else:
                                         if shipping_refund and 'delivery' in invoice_line.product_id.name.lower() and invoice_line.product_id.detailed_type == 'service':
                                             continue
-                                        refund_move_id.invoice_line_ids = [Command.delete(invoice_line.id)]
+                                        # refund_move_id.invoice_line_ids = [Command.delete(invoice_line.id)]
+                                        refund_move_id.write(
+                                            {'invoice_line_ids': [Command.update(invoice_line.id, {'quantity': 0})]})
                                 if not item_dict and other_adjustments:
                                     for adjustment in other_adjustments:
                                         if adjustment.get('kind') == 'refund_discrepancy':

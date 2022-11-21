@@ -574,6 +574,9 @@ class OrderFetchWizard(models.Model):
                                                                                            marketplace_instance_id=marketplace_instance_id,
                                                                                            params=params)
             try:
+                _logger.info(refund_url)
+                _logger.info("<-------------  REFUNDS SHOPIFY TODAY ------------->")
+                _logger.info(fetched_orders['orders'])
                 orders += fetched_orders['orders']
                 if next_link:
                     if next_link.get("next"):
