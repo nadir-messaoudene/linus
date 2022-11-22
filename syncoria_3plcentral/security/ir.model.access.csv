@@ -3,6 +3,7 @@ access_instance_3pl,access.instance.3pl,model_instance_3pl,base.group_erp_manage
 access_facilities_3pl,access.facilities.3pl,model_facilities_3pl,stock.group_stock_manager,1,1,1,1
 access_carriers_3pl,access.carriers.3pl,model_carriers_3pl,stock.group_stock_manager,1,1,1,1
 access_carrier_services_3pl,access.carrier.services.3pl,model_carrier_services_3pl,stock.group_stock_manager,1,1,1,1
+access_carriers_3pl_customer_account,access.carriers.3pl.customer.account,model_carriers_3pl_customer_account,stock.group_stock_manager,1,1,1,1
 access_mapping_carrier_service_3pl,access.mapping.carrier.service.3pl,model_mapping_carrier_service_3pl,stock.group_stock_manager,1,1,1,1
 access_measure_types,access.measure.types,model_measure_types,stock.group_stock_manager,1,1,1,1
 access_product_warehouse_3pl,access.product.warehouse.3pl,model_product_warehouse_3pl,stock.group_stock_manager,1,1,1,1
