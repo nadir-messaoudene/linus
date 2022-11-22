@@ -31,6 +31,14 @@ class ProductProduct(models.Model):
     product_warehouse_3pl_count = fields.Integer('Product Warehouse 3PL Count', compute='_compute_total_qty')
     primary_unit_measure = fields.Many2one('measure.types', 'Primary Unit of Measure')
 
+    odoo_3pl_soh = fields.Integer('Odoo 3PL SOH', compute='_compute_odoo_3pl_soh')
+
+    @api.depends('qty_available')
+    def _compute_odoo_3pl_soh(self):
+        for record in self:
+            locations = self.env['stock.location'].search([('location_id', 'in', [63,69])])
+            record.odoo_3pl_soh = record.with_context(location=locations.ids).qty_available
+
     @api.depends('product_warehouse_3pl_ids')
     def _compute_total_qty(self):
         for record in self:
