@@ -98,7 +98,7 @@ class Invoice(models.Model):
                                 _logger.info(
                                     "Payment-{} Posted for Invoice-{}".format(payment, invoice))
                                 invoice.partner_id.fetch_customer_resolvepay()
-                    if data.get('amount_paid') and data.get('fully_paid_at'):
+                    if data.get('amount_paid') and data.get('payout_fully_paid_at'):
                         journal = self.env['account.journal'].search([('code', '=', 'RSP')])
                         if not journal:
                             raise ValidationError('Can not find Resolve Pay journal')
@@ -106,9 +106,9 @@ class Invoice(models.Model):
                             payment_dict = {
                                 'journal_id': journal.id,
                                 'amount': data.get('amount_paid'),
-                                'payment_date': data.get('fully_paid_at') if data.get('fully_paid_at') else date.today(),
+                                'payment_date': data.get('payout_fully_paid_at') if data.get('payout_fully_paid_at') else date.today(),
                                 'partner_id': invoice.partner_id.id,
-                                'resolvepay_payment_date': data.get('fully_paid_at') if data.get('fully_paid_at') else date.today()
+                                'resolvepay_payment_date': data.get('payout_fully_paid_at') if data.get('payout_fully_paid_at') else date.today()
                             }
                             payment_method_line_id = journal.inbound_payment_method_line_ids
                             if payment_method_line_id:
