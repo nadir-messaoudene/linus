@@ -142,6 +142,7 @@ class OrderFetchWizard(models.Model):
             ('closed', 'Closed'),
             ('cancelled', 'Cancelled')
         ], string="Order Status",required=True,default='any')
+    order_id = fields.Char('Order ID')
 
     def _get_instance_id(self):
         ICPSudo = self.env['ir.config_parameter'].sudo()
@@ -543,13 +544,19 @@ class OrderFetchWizard(models.Model):
         orders = []
         headers = {
             'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password}
+        if self.order_id:
+            url = marketplace_instance_id.marketplace_host + \
+                  '/admin/api/%s/orders/%s.json' % (version, self.order_id)
         while True:
             fetched_orders, next_link = self.env['marketplace.connector'].shopify_api_call(headers=headers,
                                                                                            url=url, type=type_req,
                                                                                            marketplace_instance_id=marketplace_instance_id,
                                                                                            params=params)
             try:
-                orders += fetched_orders['orders']
+                if self.order_id:
+                    orders = [fetched_orders['order']]
+                else:
+                    orders += fetched_orders['orders']
                 if next_link:
                     if next_link.get("next"):
                         url = next_link.get("next").get("url")

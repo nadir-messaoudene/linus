@@ -149,7 +149,13 @@ class ModelName(models.Model):
     #                     ('deprecated', '=', False),
     #                 ], limit=1)
 
+    payment_type = fields.Selection([
+        ('use_gateway', 'Use Gateway'),
+        ('use_tag', 'Use Tag')
+    ], string="Choose method to identify account journal", default="use_gateway")
 
+    payment_journal_ids = fields.One2many('shopify.payment.journal', 'shopify_instance_id', 'Journal Payments')
+    apply_payment_immediate = fields.Boolean('Apply payment immediately when order is created', default=False)
 
     
     def action_check_acess(self):

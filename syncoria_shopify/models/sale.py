@@ -513,10 +513,40 @@ class SaleOrderShopify(models.Model):
         account_payment = self.env['account.move'].sudo()
         move_id = False
         for rec in self:
+            shopify_instance_id = rec.shopify_instance_id
             success_tran_ids = rec.shopify_transaction_ids.filtered(lambda l: l.shopify_status == 'success')
             move_id = account_move.search([('invoice_origin', '=', rec.name), ('move_type', "=", "out_invoice"), ('state', '=', 'posted')], order='id desc', limit=1)
             try:
-                if move_id:
+                ### Mirakl order payments dont have transactions
+                if shopify_instance_id and shopify_instance_id.apply_payment_immediate and shopify_instance_id.payment_type == 'use_tag':
+                    if not move_id and not rec.invoice_ids:
+                        move_id = rec._create_invoices()
+                        move_id.action_post()
+                    journal_id = False
+                    for tag in shopify_instance_id.payment_journal_ids:
+                        if tag.tag_id in rec.shopify_tag_ids:
+                            journal_id = tag.journal_id
+                    if not journal_id:
+                        journal_id = shopify_instance_id.marketplace_payment_journal_id
+                    if journal_id and move_id and move_id.payment_state != 'in_payment':
+                        wizard_vals = {
+                            'journal_id': journal_id.id,
+                            'payment_date': rec.date_order,
+                        }
+                        payment_method_line_id = journal_id.inbound_payment_method_line_ids.filtered(
+                            lambda l: l.payment_method_id.id == shopify_instance_id.marketplace_inbound_method_id.id)
+                        if payment_method_line_id:
+                            wizard_vals['payment_method_line_id'] = payment_method_line_id.id
+                        pmt_wizard = self.env['account.payment.register'].with_context(
+                            active_model='account.move',
+                            active_ids=move_id.ids).create(wizard_vals)
+                        payment = pmt_wizard._create_payments()
+                        print("===============>", payment)
+                        if move_id.payment_state in ['paid', 'in_payment']:
+                            rec.write({"shopify_is_invoice": True})
+
+
+                if move_id and not shopify_instance_id.apply_payment_immediate:
                     for tran_id in success_tran_ids:
                         payment_id = self.env['account.payment'].search([('shopify_id', '=', tran_id.shopify_id)])
                         if not payment_id:
@@ -529,8 +559,16 @@ class SaleOrderShopify(models.Model):
                                         shopify_amount = float(tran_id.shopify_amount)*float(tran_id.shopify_exchange_rate)
                                 #######################################################################################################
                                 _logger.info("shopify_amount==>>>{}".format(shopify_amount))
-                                journal_id = self.env['account.journal'].search(
-                                    [('gateway', '=', tran_id.shopify_gateway)])
+                                journal_id = False
+                                if not shopify_instance_id.payment_type:
+                                    raise exceptions.ValidationError('Please set payment journal selector')
+                                if shopify_instance_id.payment_type == 'use_gateway':
+                                    journal_id = self.env['account.journal'].search(
+                                        [('gateway', '=', tran_id.shopify_gateway)])
+                                elif shopify_instance_id.payment_type == 'use_tag':
+                                    for tag in shopify_instance_id.payment_journal_ids:
+                                        if tag.tag_id in rec.shopify_tag_ids:
+                                            journal_id = tag.journal_id
                                 if not journal_id:
                                     journal_id = shopify_instance_id.marketplace_payment_journal_id
                                 wizard_vals = {
@@ -917,6 +955,11 @@ class SaleOrderShopify(models.Model):
                #
                # elif len(success_fulfilment) >1:
 
+    def _prepare_confirmation_values(self):
+        return {
+            'state': 'sale',
+            'date_order': self._context.get('date_order') if self._context.get('date_order') else fields.Datetime.now()
+        }
 
 
 class SaleOrderLine(models.Model):

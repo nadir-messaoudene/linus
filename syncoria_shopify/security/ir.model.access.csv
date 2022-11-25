@@ -63,3 +63,5 @@ access_shopify_multi_store_usr,access_shopify_multi_store_usr,model_shopify_mult
 access_shopify_multi_store_man,access_shopify_multi_store_man,model_shopify_multi_store,base.group_erp_manager,1,1,1,1
 
 access_create_variant_shopify_man,access_create_variant_shopify_man,model_create_variant_shopify,base.group_erp_manager,1,1,1,1
+
+access_shopify_payment_journal,access_shopify_payment_journal,model_shopify_payment_journal,base.group_erp_manager,1,1,1,1

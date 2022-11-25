@@ -697,7 +697,8 @@ class ShopifyFeedOrders(models.Model):
 
 
                             if i.get('confirmed'):
-                                order_id.action_confirm()
+                                order_id.with_context({'date_order': order_vals['date_order']}).action_confirm()
+                                # order_id.action_confirm()
 
                             if i.get("cancel_reason")and i.get('cancelled_at'):
                                 order_id.action_cancel()

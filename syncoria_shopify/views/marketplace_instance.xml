@@ -129,6 +129,20 @@
                     <field name="credit_account_id" /> -->
                   </group>
                 </group>
+                <group>
+                  <group>
+                    <field name="payment_type" widget="radio" required="1"/>
+                    <field name="payment_journal_ids" attrs="{'invisible': [('payment_type','=','use_gateway')] }">
+                      <tree editable="bottom" create="1" delete="1">
+                        <field name="tag_id" />
+                        <field name="journal_id" />
+                      </tree>
+                    </field>
+                  </group>
+                  <group>
+                    <field name="apply_payment_immediate" />
+                  </group>
+                </group>
               </page>
 
 
