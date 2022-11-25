@@ -44,16 +44,27 @@
             </field>
         </record>
 
-        <record id="action_fetch_shopify_invoice" model="ir.actions.server">
-            <field name="name">Fetch Shopify Payments</field>
-            <field name="model_id" ref="account.model_account_move" />
-            <field name="binding_model_id" ref="account.model_account_move"/>
+<!--        <record id="action_fetch_shopify_invoice" model="ir.actions.server">-->
+<!--            <field name="name">Fetch Shopify Payments</field>-->
+<!--            <field name="model_id" ref="account.model_account_move" />-->
+<!--            <field name="binding_model_id" ref="account.model_account_move"/>-->
+<!--            <field name="state">code</field>-->
+<!--            <field name="code">-->
+<!--                if records:-->
+<!--                    action = records.shopify_invoice_register_payments()-->
+<!--            </field>-->
+<!--	    </record>-->
+
+      <record id="action_register_payment_so" model="ir.actions.server">
+            <field name="name">Register Shopify Payments</field>
+            <field name="model_id" ref="sale.model_sale_order" />
+            <field name="binding_model_id" ref="sale.model_sale_order"/>
             <field name="state">code</field>
             <field name="code">
                 if records:
                     action = records.shopify_invoice_register_payments()
             </field>
-	    </record>
+      </record>
         <!-- <record model="ir.ui.view" id="syncoria_account_taxes">
         <field name="name">Shopify Taxes</field>
         <field name="model">account.tax</field>

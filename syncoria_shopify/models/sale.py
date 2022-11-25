@@ -602,7 +602,7 @@ class SaleOrderShopify(models.Model):
                 #     move_id._cr.commit()
                 # except Exception as e:
                 #     _logger.warning("Exception-{}".format(e.args))
-        return move_id, message
+        # return move_id, message
 
     def process_shopify_credit_note(self):
         message = ""
