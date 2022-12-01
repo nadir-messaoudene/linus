@@ -803,15 +803,20 @@ class ShopifyFeedOrders(models.Model):
         ###########Fetch the Payments and Refund for the Orders#########
         ################################################################
         for shopify_order in all_shopify_orders:
-            shopify_order.fetch_shopify_payments()
-            shopify_order.fetch_shopify_refunds()
-            shopify_order.get_order_fullfillments()
-            # if shopify_order and shopify_order.state in ['sale', 'done'] and marketplace_instance_id.auto_create_invoice == True:
-            if shopify_order and shopify_order.state not in ['draft'] and marketplace_instance_id.auto_create_invoice == True:
-                shopify_order.process_shopify_invoice()
-                shopify_order.shopify_invoice_register_payments()
-                shopify_order.process_shopify_credit_note()
-                shopify_order.shopify_credit_note_register_payments()
+            order_feed_id = self.search([('shopify_id', '=', shopify_order.shopify_id)], limit=1)
+            if order_feed_id:
+                feed_data = json.loads(order_feed_id.order_data)
+                shopify_order.fetch_shopify_payments()
+                if feed_data.get('refunds'):
+                    shopify_order.fetch_shopify_refunds()
+                if feed_data.get('fulfillments'):
+                    shopify_order.get_order_fullfillments()
+                # if shopify_order and shopify_order.state in ['sale', 'done'] and marketplace_instance_id.auto_create_invoice == True:
+                if shopify_order and shopify_order.state not in ['draft'] and marketplace_instance_id.auto_create_invoice == True:
+                    shopify_order.process_shopify_invoice()
+                    shopify_order.shopify_invoice_register_payments()
+                    shopify_order.process_shopify_credit_note()
+                    shopify_order.shopify_credit_note_register_payments()
             # if shopify_order and shopify_order.state not in ['draft'] and marketplace_instance_id.auto_create_fulfilment == True:
             #     shopify_order.process_shopify_fulfilment()
             shopify_order._cr.commit()
