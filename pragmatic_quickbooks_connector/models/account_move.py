@@ -431,7 +431,7 @@ class AccountInvoice(models.Model):
                                         dict_i['invoice_line_ids'].append((0, 0, k))
                                 _logger.info("Dictionary for invoice line is ---> {}".format(dict_i))
                                 account_invoice.write(dict_i)
-                            account_invoice.action_post()
+                            # account_invoice.action_post()
                             # else:
                             #     _logger.error("NO Line Found for Invoice!")
                             #     f = open(r"C:\pyproj\Odoo 15\Syncoria\linus\msg.txt", "a")
