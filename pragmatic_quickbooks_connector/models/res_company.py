@@ -241,6 +241,11 @@ class ResCompany(models.Model):
         _logger.info("Credit Memo imported successfully.")
         self._cr.commit()
 
+    def import_refund_custom(self):
+        refund_obj = self.env['account.move']
+        refund_obj.import_refund()
+        _logger.info("Refund imported successfully.")
+
     def import_vendor_bill_custom(self):
         vendorbill_obj = self.env['account.move']
         vendorbill_obj.import_vendor_bill()
@@ -316,7 +321,7 @@ class ResCompany(models.Model):
     quickbooks_last_vendor_bill_imported_id = fields.Integer('Last Vendor Bill Id')
     quickbooks_last_credit_note_imported_id = fields.Integer('Last Credit Note Id')
     quickbooks_last_journal_entry_imported_id = fields.Integer('Last Journal Entry Id')
-
+    quickbooks_last_refund_imported_id = fields.Integer('Last Refund Id')
     start = fields.Integer('Start', default=1)
     limit = fields.Integer('Limit', default=100)
     '''  Tracking Fields for Payment Term'''

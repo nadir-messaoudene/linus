@@ -266,13 +266,33 @@ class AccountInvoice(models.Model):
             headers['Content-Type'] = 'text/plain'
 
             # query = "select * from CreditMemo WHERE Id > '%s' order by Id" % (company.quickbooks_last_credit_note_imported_id)
-            query = "select * from CreditMemo WHERE Id > '%s' AND MetaData.CreateTime >= '%s' AND MetaData.CreateTime <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
+            query = "select * from CreditMemo WHERE Id > '%s' AND TxnDate >= '%s' AND TxnDate <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
                 company.quickbooks_last_credit_note_imported_id, company.date_from, company.date_to, company.start,
                 company.limit)
             data = requests.request('GET', company.url + str(company.realm_id) + "/query?query=" + query,
                                     headers=headers)
             if data.status_code == 200:
                 self.create_invoice(data, 'out_refund')
+            else:
+                _logger.error(data)
+                raise UserError('Connection Error...!')
+
+    def import_refund(self):
+        company = self.env['res.company'].browse(1)
+        if company.access_token:
+            headers = {}
+            headers['Authorization'] = 'Bearer ' + company.access_token
+            headers['accept'] = 'application/json'
+            headers['Content-Type'] = 'text/plain'
+
+            # query = "select * from CreditMemo WHERE Id > '%s' order by Id" % (company.quickbooks_last_credit_note_imported_id)
+            query = "select * from refundreceipt WHERE Id > '%s' AND TxnDate >= '%s' AND TxnDate <= '%s' order by Id STARTPOSITION %s MAXRESULTS %s " % (
+                company.quickbooks_last_refund_imported_id, company.date_from, company.date_to, company.start,
+                company.limit)
+            data = requests.request('GET', company.url + str(company.realm_id) + "/query?query=" + query,
+                                    headers=headers)
+            if data.status_code == 200:
+                self.create_refund(data, 'out_refund')
             else:
                 _logger.error(data)
                 raise UserError('Connection Error...!')
@@ -396,51 +416,61 @@ class AccountInvoice(models.Model):
 
 
                         else:
-                            continue
                             _logger.info("Begin updating taxes!")
-                            # for invoice_line in account_invoice.invoice_line_ids:
-                            #     invoice_line.unlink()
-                            # dict_i = {'invoice_line_ids': []}
-                            # invoice_obj = account_invoice.partner_id
-                            # invoice_line = self.odoo_create_invoice_line_dict(cust, invoice_obj, type, dict_i.get('qbo_invoice_id'))
-                            # if invoice_line:
-                            #     account_invoice.button_draft()
-                            #     account_invoice.line_ids.unlink()
-                            #     for k in invoice_line:
-                            #         if not k['exclude_from_invoice_tab']:
-                            #             dict_i['invoice_line_ids'].append((0, 0, k))
-                            #     _logger.info("Dictionary for invoice line is ---> {}".format(dict_i))
-                            #     account_invoice.write(dict_i)
+                            account_invoice.button_draft()
+                            for invoice_line in account_invoice.invoice_line_ids:
+                                account_invoice.write({'invoice_line_ids': [Command.delete(invoice_line.id)]})
+                            dict_i = {'invoice_line_ids': []}
+                            invoice_obj = account_invoice.partner_id
+                            invoice_line = self.odoo_create_invoice_line_dict(cust, invoice_obj, type, dict_i.get('qbo_invoice_id'))
+                            if invoice_line:
+                                for k in invoice_line:
+                                    if not k['exclude_from_invoice_tab']:
+                                        if cust.get('TxnTaxDetail') and cust.get('TxnTaxDetail').get('TotalTax') == 0:
+                                            k['tax_ids'] = False
+                                        dict_i['invoice_line_ids'].append((0, 0, k))
+                                _logger.info("Dictionary for invoice line is ---> {}".format(dict_i))
+                                account_invoice.write(dict_i)
+                            account_invoice.action_post()
                             # else:
                             #     _logger.error("NO Line Found for Invoice!")
                             #     f = open(r"C:\pyproj\Odoo 15\Syncoria\linus\msg.txt", "a")
                             #     f.write(account_invoice.name + '\n')
                             #     f.close()
                             #     continue
-                            account_invoice.button_draft()
-                            discount_line = account_invoice.invoice_line_ids.filtered(lambda l: l.name == 'Discount')
-                            tax_ids = self.odoo_create_invoice_line_dict_discount_tax(cust, type)
-                            for discount_l in discount_line:
-                                discount_l.write({'tax_ids': tax_ids})
-                                account_invoice.write(
-                                    {'invoice_line_ids': [Command.update(discount_l.id, {'tax_ids': tax_ids})]})
+
+
+
+
+
+                            # account_invoice.button_draft()
+                            # discount_line = account_invoice.invoice_line_ids.filtered(lambda l: l.name == 'Discount')
+                            # tax_ids = self.odoo_create_invoice_line_dict_discount_tax(cust, type)
+                            # for discount_l in discount_line:
+                            #     discount_l.write({'tax_ids': tax_ids})
+                            #     account_invoice.write(
+                            #         {'invoice_line_ids': [Command.update(discount_l.id, {'tax_ids': tax_ids})]})
+
+
+
+
                             # account_invoice.with_context(check_move_validity=False)._recompute_dynamic_lines(recompute_all_taxes=True)
-                            account_invoice.action_post()
-                            _logger.info("Starting mapping payment ---> {}".format(account_invoice.name))
-                            pay_term_lines = account_invoice.line_ids.filtered(lambda line: line.account_id.user_type_id.type in ('receivable', 'payable'))
-                            domain = [
-                                ('account_id', 'in', pay_term_lines.account_id.ids),
-                                ('parent_state', '=', 'posted'),
-                                ('partner_id', '=', account_invoice.commercial_partner_id.id),
-                                ('reconciled', '=', False),
-                                '|', ('amount_residual', '!=', 0.0), ('amount_residual_currency', '!=', 0.0),
-                            ]
-                            if account_invoice.is_inbound():
-                                domain.append(('balance', '<', 0.0))
-                                domain.append(('ref', '=', account_invoice.name))
-                            move_payment_lines = self.env['account.move.line'].search(domain)
-                            for line in move_payment_lines:
-                                account_invoice.js_assign_outstanding_line(line.id)
+                            # account_invoice.action_post()
+                            # _logger.info("Starting mapping payment ---> {}".format(account_invoice.name))
+                            # pay_term_lines = account_invoice.line_ids.filtered(lambda line: line.account_id.user_type_id.type in ('receivable', 'payable'))
+                            # domain = [
+                            #     ('account_id', 'in', pay_term_lines.account_id.ids),
+                            #     ('parent_state', '=', 'posted'),
+                            #     ('partner_id', '=', account_invoice.commercial_partner_id.id),
+                            #     ('reconciled', '=', False),
+                            #     '|', ('amount_residual', '!=', 0.0), ('amount_residual_currency', '!=', 0.0),
+                            # ]
+                            # if account_invoice.is_inbound():
+                            #     domain.append(('balance', '<', 0.0))
+                            #     domain.append(('ref', '=', account_invoice.name))
+                            # move_payment_lines = self.env['account.move.line'].search(domain)
+                            # for line in move_payment_lines:
+                            #     account_invoice.js_assign_outstanding_line(line.id)
                             _logger.info("End updating taxes!")
                             if type == 'out_invoice':
                                 company.quickbooks_last_invoice_imported_id = cust.get('Id')
@@ -482,6 +512,79 @@ class AccountInvoice(models.Model):
     #                         _logger.error(_('Error : %s' % e))
     #                         raise ValidationError(_('Error : %s' % e))
                             # pass
+                else:
+                    raise UserError("It seems that all of the data is already imported!")
+                    _logger.warning(_('Empty data'))
+
+    def create_refund(self, data, type='out_refund'):
+        company = self.env['res.company'].browse(1)
+        if data:
+            recs = []
+            parsed_data = json.loads(str(data.text))
+            count = 0
+            if parsed_data:
+                if type == 'out_refund':
+                    get_data_for = 'RefundReceipt'
+
+                if parsed_data.get('QueryResponse') and parsed_data.get('QueryResponse').get(get_data_for):
+                    for cust in parsed_data.get('QueryResponse').get(get_data_for):
+                        return_val = self.check_account_id(cust)
+                        _logger.info("QB Invoice Data -----> {}".format(cust))
+                        count = count + 1
+                        account_invoice = self.env['account.move'].search([('qbo_invoice_id', '=', cust.get('Id'))])
+                        _logger.info("ACC invoice is -----> {}".format(account_invoice))
+                        if not account_invoice:
+                            _logger.info("Attempting for Invoice Creation")
+                            _logger.info("QBO obj is -----> {}".format(cust))
+                            dict_i = self.create_invoice_dict(cust, type)
+                            dict_i['invoice_line_ids'] = []
+                            invoice_obj = self.env['res.partner'].search([('id', '=', dict_i.get('partner_id'))],
+                                                                         limit=1)
+                            invoice_line = self.odoo_create_invoice_line_dict(cust, invoice_obj, type,
+                                                                              dict_i.get('qbo_invoice_id'))
+                            if invoice_line:
+                                for k in invoice_line:
+                                    if 'exclude_from_invoice_tab' in k and not k['exclude_from_invoice_tab']:
+                                        dict_i['invoice_line_ids'].append((0, 0, k))
+                                    elif 'exclude_from_invoice_tab' not in k:
+                                        dict_i['invoice_line_ids'].append((0, 0, k))
+                                _logger.info("Dictionary for f is ---> {}".format(dict_i))
+                                invoice_obj = self.env['account.move'].create(dict_i)
+
+                                if not invoice_obj.posted_before:
+
+                                    # invoice_obj.action_post()
+
+                                    company.quickbooks_last_refund_imported_id = cust.get('Id')
+                            else:
+                                _logger.error("NO Line Found for Invoice!")
+                        # else:
+                        #     _logger.info("Begin updating taxes!")
+                        #     account_invoice.button_draft()
+                        #     for invoice_line in account_invoice.invoice_line_ids:
+                        #         account_invoice.write({'invoice_line_ids': [Command.delete(invoice_line.id)]})
+                        #     dict_i = {'invoice_line_ids': []}
+                        #     invoice_obj = account_invoice.partner_id
+                        #     invoice_line = self.odoo_create_invoice_line_dict(cust, invoice_obj, type,
+                        #                                                       dict_i.get('qbo_invoice_id'))
+                        #     if invoice_line:
+                        #         for k in invoice_line:
+                        #             if not k['exclude_from_invoice_tab']:
+                        #                 if cust.get('TxnTaxDetail') and cust.get('TxnTaxDetail').get(
+                        #                         'TotalTax') == 0:
+                        #                     k['tax_ids'] = False
+                        #                 dict_i['invoice_line_ids'].append((0, 0, k))
+                        #         _logger.info("Dictionary for invoice line is ---> {}".format(dict_i))
+                        #         account_invoice.write(dict_i)
+                        #     account_invoice.action_post()
+                        #     _logger.info("End updating taxes!")
+                        #     if type == 'out_invoice':
+                        #         company.quickbooks_last_invoice_imported_id = cust.get('Id')
+                        #     elif type == 'out_refund':
+                        #         company.quickbooks_last_credit_note_imported_id = cust.get('Id')
+                        #     elif type == 'in_invoice':
+                        #         company.quickbooks_last_vendor_bill_imported_id = cust.get('Id')
+                        #     _logger.info("All data seems to be imported successfully!")
                 else:
                     raise UserError("It seems that all of the data is already imported!")
                     _logger.warning(_('Empty data'))

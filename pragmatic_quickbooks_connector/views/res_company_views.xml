@@ -134,6 +134,14 @@
 							<field name="quickbooks_last_credit_note_imported_id" />
 						</group>
 					</group>
+					<group>
+						<group>
+							<button string="12.5-Import Refund" type="object" name="import_refund_custom" class="oe_highlight" icon="fa-arrow-circle-down"/>
+						</group>
+						<group>
+							<field name="quickbooks_last_refund_imported_id" />
+						</group>
+					</group>
 					
 					
 					
