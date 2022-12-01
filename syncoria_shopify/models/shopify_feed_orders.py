@@ -196,7 +196,7 @@ class ShopifyFeedOrders(models.Model):
         if sp_order_dict.get('billing_address'):
             billing_address = sp_order_dict.get('billing_address', {})
 
-            partner_invoice_id = partner_id.child_ids.filtered(lambda l:l.type == 'invoice')
+            partner_invoice_id = partner_id.child_ids.filtered(lambda l:l.type == 'invoice' and l.street.lower() == billing_address.get('address1', '').lower() and l.zip.lower() == billing_address.get('zip', '').lower() and l.phone == billing_address.get('phone', ''))
             if partner_invoice_id:
                 country_domain = [('name', '=', billing_address.get(
                     'country'))] if billing_address.get('country') else []
