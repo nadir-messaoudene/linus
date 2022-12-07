@@ -86,27 +86,35 @@ class DeliveryCarrier(models.Model):
             if line.variable_factor == 'price':
                 categ_ids = [line.categ_id.id for line in line.categ_price_ids if
                              line.rule_id.variable_factor == 'price']
-                current_price = sum(
-                    [categ_qty['price_subtotal'] for categ_qty in categ_qty_list if
-                     categ_qty['categ_id'].id in categ_ids])
-                if current_price > 0:
-                    total = current_price
-                    price_dict = self._get_price_dict(total, weight, volume, quantity)
-                    test = safe_eval(line.formula, price_dict)
-                    if test:
-                        rulewise_price = 0.0
-                        for categ_price_id in line.categ_price_ids:
-                            current_categ_price = sum([categ_qty['price_subtotal'] for categ_qty in categ_qty_list if
-                                                       categ_qty['categ_id'].id == categ_price_id.categ_id.id])
-                            total += current_categ_price
+                child_categ_ids = self.env['product.category'].sudo().search(
+                    [('id', 'child_of', categ_ids)])
+                child_categ_ids = [child_categ_id.id for child_categ_id in child_categ_ids]
+                if len(child_categ_ids) > 0:
+                    current_price = sum(
+                        [categ_qty['price_subtotal'] for categ_qty in categ_qty_list if
+                         categ_qty['categ_id'].id in child_categ_ids])
+                    if current_price > 0:
+                        total = current_price
                         price_dict = self._get_price_dict(total, weight, volume, quantity)
-                        price += line.list_base_price + line.list_price * price_dict[
-                            line.variable_factor]
-                        rulewise_price += line.list_base_price  + line.list_price * price_dict[
-                            line.variable_factor]
-                        so_description_list.append(
-                            ((line.description or '') + ': ' + str(rulewise_price and order.currency_id.symbol or '') + (
-                                    (rulewise_price) and str(rulewise_price) or 'Free')))
+                        test = safe_eval(line.formula, price_dict)
+                        if test:
+                            rulewise_price = 0.0
+                            for categ_price_id in line.categ_price_ids:
+                                line_child_categ_ids = self.env['product.category'].sudo().search(
+                                    [('id', 'child_of', categ_price_id.categ_id.id)])
+                                line_child_categ_ids = [line_child_categ_id.id for line_child_categ_id in
+                                                        line_child_categ_ids]
+                                current_categ_price = sum([categ_qty['price_subtotal'] for categ_qty in categ_qty_list if
+                                                           categ_qty['categ_id'].id in line_child_categ_ids])
+                                total += current_categ_price
+                            price_dict = self._get_price_dict(total, weight, volume, quantity)
+                            price += line.list_base_price + line.list_price * price_dict[
+                                line.variable_factor]
+                            rulewise_price += line.list_base_price  + line.list_price * price_dict[
+                                line.variable_factor]
+                            so_description_list.append(
+                                ((line.description or '') + ': ' + str(rulewise_price and order.currency_id.symbol or '') + (
+                                        (rulewise_price) and str(rulewise_price) or 'Free')))
         return price, so_description_list
 
     def _get_price_order_from_picking_qty(self, total, weight, volume, quantity, categ_qty_list, order):
@@ -116,26 +124,33 @@ class DeliveryCarrier(models.Model):
             if line.variable_factor == 'quantity':
                 categ_ids = [line.categ_id.id for line in line.categ_price_ids if
                              line.rule_id.variable_factor == 'quantity']
-                current_qty = sum(
-                    [categ_qty['product_qty'] for categ_qty in categ_qty_list if categ_qty['categ_id'].id in categ_ids])
-                if current_qty > 0:
-                    quantity = current_qty
-                    price_dict = self._get_price_dict(total, weight, volume, quantity)
-                    test = safe_eval(line.formula, price_dict)
-                    if test:
-                        rulewise_price = 0.0
-                        for categ_price_id in line.categ_price_ids:
-                            current_categ_qty = sum([categ_qty['product_qty'] for categ_qty in categ_qty_list if
-                                                     categ_qty['categ_id'].id == categ_price_id.categ_id.id])
-                            quantity = current_categ_qty
+                child_categ_ids = self.env['product.category'].sudo().search(
+                    [('id', 'child_of', categ_ids)])
+                child_categ_ids = [child_categ_id.id for child_categ_id in child_categ_ids]
+                if len(child_categ_ids) > 0:
+                    current_qty = sum(
+                        [categ_qty['product_qty'] for categ_qty in categ_qty_list if categ_qty['categ_id'].id in child_categ_ids])
+                    if current_qty > 0:
+                        quantity = current_qty
+                        price_dict = self._get_price_dict(total, weight, volume, quantity)
+                        test = safe_eval(line.formula, price_dict)
+                        if test:
+                            rulewise_price = 0.0
+                            for categ_price_id in line.categ_price_ids:
+                                line_child_categ_ids = self.env['product.category'].sudo().search(
+                                    [('id', 'child_of', categ_price_id.categ_id.id)])
+                                line_child_categ_ids = [line_child_categ_id.id for line_child_categ_id in line_child_categ_ids]
+                                current_categ_qty = sum([categ_qty['product_qty'] for categ_qty in categ_qty_list if
+                                                         categ_qty['categ_id'].id in line_child_categ_ids])
+                                quantity = current_categ_qty
 
-                            price_dict = self._get_price_dict(total, weight, volume, quantity)
-                            price += line.list_base_price + (line.list_price + categ_price_id.list_price) * price_dict[
-                                line.variable_factor]
-                            rulewise_price += line.list_base_price + (line.list_price + categ_price_id.list_price) * \
-                                              price_dict[
-                                                  line.variable_factor]
-                        so_description_list.append(
-                            ((line.description or '') + ': ' + str(rulewise_price and order.currency_id.symbol or '') + (
-                                    (rulewise_price) and str(rulewise_price) or 'Free')))
+                                price_dict = self._get_price_dict(total, weight, volume, quantity)
+                                price += line.list_base_price + (line.list_price + categ_price_id.list_price) * price_dict[
+                                    line.variable_factor]
+                                rulewise_price += line.list_base_price + (line.list_price + categ_price_id.list_price) * \
+                                                  price_dict[
+                                                      line.variable_factor]
+                            so_description_list.append(
+                                ((line.description or '') + ': ' + str(rulewise_price and order.currency_id.symbol or '') + (
+                                        (rulewise_price) and str(rulewise_price) or 'Free')))
         return price, so_description_list
