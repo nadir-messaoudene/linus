@@ -128,11 +128,11 @@
 
         <template id="portal_my_home_invoice_inherit" name="Show Invoices &amp; Bills Inherit" inherit_id="account.portal_my_home_invoice" customize_show="True" priority="30">
             <xpath expr='//t[@t-call="portal.portal_docs_entry"][last()]' position="replace">
-                <t t-call="portal.portal_docs_entry">
-                    <t t-set="title">Invoices</t>
-                    <t t-set="url" t-value="'/my/invoices'"/>
-                    <t t-set="placeholder_count" t-value="'invoice_count'"/>
-                </t>
+<!--                <t t-call="portal.portal_docs_entry">-->
+<!--                    <t t-set="title">Invoices</t>-->
+<!--                    <t t-set="url" t-value="'/my/invoices'"/>-->
+<!--                    <t t-set="placeholder_count" t-value="'invoice_count'"/>-->
+<!--                </t>-->
             </xpath>
         </template>
 
