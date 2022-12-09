@@ -101,6 +101,7 @@
 
         <template id="product_inherit_replace_description" inherit_id="website_sale.product" name="Move Description Position">
             <xpath expr="//p[@t-field='product.description_sale']" position="replace">
+                <div class="custom_availability_messages o_not_editable"/>
                 <p t-field="product.website_description" class="text-muted my-2" placeholder="A short description that will also appear on documents." />
             </xpath>
             <xpath expr="//div[@id='product_full_description']" position="attributes">
@@ -183,5 +184,19 @@
 <!--                <strong>Total before Shipping:</strong>-->
 <!--            </xpath>-->
 <!--        </template>-->
+        <template id="cart_summary_inherit" name="Cart Summary Inherit" inherit_id="website_sale.cart_summary">
+            <xpath expr='//td[hasclass("td-qty")]' position="replace">
+                <td class='td-qty'>
+                    <div t-esc="int(line.product_uom_qty)" />
+                </td>
+            </xpath>
+        </template>
+
+        <template id="linus_website_sale_stock_product" inherit_id="website_sale_stock.website_sale_stock_product">
+<!--            <xpath expr="//div[hasclass('availability_messages', 'o_not_editable')]" position="replace">-->
+<!--            </xpath>-->
+<!--            <div class="availability_messages o_not_editable"/>-->
+        </template>
+
     </data>
 </odoo>
