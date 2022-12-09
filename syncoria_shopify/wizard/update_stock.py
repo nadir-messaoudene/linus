@@ -287,6 +287,95 @@ class ProductsFetchWizard(models.Model):
                 'tag': 'reload'
             }
 
+    def ir_cron_shopify_update_stock_item(self, prod_id=False):
+        products = self.env['product.product'].search([('shopify_id', '!=', False)])
+        if prod_id:
+            products = [self.env['product.product'].browse(prod_id)]
+        for product in products:
+            try:
+                locations = self.env['stock.location'].search([('shopify_warehouse_ids', '!=', False)])
+                ########################################
+                # Purpose of this 'shopify_warehouse_dict' object is to deal with multiple locations mapped to the same shopify warehouse
+                shopify_warehouse_dict = {}
+                for location in locations:
+                    time.sleep(0.5)
+                    for shopify_warehouse in location.shopify_warehouse_ids:
+                        shopify_instance = shopify_warehouse.shopify_instance_id
+                        marketplace_instance_id = shopify_instance
+                        _logger.info("Store Instance: %s" % marketplace_instance_id.name)
+                        host = marketplace_instance_id.marketplace_host
+                        if marketplace_instance_id.marketplace_host:
+                            if '/' in marketplace_instance_id.marketplace_host[-1]:
+                                host = marketplace_instance_id.marketplace_host[0:-1]
+                        prod_mapping = self.env['shopify.multi.store'].search(
+                            [('product_id', '=', product.id),
+                             ('shopify_instance_id', '=', shopify_instance.id)])
+                        ###############################
+                        if prod_mapping:
+                            if shopify_warehouse.shopify_invent_id not in shopify_warehouse_dict:
+                                shopify_warehouse_dict[shopify_warehouse.shopify_invent_id] = 1
+                                try:
+                                    update_qty = self._shopify_update_qty(
+                                        warehouse=shopify_warehouse.shopify_invent_id,
+                                        inventory_item_id=prod_mapping.shopify_inventory_id, quantity=int(
+                                            0),
+                                        marketplace_instance_id=marketplace_instance_id, host=host)
+                                except Exception as e:
+                                    _logger.warning("Error in Request: %s" % e.args)
+                                    continue
+                            ###############
+                            if product.type == 'product' and prod_mapping.shopify_id:
+                                try:
+                                    if product.with_context({"location": location.id}).free_qty > 0:
+                                        update_qty = self._shopify_adjust_qty(
+                                            warehouse=shopify_warehouse.shopify_invent_id,
+                                            inventory_item_id=prod_mapping.shopify_inventory_id, quantity=int(
+                                                product.with_context(
+                                                    {"location": location.id}).free_qty),
+                                            marketplace_instance_id=marketplace_instance_id, host=host)
+                                except Exception as e:
+                                    _logger.warning("Error in Request: %s" % e.args)
+                                    continue
+                                if product.with_context({"location": location.id}).free_qty > 0:
+                                    product.message_post(
+                                        body='Product {} ({}) updated {} quantity from {} to location {} of store {}.\n'.format(
+                                            product.name, product.default_code, product.with_context(
+                                                {"location": location.id}).free_qty, location.complete_name,
+                                            shopify_warehouse.shopify_loc_name, marketplace_instance_id.name))
+                        else:
+                            if marketplace_instance_id == product.shopify_instance_id:
+                                if shopify_warehouse.shopify_invent_id not in shopify_warehouse_dict:
+                                    shopify_warehouse_dict[shopify_warehouse.shopify_invent_id] = 1
+                                    try:
+                                        update_qty = self._shopify_update_qty(
+                                            warehouse=shopify_warehouse.shopify_invent_id,
+                                            inventory_item_id=product.shopify_inventory_id, quantity=int(
+                                                0),
+                                            marketplace_instance_id=marketplace_instance_id, host=host)
+                                    except Exception as e:
+                                        _logger.warning("Error in Request: %s" % e.args)
+                                        continue
+                                #######################
+                                if product.type == 'product' and product.shopify_id:
+                                    try:
+                                        if product.with_context({"location": location.id}).free_qty > 0:
+                                            update_qty = self._shopify_adjust_qty(
+                                                warehouse=shopify_warehouse.shopify_invent_id,
+                                                inventory_item_id=product.shopify_inventory_id, quantity=int(
+                                                    product.with_context({"location": location.id}).free_qty),
+                                                marketplace_instance_id=marketplace_instance_id, host=host)
+                                    except Exception as e:
+                                        _logger.warning("Error in Request: %s" % e.args)
+                                        continue
+                                    if product.with_context({"location": location.id}).free_qty > 0:
+                                        product.message_post(body='Product {} ({}) updated {} quantity from {} to location {} of store {}.\n'.format(
+                                            product.name, product.default_code, product.with_context(
+                                                {"location": location.id}).free_qty, location.complete_name,
+                                            shopify_warehouse.shopify_loc_name, marketplace_instance_id.name))
+            except Exception as e:
+                _logger.warning("Error in Request: %s" % (e.args))
+                raise ValidationError(e)
+
     def shopify_update_price_item(self):
         _logger.info("******shopify_update_price_item")
         Connector = self.env['marketplace.connector']
