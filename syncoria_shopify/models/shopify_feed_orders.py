@@ -198,10 +198,16 @@ class ShopifyFeedOrders(models.Model):
 
             partner_invoice_id = partner_id.child_ids.filtered(lambda l:l.type == 'invoice' and l.street.lower() == billing_address.get('address1', '').lower() and l.zip.lower() == billing_address.get('zip', '').lower() and l.phone == billing_address.get('phone', ''))
             if partner_invoice_id:
-                country_domain = [('name', '=', billing_address.get(
-                    'country'))] if billing_address.get('country') else []
-                country_domain += [('name', '=', billing_address.get('province'))
-                                    ] if billing_address.get('province') else country_domain
+                country_domain = []
+                if billing_address.get('country_code'):
+                    country_domain += [('code', '=', billing_address.get('country_code'))]
+
+                elif billing_address.get('country'):
+                    country_domain += [('name', '=', billing_address.get('country'))]
+                # country_domain = [('name', '=', billing_address.get(
+                #     'country'))] if billing_address.get('country') else []
+                # country_domain += [('name', '=', billing_address.get('province'))
+                #                     ] if billing_address.get('province') else country_domain
                 country_id = self.env['res.country'].sudo().search(
                     country_domain, limit=1)
 
@@ -263,10 +269,16 @@ class ShopifyFeedOrders(models.Model):
             shipping_address = sp_order_dict.get('shipping_address', {})
             partner_shipping_id = partner_id.child_ids.filtered(lambda l:l.type == 'delivery' and l.street.lower() == shipping_address.get('address1', '').lower() and l.zip.lower() == shipping_address.get('zip', '').lower() and l.phone == shipping_address.get('phone', ''))
             if partner_shipping_id:
-                country_domain = [('name', '=', shipping_address.get(
-                    'country'))] if shipping_address.get('country') else []
-                country_domain += [('name', '=', shipping_address.get('province'))
-                                    ] if shipping_address.get('province') else country_domain
+                country_domain = []
+                if shipping_address.get('country_code'):
+                    country_domain += [('code', '=', shipping_address.get('country_code'))]
+
+                elif shipping_address.get('country'):
+                    country_domain += [('name', '=', shipping_address.get('country'))]
+                # country_domain = [('name', '=', shipping_address.get(
+                #     'country'))] if shipping_address.get('country') else []
+                # country_domain += [('name', '=', shipping_address.get('province'))
+                #                     ] if shipping_address.get('province') else country_domain
                 country_id = self.env['res.country'].sudo().search(
                     country_domain, limit=1)
 
@@ -973,11 +985,16 @@ class ShopifyFeedOrders(models.Model):
         if partner:
             delivery = partner.child_ids.filtered(
                 lambda c: (c.street == street or c.street2 == street2 or c.zip == azip) and c.type == contact_type and c.phone == checkout.get('phone'))
+            country_domain = []
+            if checkout.get('country_code'):
+                country_domain += [('code', '=', checkout.get('country_code'))]
 
-            country_domain = [('name', '=', checkout.get(
-                'country'))] if checkout.get('country') else []
-            country_domain += [('name', '=', checkout.get('province'))
-                                ] if checkout.get('province') else country_domain
+            elif checkout.get('country'):
+                country_domain += [('name', '=', checkout.get('country'))]
+            # country_domain = [('name', '=', checkout.get(
+            #     'country'))] if checkout.get('country') else []
+            # country_domain += [('name', '=', checkout.get('province'))
+            #                     ] if checkout.get('province') else country_domain
             country_id = self.env['res.country'].sudo().search(
                 country_domain, limit=1)
 
