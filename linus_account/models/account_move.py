@@ -29,6 +29,20 @@ class AccountMove(models.Model):
 
     last_payment_date = fields.Date(string='Last Payment Date', compute='_compute_payments_widget_reconciled_info', store=True)
 
+    order_type_ids = fields.Many2many('crm.tag', 'account_move_order_tag_rel', 'move_id', 'tag_id', string='Order Type')
+
+    @api.onchange('order_type_ids', 'invoice_line_ids')
+    def _onchange_order_type_ids(self):
+        print('_onchange_order_type_ids')
+        for move in self:
+            if move.order_type_ids:
+                order_type_name = move.order_type_ids[0].name
+                print(order_type_name)
+                for line in move.invoice_line_ids:
+                    analytic_acc_res = self.env['account.analytic.account'].search([('name', '=', order_type_name)], limit=1)
+                    if analytic_acc_res:
+                        line.analytic_account_id = analytic_acc_res.id
+
     @api.depends('amount_residual')
     def compute_amount_paid(self):
         for move in self:

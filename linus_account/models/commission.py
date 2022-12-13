@@ -24,6 +24,7 @@ class SaleOrder(models.Model):
     def _prepare_invoice(self):
         invoice_vals = super(SaleOrder, self)._prepare_invoice()
         invoice_vals['shopify_tag_ids'] = self.shopify_tag_ids
+        invoice_vals['order_type_ids'] = self.tag_ids
         return invoice_vals
 
     def action_update_shopify_tag_ids(self):
