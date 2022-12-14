@@ -667,6 +667,68 @@ class OrderFetchWizard(models.Model):
                 'tag': 'reload'
             }
 
+    def shopify_fetch_financial_status(self, kwargs=None):
+        if not kwargs:
+            marketplace_instance_id = self._get_instance_id()
+        else:
+            marketplace_instance_id = kwargs.get("marketplace_instance_id")
+
+        version = marketplace_instance_id.marketplace_api_version or '2021-04'
+        url = marketplace_instance_id.marketplace_host + '/admin/api/%s/orders.json' % version + '?fields=id,financial_status'
+        tz_offset = '-00:00'
+        if self.env.user and self.env.user.tz_offset:
+            tz_offset = self.env.user.tz_offset
+        one_month_range = fields.Datetime.now() - datetime.timedelta(days=31)
+        url += '&created_at_min=%s' % one_month_range.strftime(
+            "%Y-%m-%dT00:00:00" + tz_offset)
+        url += '&created_at_max=%s' % fields.Datetime.now().strftime(
+            "%Y-%m-%dT23:59:59" + tz_offset)
+
+        type_req = 'GET'
+        params = {"limit": 250}
+        params.update({"status": 'any'})
+
+        orders = []
+        headers = {
+            'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password}
+        while True:
+            fetched_orders, next_link = self.env['marketplace.connector'].shopify_api_call(headers=headers,
+                                                                                           url=url, type=type_req,
+                                                                                           marketplace_instance_id=marketplace_instance_id,
+                                                                                           params=params)
+            try:
+                orders += fetched_orders['orders']
+                if next_link:
+                    if next_link.get("next"):
+                        url = next_link.get("next").get("url")
+                        if params.get('status'):
+                            del (params['status'])
+
+                    else:
+                        break
+                else:
+                    break
+            except Exception as e:
+                _logger.info("Exception occurred: %s", e)
+                raise exceptions.UserError(_("Error Occured %s") % e)
+
+        order_list = {"orders": orders}
+
+        if url and order_list:
+            _logger.info("\nurl >>>>>>>>>>>>>>>>>>>>>>" + str(url) +
+                         "\nOrder #:--->" + str(len(order_list.get('orders'))))
+
+            for order in order_list['orders']:
+                order_id = self.env['sale.order'].search([('shopify_id', '=', order['id']),
+                                                          ('shopify_instance_id', '=', marketplace_instance_id.id)], limit=1)
+                if order_id:
+                    order_id.shopify_financial_status = order['financial_status']
+                    if order['financial_status'] in ['refunded', 'partially_refunded']:
+                        _logger.info('process_shopify_refunds')
+                        _logger.info(order_id.name)
+                        order_id.process_shopify_refunds()
+
+
     def _get_delivery_line(self, i, order_vals, marketplace_instance_id):
         ProductObj = self.env['product.product'].sudo()
         service = self.env.ref('syncoria_shopify.shopify_shipping')
