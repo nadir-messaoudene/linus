@@ -66,7 +66,7 @@ class AccountMove(models.Model):
 
     def force_delete_move(self):
         for move in self:
-            if move.date.year == 2021 and move.name not in ['MISC/2021/12/0025','MISC/2021/12/0026','MISC/2021/12/0031','MISC/2021/12/0032']:
+            if move.name not in ['MISC/2021/12/0025','MISC/2021/12/0026','MISC/2021/12/0031','MISC/2021/12/0032']:
                 move.button_draft()
                 move.name = ''
                 # move.with_context(force_delete=True).unlink()
