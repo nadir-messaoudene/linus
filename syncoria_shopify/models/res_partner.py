@@ -28,9 +28,9 @@ class ResPartner(models.Model):
     marketplace_type = fields.Selection(
         selection_add=[('shopify', 'Shopify')],
     )
-    shopify_id = fields.Char(string="shopify id",
-                             store=True,
-                             readonly=True,
+    shopify_id = fields.Char(string="Shopify ID",
+                             store=True
+                             # readonly=True,
                              )
     shopify_add_id = fields.Char(string="Address id",
                              store=True,
