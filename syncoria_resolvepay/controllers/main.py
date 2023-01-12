@@ -34,9 +34,11 @@ class ResolvepayController(http.Controller):
             order = request.env['sale.order'].sudo().browse(sale_order_id)
             if order.partner_id.available_credit < order.amount_total:
                 tag_id = request.env['crm.tag'].sudo().search([('name', '=', 'B2B')])
-                order.tag_ids = [(4, tag_id.id)]
+                if tag_id:
+                    order.tag_ids = [(4, tag_id.id)]
                 tag_id = request.env['crm.tag'].sudo().search([('name', '=', 'Not Enough Credit')])
-                order.tag_ids = [(4, tag_id.id)]
+                if tag_id:
+                    order.tag_ids = [(4, tag_id.id)]
                 order.sudo().action_confirm()
                 wiz = request.env['sale.advance.payment.inv'].sudo().with_context(active_ids=order.ids, open_invoices=True).create({})
                 wiz.sudo().create_invoices()
@@ -81,7 +83,7 @@ class ResolvepayController(http.Controller):
         invoice_fname, invoice_lname = self.name_split(order.partner_invoice_id.name)
         item_list = []
 
-        if order.partner_id.available_credit < order.amount_total:
+        if order.partner_id.resolvepay_customer_id and order.partner_id.available_credit < order.amount_total:
             return False
         else:
             tag_id = request.env['crm.tag'].sudo().search([('name', '=', 'B2B')])
