@@ -232,6 +232,9 @@ class ResolvepayController(WebsiteSale):
     @http.route('/shop/validate_credit', type='json', auth="public", website=True, save_session=False)
     def validate_credit(self, partner=None, amount=None):
         partner_id = request.env['res.partner'].sudo().browse(partner)
+        logging.info(partner_id.available_credit)
+        logging.info('|')
+        logging.info(amount)
         if partner_id.available_credit > float(amount):
             return True
         else:
