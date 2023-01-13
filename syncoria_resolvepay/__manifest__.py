@@ -19,7 +19,7 @@
     ],
     'assets': {
         'web.assets_frontend': [
-            'https://app.resolvepay.com/js/resolve.js',
+            # 'https://app.resolvepay.com/js/resolve.js',
             'syncoria_resolvepay/static/js/resolvepay.js'
         ]
     },

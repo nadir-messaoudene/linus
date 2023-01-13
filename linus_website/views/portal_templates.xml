@@ -198,5 +198,9 @@
 <!--            <div class="availability_messages o_not_editable"/>-->
         </template>
 
+        <template id="linus_sale_order_portal_content_inherit" inherit_id="sale.sale_order_portal_content">
+            <xpath expr="//div[@t-if='invoices']" position="replace">
+            </xpath>
+        </template>
     </data>
 </odoo>

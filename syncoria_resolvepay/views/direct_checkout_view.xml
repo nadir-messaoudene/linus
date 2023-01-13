@@ -15,6 +15,76 @@
             <br/>
             <h3 class="mb24">Pay with</h3>
         </xpath>
+<!--        <xpath expr="//div[hasclass('card')]" position="before">-->
+<!--            <t t-set="partner_info" t-value="env['res.partner'].browse(partner_id)"/>-->
+<!--        </xpath>-->
+<!--        <xpath expr="//t[@t-foreach='acquirers']" position="replace">-->
+<!--            <t t-foreach="acquirers" t-as="acquirer">-->
+<!--                <t t-if="acquirer.id == 18 and not partner_info.resolvepay_customer_id">-->
+<!--                </t>-->
+<!--                <t t-else="">-->
+<!--                    <div name="o_payment_option_card" class="card-body o_payment_option_card">-->
+<!--                        <label>-->
+<!--                            &lt;!&ndash; === Radio button === &ndash;&gt;-->
+<!--                            &lt;!&ndash; Only shown if linked to the only payment option &ndash;&gt;-->
+<!--                            <input name="o_payment_radio"-->
+<!--                                   type="radio"-->
+<!--                                   t-att-checked="acquirer.id == default_payment_option_id"-->
+<!--                                   t-att-class="'' if acquirer_count + token_count > 1 else 'd-none'"-->
+<!--                                   t-att-data-payment-option-id="acquirer.id"-->
+<!--                                   t-att-data-provider="acquirer.provider"-->
+<!--                                   data-payment-option-type="acquirer"/>-->
+<!--                            &lt;!&ndash; === Acquirer name === &ndash;&gt;-->
+<!--                            <span class="payment_option_name">-->
+<!--                                <b t-esc="acquirer.display_as or acquirer.name"/>-->
+<!--                            </span>-->
+<!--                            &lt;!&ndash; === "Test Mode" badge === &ndash;&gt;-->
+<!--                            <span t-if="acquirer.state == 'test'"-->
+<!--                                  class="badge-pill badge-warning ml-1">-->
+<!--                                Test Mode-->
+<!--                            </span>-->
+<!--                            &lt;!&ndash; === Extra fees badge === &ndash;&gt;-->
+<!--                            <t t-if="fees_by_acquirer.get(acquirer)">-->
+<!--                                <span class="badge-pill badge-secondary ml-1">-->
+<!--                                    + <t t-esc="fees_by_acquirer.get(acquirer)"-->
+<!--                                         t-options="{'widget': 'monetary', 'display_currency': currency}"/>-->
+<!--                                    Fees-->
+<!--                                </span>-->
+<!--                            </t>-->
+<!--                        </label>-->
+<!--                        &lt;!&ndash; === Payment icon list === &ndash;&gt;-->
+<!--                        <t t-call="payment.icon_list"/>-->
+<!--                        &lt;!&ndash; === Help message === &ndash;&gt;-->
+<!--                        <div t-if="not is_html_empty(acquirer.pre_msg)"-->
+<!--                             t-out="acquirer.pre_msg"-->
+<!--                             class="text-muted ml-3"/>-->
+<!--                    </div>-->
+<!--                    &lt;!&ndash; === Acquirer inline form === &ndash;&gt;-->
+<!--                    <div t-attf-id="o_payment_acquirer_inline_form_{{acquirer.id}}"-->
+<!--                         name="o_payment_inline_form"-->
+<!--                         class="card-footer d-none">-->
+<!--                        &lt;!&ndash; === Inline form content (filled by acquirer) === &ndash;&gt;-->
+<!--                        <t t-if="acquirer.sudo()._should_build_inline_form(is_validation=False)">-->
+<!--                            <t t-set="inline_form_xml_id"-->
+<!--                               t-value="acquirer.sudo().inline_form_view_id.xml_id"/>-->
+<!--                            <div t-if="inline_form_xml_id" class="clearfix">-->
+<!--                                <t t-call="{{inline_form_xml_id}}">-->
+<!--                                    <t t-set="acquirer_id" t-value="acquirer.id"/>-->
+<!--                                </t>-->
+<!--                            </div>-->
+<!--                        </t>-->
+<!--                        &lt;!&ndash; === "Save my payment details" checkbox === &ndash;&gt;-->
+<!--                        &lt;!&ndash; Only included if partner is known and if the choice is given &ndash;&gt;-->
+<!--                        <t t-set="tokenization_required"-->
+<!--                           t-value="acquirer._is_tokenization_required(provider=acquirer.provider)"/>-->
+<!--                        <label t-if="show_tokenize_input and acquirer.allow_tokenization and not tokenization_required">-->
+<!--                            <input name="o_payment_save_as_token" type="checkbox"/>-->
+<!--                            Save my payment details-->
+<!--                        </label>-->
+<!--                    </div>-->
+<!--                </t>-->
+<!--            </t>-->
+<!--        </xpath>-->
     </template>
 
     <template inherit_id="website_sale.payment" id="inherit_website_sale_payment">

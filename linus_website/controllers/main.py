@@ -21,6 +21,17 @@ class WebsiteSaleInherit(WebsiteSale):
             tag_id = request.env['crm.tag'].sudo().search([('name', '=', 'B2B')])
             if tag_id:
                 order.tag_ids = [(4, tag_id.id)]
+            payment_tx_id = order.sudo().get_portal_last_transaction()
+            if payment_tx_id.acquirer_id.id == 18:
+                order.sudo().action_confirm()
+                if order.partner_id.resolvepay_customer_id and order.partner_id.available_credit > order.amount_total:
+                    invoice_id = order.sudo()._create_invoices()
+                    invoice_id.sudo().action_post()
+                    invoice_id.sudo().create_invoice_resolvepay()
+                else:
+                    tag_id = request.env['crm.tag'].sudo().search([('name', '=', 'Not Enough Credit')])
+                    if tag_id:
+                        order.tag_ids = [(4, tag_id.id)]
             return request.render("website_sale.confirmation", {
                 'order': order,
                 'order_tracking_info': self.order_2_return_dict(order),
