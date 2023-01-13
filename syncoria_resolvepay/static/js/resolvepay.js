@@ -14,7 +14,6 @@ odoo.define('syncoria_resolvepay.payment_checkout', require => {
         _onClickPay: async function (ev) {
             ev.stopPropagation();
             ev.preventDefault();
-
             // Check that the user has selected a payment option
             const $checkedRadios = this.$('input[name="o_payment_radio"]:checked');
             if (!this._ensureRadioIsChecked($checkedRadios)) {
