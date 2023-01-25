@@ -15,6 +15,9 @@
             <br/>
             <h3 class="mb24">Pay with</h3>
         </xpath>
+        <xpath expr="//span[@t-esc='token.name']" position="replace">
+            <span class="payment_option_name" t-esc="token.name"/> <span t-esc="token.acquirer_id.name"/>
+        </xpath>
 <!--        <xpath expr="//div[hasclass('card')]" position="before">-->
 <!--            <t t-set="partner_info" t-value="env['res.partner'].browse(partner_id)"/>-->
 <!--        </xpath>-->

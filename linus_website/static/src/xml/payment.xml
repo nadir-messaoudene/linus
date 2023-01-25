@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-extend="payment.no_tx_found">
+        <t t-jquery=".text-center" t-operation="replace">
+            <p>Your transaction is being processed. Please do not refresh your browser.</p>
+        </t>
+    </t>
+
+</templates>

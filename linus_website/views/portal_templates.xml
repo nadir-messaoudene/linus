@@ -202,5 +202,7 @@
             <xpath expr="//div[@t-if='invoices']" position="replace">
             </xpath>
         </template>
+
+
     </data>
 </odoo>

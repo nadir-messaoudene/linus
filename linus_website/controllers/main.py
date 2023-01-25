@@ -2,6 +2,7 @@ from odoo import http
 from odoo.http import request
 from odoo.addons.website_sale.controllers.main import WebsiteSale
 from odoo.addons.website.controllers.main import Website
+from odoo.addons.payment.controllers.post_processing import PaymentPostProcessing
 
 
 class WebsiteSaleInherit(WebsiteSale):
@@ -23,6 +24,9 @@ class WebsiteSaleInherit(WebsiteSale):
                 order.tag_ids = [(4, tag_id.id)]
             payment_tx_id = order.sudo().get_portal_last_transaction()
             if payment_tx_id.acquirer_id.id == 18:
+                payment_term_id = request.env['account.payment.term'].sudo().search([('name', '=', 'NET 30')], limit=1)
+                if payment_term_id:
+                    order.payment_term_id = payment_term_id.id
                 order.sudo().action_confirm()
                 if order.partner_id.resolvepay_customer_id and order.partner_id.available_credit > order.amount_total:
                     invoice_id = order.sudo()._create_invoices()
@@ -32,6 +36,15 @@ class WebsiteSaleInherit(WebsiteSale):
                     tag_id = request.env['crm.tag'].sudo().search([('name', '=', 'Not Enough Credit')])
                     if tag_id:
                         order.tag_ids = [(4, tag_id.id)]
+            else:
+                if payment_tx_id:
+                    if payment_tx_id.acquirer_id and payment_tx_id.acquirer_id.provider == 'authorize' and payment_tx_id.state in ['pending', 'cancel', 'error']:
+                        tag_id = False
+                        tag_id = request.env['crm.tag'].sudo().search([('name', '=', 'PENDING')])
+                        if not tag_id:
+                            tag_id = request.env['crm.tag'].sudo().create({"name": 'PENDING', "color": 1})
+                        if tag_id:
+                            order.tag_ids = [(4, tag_id.id)]
             return request.render("website_sale.confirmation", {
                 'order': order,
                 'order_tracking_info': self.order_2_return_dict(order),
