@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data>
+
+        <record id="lightspeed_update_stock_form" model="ir.ui.view">
+            <field name="name">lightspeed.stock.wiz.form</field>
+            <field name="model">lightspeed.stock.wiz</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="fetch_type" required="1" />
+                                <field name="instance_id" required="1" domain="[('state', '=', 'validate')]"/>
+                                <field name="source_location_ids" options="{'no_create': True}" widget="many2many_tags" required="1"/>
+                            </group>
+                        </group>
+                        <p>The operation may take some time to complete. It depends on the number of records.
+                            Please wait patiently.</p>
+                        <footer>
+                            <button string='Update' name="lightspeed_update_stock_item"
+                                    type="object" class="btn-primary" />
+                            <button string="Cancel" class="btn-default" special="cancel"/>
+                        </footer>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="update_stock_to_lightspeed" model="ir.actions.act_window">
+            <field name="name">Update Stock to Lightspeed</field>
+            <field name="res_model">lightspeed.stock.wiz</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="lightspeed_update_stock_form"/>
+            <field name="target">new</field>
+            <field name="binding_model_id" ref="model_product_product"/>
+            <field name="binding_view_types">form,list</field>
+        </record>
+
+    </data>
+</odoo>
