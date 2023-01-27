@@ -639,6 +639,18 @@ class ShopifyFeedOrders(models.Model):
                     except Exception as e:
                         _logger.warning(e)
 
+                    """ COUPONS """
+                    if 'discount_codes' in i:
+                        coupon_ids = []
+                        for coupon in i['discount_codes']:
+                            coupon_name = self.env['shopify.coupon'].sudo().search([('name', '=', coupon.get('code'))])
+                            if not coupon_name:
+                                coupon_name = self.env['shopify.coupon'].create({"name": coupon.get('code')})
+                            if coupon_name:
+                                coupon_ids.append((4, coupon_name.id))
+                        if coupon_ids:
+                            order_vals['coupon_ids'] = coupon_ids
+
                     if 'message_follower_ids' in order_vals:
                         order_vals.pop('message_follower_ids')
                     order_vals['name'] = self.env['ir.sequence'].next_by_code('sale.order')

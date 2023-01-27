@@ -34,6 +34,7 @@
                        position="after">
                        <field name="order_type_ids" widget="many2many_tags"/>
                        <field name="shopify_tag_ids" widget="many2many_tags" readonly="1"/>
+                       <field name="coupon_ids" widget="many2many_tags" readonly="1"/>
                 </xpath>
                 <xpath expr="//form/sheet/notebook/page[@id='invoice_tab']/field/tree/field[@name='account_id']"
                        position="after">

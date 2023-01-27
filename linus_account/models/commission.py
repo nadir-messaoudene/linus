@@ -18,6 +18,7 @@ class AccountMove(models.Model):
     amount_paid = fields.Float('Amount Paid', compute='compute_amount_paid', store=True)
     shopify_tag_ids = fields.Many2many('crm.tag', string="Shopify Tags (SO)")
 
+
 class SaleOrder(models.Model):
     _inherit = "sale.order"
 
@@ -25,6 +26,7 @@ class SaleOrder(models.Model):
         invoice_vals = super(SaleOrder, self)._prepare_invoice()
         invoice_vals['shopify_tag_ids'] = self.shopify_tag_ids
         invoice_vals['order_type_ids'] = self.tag_ids
+        invoice_vals['coupon_ids'] = self.coupon_ids
         return invoice_vals
 
     def action_update_shopify_tag_ids(self):

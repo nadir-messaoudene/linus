@@ -27,3 +27,5 @@ from . import shopify_refunds
 from . import marketplace_logging
 from . import shopify_fulfilments
 from . import shopify_payment_journal
+
+from . import shopify_coupon
