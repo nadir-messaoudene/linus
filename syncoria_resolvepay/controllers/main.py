@@ -83,6 +83,7 @@ class ResolvepayController(WebsiteSale):
             if tag_id:
                 order.tag_ids = [(4, tag_id.id)]
             order.sudo().action_confirm()
+            order.sudo()._send_order_confirmation_mail()
             tag_id = request.env['crm.tag'].sudo().search([('name', '=', 'Not Enough Credit')])
             if tag_id:
                 order.tag_ids = [(4, tag_id.id)]
