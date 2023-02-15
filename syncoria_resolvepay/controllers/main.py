@@ -79,14 +79,18 @@ class ResolvepayController(WebsiteSale):
         sale_order_id = request.session.get('sale_last_order_id')
         if sale_order_id:
             order = request.env['sale.order'].sudo().browse(sale_order_id)
-            tag_id = request.env['crm.tag'].sudo().search([('name', '=', 'B2B')])
-            if tag_id:
-                order.tag_ids = [(4, tag_id.id)]
-            order.sudo().action_confirm()
-            order.sudo()._send_order_confirmation_mail()
-            tag_id = request.env['crm.tag'].sudo().search([('name', '=', 'Not Enough Credit')])
-            if tag_id:
-                order.tag_ids = [(4, tag_id.id)]
+            if order.state == 'draft':
+                tag_id = request.env['crm.tag'].sudo().search([('name', '=', 'B2B')])
+                if tag_id:
+                    order.tag_ids = [(4, tag_id.id)]
+                payment_term_id = request.env['account.payment.term'].sudo().search([('name', '=', 'NET 30')], limit=1)
+                if payment_term_id:
+                    order.payment_term_id = payment_term_id.id
+                order.sudo().action_confirm()
+                order.sudo()._send_order_confirmation_mail()
+                tag_id = request.env['crm.tag'].sudo().search([('name', '=', 'Not Enough Credit')])
+                if tag_id:
+                    order.tag_ids = [(4, tag_id.id)]
             request.website.sale_reset()
             return request.render("syncoria_resolvepay.confirmation", {'order': order})
         else:
