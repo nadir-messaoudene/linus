@@ -45,13 +45,14 @@ odoo.define('syncoria_resolvepay.payment_checkout', require => {
                 overlayCSS: { backgroundColor: "#000", opacity: 0, zIndex: 1050 },
             });
             const $poNumber = this.$('input[name="po_number"]');
+            const po_number = await this._rpc({route: "/shop/add_po_number",  params: {po: $poNumber[0].value}})
             if (paymentOptionId == 18) {
                 const validate_credit = await this._rpc({route: "/shop/validate_credit",  params: {partner: this.txContext.partnerId, amount: this.txContext.amount}})
                 if (!validate_credit) {
                     window.location.replace('/resolvepay/pre_confirmation');
                 }
             }
-            const po_number = await this._rpc({route: "/shop/add_po_number",  params: {po: $poNumber[0].value}})
+
             this._processPayment(provider, paymentOptionId, flow);
         },
 

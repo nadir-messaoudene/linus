@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="lightspeed_view_sale_order_inherited" model="ir.ui.view">
+            <field name="name">lightspeed.view.sale.order.tree.inherited</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_quotation_tree_with_onboarding" />
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='name']" position="after">
+                    <field name="lightspeed_ticket_number" optional='hide'/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

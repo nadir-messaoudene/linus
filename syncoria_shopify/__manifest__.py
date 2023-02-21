@@ -56,7 +56,8 @@
         'views/marketplace_logging.xml',
         'views/shopify_dashnoard_view.xml',
         'views/update_stock_wizard.xml',
-        'views/shopify_multi_store.xml'
+        'views/shopify_multi_store.xml',
+        'views/shopify_coupon.xml'
     ],
     'assets': {
         'web.assets_backend': [

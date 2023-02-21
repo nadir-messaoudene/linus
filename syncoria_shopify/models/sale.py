@@ -99,6 +99,7 @@ class SaleOrderShopify(models.Model):
     refund_fee_tax_amount = fields.Monetary()
     refund_fee_total_amount = fields.Monetary()
     shopify_tag_ids = fields.Many2many('crm.tag', string="Shopify Tags")
+    coupon_ids = fields.Many2many('shopify.coupon', string="Shopify Coupons")
 
     def fetch_shopify_payments(self):
         _logger.info("fetch_shopify_payments")

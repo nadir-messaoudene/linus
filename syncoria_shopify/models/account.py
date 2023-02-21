@@ -19,6 +19,7 @@ class AccountInvoice(models.Model):
     pricelist_id = fields.Many2one(
         comodel_name='product.pricelist', string='Pricelist',
         readonly=True)
+    coupon_ids = fields.Many2many('shopify.coupon', string="Shopify Coupons")
 
     def fetch_shopify_payments(self):
         SaleOrder = self.env['sale.order'].sudo()

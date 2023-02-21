@@ -6,7 +6,7 @@
     'author': "Syncoria Inc",
     'website': "http://www.syncoria.com",
     'category': 'Uncategorized',
-    'depends': ['base', 'account', 'website', 'web'],
+    'depends': ['base', 'account', 'website_sale_stock', 'website', 'web', 'sale'],
     'data': [
         'security/ir.model.access.csv',
         'views/resolvepay_view.xml',
