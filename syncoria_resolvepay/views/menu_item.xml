@@ -12,6 +12,7 @@
             name="Instance"
             parent="menu_resolvepay_config"
             action="resolvepay_instance_action"
+            groups="base.group_no_one"
             sequence="1"/>
 
         <menuitem

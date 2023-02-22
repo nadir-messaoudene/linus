@@ -4,6 +4,7 @@
     <data>
         <menuitem id="menu_3pl_config"
             parent="stock.menu_stock_config_settings"
+            groups="base.group_no_one"
             name="3PL"/>
 
         <menuitem
