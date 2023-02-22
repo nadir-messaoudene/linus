@@ -8,6 +8,8 @@ import requests
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError, Warning
 from odoo.fields import Command
+
+import pprint
 _logger = logging.getLogger(__name__)
 
 
@@ -254,6 +256,64 @@ class AccountInvoice(models.Model):
             else:
                 _logger.error(data)
                 raise UserError(data)
+
+    def fetch_qbo_payment(self):
+        company = self.env['res.company'].browse(1)
+        if company.access_token:
+            headers = {'Authorization': 'Bearer ' + company.access_token, 'accept': 'application/json',
+                       'Content-Type': 'text/plain'}
+            for record in self:
+                if record.qbo_invoice_id and record.state == 'posted':
+                    query = "select * from invoice WHERE Id = '%s'" % record.qbo_invoice_id
+                    data = requests.request('GET', company.url + str(company.realm_id) + "/query?query=" + query,
+                                            headers=headers)
+
+                    if data.status_code == 200:
+                        parsed_data = json.loads(str(data.text))
+                        _logger.info("Request DATA==>>>" + pprint.pformat(parsed_data))
+                        for linked_txn in parsed_data.get('QueryResponse').get('Invoice')[0].get('LinkedTxn'):
+
+                            if linked_txn.get('TxnType') == 'Payment' and linked_txn.get(
+                                    'TxnId'):
+                                payment_query = "select * from payment WHERE Id = '%s'" % linked_txn.get('TxnId')
+                                res = requests.request('GET',
+                                                       company.url + str(
+                                                           company.realm_id) + "/query?query=" + payment_query,
+                                                       headers=headers)
+                                if res.status_code == 200:
+                                    res = json.loads(str(res.text))
+                                    _logger.info("Request DATA==>>>" + pprint.pformat(res))
+                                    res = res.get('QueryResponse').get('Payment')[0]
+                                    if res.get('DepositToAccountRef') and res.get('DepositToAccountRef').get('value') == '2084':
+                                        for pmt_txn in res.get('Line'):
+                                            payment_obj_rec = self.env['account.payment'].search(
+                                                [('qbo_payment_id', '=', res.get("Id")),
+                                                 ('qbo_invoice_name', '=', record.qbo_invoice_name)])
+                                            if pmt_txn.get('LinkedTxn')[0].get(
+                                                    'TxnId') == record.qbo_invoice_id and pmt_txn.get('LinkedTxn')[0].get(
+                                                    'TxnType') == 'Invoice' and not payment_obj_rec:
+                                                if record.payment_state in ['not_paid', 'partial']:
+                                                    payment_ref = res.get('PaymentRefNum') or False
+                                                    qbo_invoice_name = False
+                                                    for line_ex in pmt_txn.get('LineEx').get('any'):
+                                                        if line_ex.get('value').get('Name') == 'txnReferenceNumber':
+                                                            qbo_invoice_name = line_ex.get('value').get('Value')
+                                                        # if line_ex.get('value').get('Name') == 'txnId':
+                                                        #     qbo_invoice_name = line_ex.get('value').get('Value')
+                                                    _logger.info('CREATE NEW PAYMENT')
+                                                    pmt_wizard = self.env['account.payment.register'].with_context(
+                                                        active_model='account.move',
+                                                        active_ids=record.ids).create({'journal_id': 125,
+                                                                                        'amount': pmt_txn.get('Amount'),
+                                                                                        'payment_date': res.get('TxnDate'),
+                                                                                        'communication': record.name})
+                                                    payment = pmt_wizard._create_payments()
+                                                    payment.qbo_invoice_name = qbo_invoice_name
+                                                    payment.qbo_payment_ref = payment_ref
+                                                    payment.qbo_payment_id = res.get('Id')
+                    else:
+                        _logger.error(data)
+                        raise UserError(data)
 
 
     def import_credit_memo(self):
