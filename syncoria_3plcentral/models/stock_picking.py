@@ -192,7 +192,6 @@ class StockPicking(models.Model):
                 }
             response = requests.request("POST", url, headers=headers, data=payload)
             if response.status_code == 201:
-
                 pickings_to_backorder = self._check_backorder()
                 if pickings_to_backorder:
                     # START processing back order
@@ -214,7 +213,13 @@ class StockPicking(models.Model):
                             'date': fields.Datetime.now(),
                         })
                     backorder_moves = self.env['stock.move'].create(backorder_moves_vals)
-                    self._create_backorder_custom(moves_todo.ids)
+                    backorder = self._create_backorder_custom(moves_todo.ids)
+                    mls = backorder_moves.mapped('move_line_ids')
+                    Quant = self.env['stock.quant']
+                    for ml in mls:
+                        Quant._update_reserved_quantity(ml.product_id, ml.location_id, -ml.product_qty, lot_id=ml.lot_id,
+                                                        package_id=ml.package_id, owner_id=ml.owner_id, strict=True)
+
                 response = json.loads(response.text)
                 self.threeplId = response.get('readOnly').get('orderId')
             else:
