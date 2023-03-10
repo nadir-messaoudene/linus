@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    <data>
+        <template id="inherited_website_sale_checkout" inherit_id="website_sale.checkout" name="Website Sale Checkout Inherit">
+            <xpath expr="//div[hasclass('all_shipping')]/div/div/div[1]" position="replace">
+            </xpath>
+            <xpath expr="//t[@t-foreach='shippings']" position="replace">
+                <t t-foreach="shippings" t-as="ship">
+                    <div class="col-md-12 col-lg-6 one_kanban mb-2">
+                        <t t-call="website_sale.address_kanban">
+                            <t t-set='contact' t-value="ship"/>
+                            <t t-set='selected' t-value="order.partner_shipping_id==ship"/>
+                            <t t-set='readonly' t-value="bool(len(shippings)==1)"/>
+                            <t t-set='edit_billing' t-value="bool(ship==order.partner_id)"/>
+                            <t t-set="allow_edit" t-value="0" />
+                        </t>
+                    </div>
+                </t>
+            </xpath>
+        </template>
+    </data>
+</odoo>
