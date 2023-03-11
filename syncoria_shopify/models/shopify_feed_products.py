@@ -457,7 +457,7 @@ class ShopifyFeedProducts(models.Model):
                                 option_names = []
                                 for key, value in child.items():
                                     if key in option_keys:
-                                        if child[key] != None:
+                                        if child[key] is not None:
                                             option_names.append(child[key])
 
                                 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

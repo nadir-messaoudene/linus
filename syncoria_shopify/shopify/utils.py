@@ -65,7 +65,7 @@ def get_provar_vals(record, values):
     return data
 
 
-def get_protmpl_vals(record, values):
+def get_protmpl_vals(record, values, instance_obj=False):
     VariantObj = record.env['product.product'].sudo()
     data = {}
     product = {}
@@ -79,13 +79,15 @@ def get_protmpl_vals(record, values):
         "status": record.shopify_product_status,
     })
     instance_id = record.shopify_instance_id
+    if instance_obj:
+        instance_id = instance_obj
     if not instance_id:
         instance_id = get_marketplace(record)
     print(instance_id)
     if 'product.template' in str(record):
         variants = []
         variants_rec = record.product_variant_ids
-        
+
         for var in variants_rec:
             variant = {}
             count = 1
@@ -100,7 +102,7 @@ def get_protmpl_vals(record, values):
             shopify_price = var.lst_price
             if instance_id.pricelist_id.currency_id.id != var.currency_id.id:
                 shopify_price = var.shopify_price
-            
+
             for attrib in var.product_template_attribute_value_ids:
                 _logger.info(attrib.attribute_id.name)
                 _logger.info(attrib.name)
@@ -151,7 +153,7 @@ def get_protmpl_vals(record, values):
             options.append(option)
 
         product["options"] = options
-    
+
     # Update Product Image
     if record.image_1920:
         product.update({
@@ -193,7 +195,7 @@ def get_protmpl_vals(record, values):
                     "attachment": record.image_1920.decode() if record.image_1920 else ""
                 }]
             })
-        
+
         del product['product_type']
     else:
         shopify_price = record.list_price
@@ -223,10 +225,9 @@ def get_protmpl_vals(record, values):
         product.update({"inventory_quantity": int(record.qty_available)})
     if product.get('images'):
         _logger.info("\images===>>>\n" + str(len(product['images'])))
-    
+
     product = {k: v for k, v in product.items() if v}
     data["product"] = product
-
 
     # if 'product.product' in str(record):
     #     data = {}
@@ -250,7 +251,7 @@ def get_protmpl_vals(record, values):
     #         value = record.env['product.attribute.value'].browse(att.product_attribute_value_id.id)
     #         variant['option' + str(position)] = value.name
     #         position += 1
-        
+
     #     #Images
     #     # if record.image_1920:
     #     #     variant['image'] = [{
@@ -260,7 +261,7 @@ def get_protmpl_vals(record, values):
     #     data['variant'] = variant
 
     _logger.info("\nDATA===>>>\n" + pprint.pformat(data))
-    
+
     return data
 
 def get_protmpl_product_product_vals(record, instance_obj):
@@ -461,11 +462,13 @@ def update_product_images(record, product_data, req_type, marketplace_instance_o
         # _logger.info("\updated_products--->\n" + str(updated_products))
 
 
-def shopify_pt_request(record, data, req_type):
+def shopify_pt_request(record, data, req_type, instance_obj=False):
     if record.shopify_instance_id:
         marketplace_instance_id = record.shopify_instance_id
     else:
         marketplace_instance_id = get_marketplace(record)
+    if instance_obj:
+        marketplace_instance_id = instance_obj
 
     version = marketplace_instance_id.marketplace_api_version or '2021-01'
     url = marketplace_instance_id.marketplace_host
@@ -494,7 +497,7 @@ def shopify_pt_request(record, data, req_type):
         'X-Shopify-Access-Token': marketplace_instance_id.marketplace_api_password,
         'Content-Type': 'application/json'
     }
-    created_products,next_link = shopify_api_call(
+    created_products, next_link = shopify_api_call(
         headers=headers,
         url=url,
         type=type_req,
@@ -557,11 +560,10 @@ def shopify_pt_request(record, data, req_type):
                     pro_domain += [('product_tmpl_id', '=', record.id)]
                     if len(ptav_ids) > 1:
                         for ptav_id in ptav_ids:
-                                pro_domain += [('product_template_attribute_value_ids','=', ptav_id)]
+                            pro_domain += [('product_template_attribute_value_ids', '=', ptav_id)]
                     elif len(ptav_ids) == 1:
                         pro_domain += [('product_template_attribute_value_ids',
                                         'in', ptav_ids)]
-
 
                     var_id = record.env['product.product'].sudo().search(
                         pro_domain, limit=1)
@@ -580,7 +582,6 @@ def shopify_pt_request(record, data, req_type):
         else:
             record.write(
                 {'shopify_inventory_id': created_products.get("product").get("inventory_item_id")})
-    
 
         body = _("Shopify Product " + req_type + " with Shopify ID: " +
                  str(created_products.get("product").get("id")))
@@ -590,10 +591,10 @@ def shopify_pt_request(record, data, req_type):
         if not record.shopify_id:
             record.write(
                 {'shopify_id': created_products.get("variant").get("id"),
-                'marketplace_type': 'shopify',
-                'shopify_instance_id': marketplace_instance_id.id,
-                'shopify_inventory_id': created_products.get("variant").get("inventory_item_id"),
-                })
+                 'marketplace_type': 'shopify',
+                 'shopify_instance_id': marketplace_instance_id.id,
+                 'shopify_inventory_id': created_products.get("variant").get("inventory_item_id"),
+                 })
             update_product_images(record, record.product_tmpl_id, req_type)
 
         body = _("Shopify Product Variant " + req_type + " with Shopify ID: " +

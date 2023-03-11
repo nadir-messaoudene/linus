@@ -151,10 +151,10 @@ class ProductTemplate(models.Model):
                 _logger.warning(msg)
                 rec.message_post(body=msg)
 
-    def action_create_shopify_product(self):
-        data = get_protmpl_vals(self, {})
+    def action_create_shopify_product(self, instance_obj):
+        data = get_protmpl_vals(self, {}, instance_obj)
         _logger.info("data ===>>>", data)
-        shopify_pt_request(self, data, 'create')
+        shopify_pt_request(self, data, 'create', instance_obj)
 
     def shopify_create_product(self, result, values):
         if not values.get('shopify_id') and result.marketplace_type == 'shopify':
@@ -287,6 +287,7 @@ class ProductTemplate(models.Model):
             return image
         else:
             return False
+
 
 class ProductProductShopify(models.Model):
     _inherit = 'product.product'
