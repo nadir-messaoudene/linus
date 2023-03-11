@@ -165,16 +165,16 @@ class ProductTemplate(models.Model):
         data = get_protmpl_vals(self, {"req_type": 'update'})
         res = shopify_pt_request(self, data, 'update')
 
-    def server_action_shopify_create_update_product(self):
-        for record in self:
-            if record.marketplace_type == 'shopify':
-                if record.shopify_id:
-                    record.action_update_shopify_product()
-                else:
-                    record.action_create_shopify_product()
-            else:
-                raise UserError(
-                    _("Marketplace type is not set for Shopify(Product: %s)") % record.name)
+    # def server_action_shopify_create_update_product(self):
+    #     for record in self:
+    #         if record.marketplace_type == 'shopify':
+    #             if record.shopify_id:
+    #                 record.action_update_shopify_product()
+    #             else:
+    #                 record.action_create_shopify_product()
+    #         else:
+    #             raise UserError(
+    #                 _("Marketplace type is not set for Shopify(Product: %s)") % record.name)
 
     def server_action_shopify_update_stock(self):
         Connector = self.env['marketplace.connector']

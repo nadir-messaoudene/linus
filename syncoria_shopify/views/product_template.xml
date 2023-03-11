@@ -11,9 +11,10 @@
                 <xpath expr="//header" position="inside">
                     <button
                             string="Create Product in Shopify"
-                            type="object"
+                            type="action"
                             groups="base.group_erp_manager"
-                            name="action_create_shopify_product"/>
+                            name="%(action_create_variant_shopify)d"
+                            context="{'default_product_tpml_id': active_id}"/>
 <!--                            attrs="{'invisible': ['|',('marketplace_type', '!=', 'shopify'),('shopify_id', '!=', False)]}"/>-->
                     <button
                             string="Update in Shopify"

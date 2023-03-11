@@ -39,7 +39,7 @@ class CreateVariantShopifyWizard(models.Model):
                     self.product_tpml_id.action_create_shopify_product(instance_obj)
         return
 
-    @api.depends('product_id')
+    @api.depends('product_id', 'product_tpml_id')
     def compute_note(self):
         result = ''
         # Product Product
@@ -59,7 +59,7 @@ class CreateVariantShopifyWizard(models.Model):
             if self.product_tpml_id.shopify_instance_id:
                 result += self.product_tpml_id.shopify_instance_id.name
             shopify_multi_store_obj = self.env['shopify.multi.store'].search(
-                [('product_tpml_id', '=', self.product_tpml_id.id)])
+                [('product_tmpl_id', '=', self.product_tpml_id.id)])
             if len(shopify_multi_store_obj) > 0:
                 if len(result) > 0:
                     result += ', '
@@ -70,7 +70,7 @@ class CreateVariantShopifyWizard(models.Model):
 
         if len(result) > 0:
             self.note = 'Please notice that Product: %s already been created on Store(s): %s. Do not select these Store(s) on the list above.' % (
-            self.product_id.name, result)
+            self.product_id.display_name or self.product_tpml_id.name, result)
         else:
             self.note = ''
 
@@ -89,7 +89,7 @@ class CreateVariantShopifyWizard(models.Model):
         if product_template_obj.shopify_instance_id:
             result.append(product_template_obj.shopify_instance_id.id)
         shopify_multi_store_obj = self.env['shopify.multi.store'].search(
-            [('product_tpml_id', '=', product_template_obj.id)])
+            [('product_tmpl_id', '=', product_template_obj.id)])
         if len(shopify_multi_store_obj) > 0:
             for store in shopify_multi_store_obj:
                 result.append(store.shopify_instance_id.id)

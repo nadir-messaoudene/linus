@@ -10,8 +10,8 @@
                     <sheet>		                	
                         <group> 
                             <field name="shopify_instance_ids" options="{'no_create': True}" widget="many2many_tags"/>
-                            <field name="product_id"/>
-                            <field name="product_tpml_id" />
+                            <field name="product_id" attrs="{'invisible': [('product_tpml_id', '!=', False)]}"/>
+                            <field name="product_tpml_id" attrs="{'invisible': [('product_id', '!=', False)]}"/>
                         </group>
                         <group>
                             <div>
