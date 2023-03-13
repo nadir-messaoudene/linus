@@ -463,10 +463,7 @@ def update_product_images(record, product_data, req_type, marketplace_instance_o
 
 
 def shopify_pt_request(record, data, req_type, instance_obj=False):
-    if record.shopify_instance_id:
-        marketplace_instance_id = record.shopify_instance_id
-    else:
-        marketplace_instance_id = get_marketplace(record)
+    default_marketplace_instance_id = get_marketplace(record)
     if instance_obj:
         marketplace_instance_id = instance_obj
 
@@ -509,10 +506,12 @@ def shopify_pt_request(record, data, req_type, instance_obj=False):
     if created_products.get('errors'):
         raise exceptions.UserError(_(created_products.get('errors')))
     elif created_products.get('product', {}).get("id"):
-        if not record.shopify_id:
+        if not record.shopify_id and marketplace_instance_id == default_marketplace_instance_id:
             shopify_id = created_products.get("product").get("id")
             record.write(
-                {'shopify_id': created_products.get("product").get("id")})
+                {'shopify_id': created_products.get("product").get("id"),
+                 'shopify_instance_id': marketplace_instance_id.id,
+                 'marketplace_type': 'shopify'})
 
         if created_products.get('product', {}).get("variants"):
             if len(created_products.get('product', {}).get("variants")) == 1:
@@ -521,13 +520,25 @@ def shopify_pt_request(record, data, req_type, instance_obj=False):
                 product_ids = record.env['product.product'].sudo().search(
                     [('product_tmpl_id', '=', record.id)])
                 if len(product_ids) == 1:
-                    vals = {
-                        'shopify_id': varaint.get('id'),
-                        'marketplace_type': 'shopify',
-                        'shopify_inventory_id': varaint.get("inventory_item_id"),
-                        'shopify_instance_id': marketplace_instance_id.id
-                    }
-                    product_ids[0].write(vals)
+                    if marketplace_instance_id == default_marketplace_instance_id:
+                        vals = {
+                            'shopify_id': varaint.get('id'),
+                            'marketplace_type': 'shopify',
+                            'shopify_inventory_id': varaint.get("inventory_item_id"),
+                            'shopify_instance_id': marketplace_instance_id.id
+                        }
+                        product_ids[0].write(vals)
+                    else:
+                        val_dict = {
+                            'name': varaint.get('sku'),
+                            'shopify_instance_id': marketplace_instance_id.id,
+                            'product_id': product_ids[0].id,
+                            'product_tmpl_id': record.id,
+                            'shopify_id': varaint.get('id'),
+                            'shopify_parent_id': varaint.get('product_id'),
+                            'shopify_inventory_id': varaint.get('inventory_item_id')
+                        }
+                        prod_mapping = record.env['shopify.multi.store'].sudo().create(val_dict)
                 else:
                     """"""
             if len(created_products.get('product', {}).get("variants")) > 1:
@@ -570,12 +581,24 @@ def shopify_pt_request(record, data, req_type, instance_obj=False):
                     _logger.info("pro_domain-->%s", pro_domain)
 
                     if var_id:
-                        var_id.write({
-                            'shopify_id': var['id'],
-                            'marketplace_type': 'shopify',
-                            'shopify_inventory_id': var.get("inventory_item_id"),
-                            'shopify_instance_id': marketplace_instance_id.id
-                        })
+                        if marketplace_instance_id == default_marketplace_instance_id:
+                            var_id.write({
+                                'shopify_id': var['id'],
+                                'marketplace_type': 'shopify',
+                                'shopify_inventory_id': var.get("inventory_item_id"),
+                                'shopify_instance_id': marketplace_instance_id.id
+                            })
+                        else:
+                            val_dict = {
+                                'name': var.get('sku'),
+                                'shopify_instance_id': marketplace_instance_id.id,
+                                'product_id': var_id.id,
+                                'product_tmpl_id': record.id,
+                                'shopify_id': var.get('id'),
+                                'shopify_parent_id': var.get('product_id'),
+                                'shopify_inventory_id': var.get('inventory_item_id')
+                            }
+                            prod_mapping = record.env['shopify.multi.store'].sudo().create(val_dict)
                         _logger.info("var_id-->%s", var_id)
                         # Update Product Images
                         update_product_images(var_id, record, req_type)
@@ -598,7 +621,7 @@ def shopify_pt_request(record, data, req_type, instance_obj=False):
             update_product_images(record, record.product_tmpl_id, req_type)
 
         body = _("Shopify Product Variant " + req_type + " with Shopify ID: " +
-                 str(created_products.get("variant").get("id")))
+                 str(created_products.get("variant").get("id")) + " store: " + str(marketplace_instance_id.name))
         _logger.info(body)
         record.message_post(body=body)
 
