@@ -601,7 +601,7 @@ def shopify_pt_request(record, data, req_type, instance_obj=False):
                             prod_mapping = record.env['shopify.multi.store'].sudo().create(val_dict)
                         _logger.info("var_id-->%s", var_id)
                         # Update Product Images
-                        update_product_images(var_id, record, req_type)
+                        # update_product_images(var_id, record, req_type, marketplace_instance_id)
         else:
             record.write(
                 {'shopify_inventory_id': created_products.get("product").get("inventory_item_id")})
