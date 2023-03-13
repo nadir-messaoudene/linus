@@ -64,7 +64,7 @@ class CreateVariantShopifyWizard(models.Model):
                 if len(result) > 0:
                     result += ', '
                 l_tmp = []
-                for i in shopify_multi_store_obj:
+                for i in shopify_multi_store_obj and shopify_instance_id.name not in result:
                     l_tmp.append(i.shopify_instance_id.name)
                 result += ', '.join(l_tmp)
 

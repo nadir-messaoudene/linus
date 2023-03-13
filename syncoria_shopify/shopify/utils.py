@@ -427,7 +427,7 @@ def update_product_images(record, product_data, req_type, marketplace_instance_o
             default_marketplace_instance_id = get_marketplace(record)
             product_tmpl_shopify_id = product_data.shopify_id
             if default_marketplace_instance_id != marketplace_instance_id:
-                prod_mapping = record.env['shopify.multi.store'].sudo().search([('product_tmpl_id', '=', record.product_tmpl_id.id), ('shopify_instance_id', '=', instance_obj.id)], limit=1)
+                prod_mapping = record.env['shopify.multi.store'].sudo().search([('product_tmpl_id', '=', record.product_tmpl_id.id), ('shopify_instance_id', '=', marketplace_instance_id.id)], limit=1)
                 product_tmpl_shopify_id = prod_mapping.shopify_parent_id
 
         version = marketplace_instance_id.marketplace_api_version or '2021-01'
@@ -607,7 +607,7 @@ def shopify_pt_request(record, data, req_type, instance_obj=False):
                 {'shopify_inventory_id': created_products.get("product").get("inventory_item_id")})
 
         body = _("Shopify Product " + req_type + " with Shopify ID: " +
-                 str(created_products.get("product").get("id")))
+                 str(created_products.get("product").get("id")) + " store: " + str(marketplace_instance_id.name))
         _logger.info(body)
         record.message_post(body=body)
     elif created_products.get('variant', {}).get("id"):
@@ -618,7 +618,7 @@ def shopify_pt_request(record, data, req_type, instance_obj=False):
                  'shopify_instance_id': marketplace_instance_id.id,
                  'shopify_inventory_id': created_products.get("variant").get("inventory_item_id"),
                  })
-            update_product_images(record, record.product_tmpl_id, req_type)
+            # update_product_images(record, record.product_tmpl_id, req_type)
 
         body = _("Shopify Product Variant " + req_type + " with Shopify ID: " +
                  str(created_products.get("variant").get("id")) + " store: " + str(marketplace_instance_id.name))
@@ -685,7 +685,7 @@ def shopify_pt_request_create_product_by_instance(record, data, req_type, market
                 prod_mapping = record.env['shopify.multi.store'].sudo().create(val_dict)
             else:
                 prod_mapping.write(val_dict)
-            update_product_images(record, record.product_tmpl_id, req_type, marketplace_instance_id)
+            # update_product_images(record, record.product_tmpl_id, req_type, marketplace_instance_id)
 
         body = _("Shopify Product Variant " + req_type + " with Shopify ID: " +
                  str(created_products.get("variant").get("id")) + " at Instance: " + marketplace_instance_id.name)
