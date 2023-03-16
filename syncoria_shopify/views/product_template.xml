@@ -27,6 +27,8 @@
                             type="action"
                             groups="base.group_erp_manager"
                             name="%(action_delete_product_shopify)d"
+                            class="btn-danger"
+                            confirm="Do you want to proceed?"
                             context="{'default_product_tpml_id': active_id}"/>
                 </xpath>
 
@@ -120,6 +122,8 @@
                             type="action"
                             groups="base.group_erp_manager"
                             name="%(action_delete_product_shopify)d"
+                            class="btn-danger"
+                            confirm="Do you want to proceed?"
                             context="{'default_product_id': active_id}"/>
 
                     <!-- The "Update in Shopify" has not been develop yet -->

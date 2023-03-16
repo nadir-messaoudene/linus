@@ -322,10 +322,14 @@ class ProductTemplate(models.Model):
                     self.shopify_id = ''
                     self.shopify_inventory_id = ''
                     self.shopify_instance_id = False
+                    self.marketplace_type = ''
                     for variant in self.product_variant_ids:
                         variant.shopify_id = ''
                         variant.shopify_inventory_id = ''
                         variant.shopify_instance_id = False
+                        variant.marketplace_type = ''
+                _logger.info('Delete Product and its variants on Shopify Store %s' % instance_obj.name)
+                self.message_post(body='Delete Product and its variants on Shopify Store %s' % instance_obj.name)
 
 class ProductProductShopify(models.Model):
     _inherit = 'product.product'
@@ -521,6 +525,9 @@ class ProductProductShopify(models.Model):
                     self.shopify_id = ''
                     self.shopify_inventory_id = ''
                     self.shopify_instance_id = False
+                    self.marketplace_type = False
+                _logger.info('Delete Product Variant on Shopify Store %s' % instance_obj.name)
+                self.message_post(body='Delete Product Variant on Shopify Store %s' % instance_obj.name)
 
     def action_create_shopify_product(self, instance_obj):
         data = get_protmpl_product_product_vals(self, instance_obj)
