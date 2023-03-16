@@ -525,7 +525,7 @@ class ProductProductShopify(models.Model):
                     self.shopify_id = ''
                     self.shopify_inventory_id = ''
                     self.shopify_instance_id = False
-                    self.marketplace_type = False
+                    self.marketplace_type = ''
                 _logger.info('Delete Product Variant on Shopify Store %s' % instance_obj.name)
                 self.message_post(body='Delete Product Variant on Shopify Store %s' % instance_obj.name)
 
