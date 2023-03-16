@@ -18,3 +18,4 @@ from . import fetch_feed_products_wiz
 from . import fetch_feed_orders_wiz
 from . import fetch_feed_customers_wiz
 from . import create_variant_shopify
+from . import delete_product_wiz

@@ -67,3 +67,5 @@ access_create_variant_shopify_man,access_create_variant_shopify_man,model_create
 access_shopify_payment_journal,access_shopify_payment_journal,model_shopify_payment_journal,base.group_erp_manager,1,1,1,1
 
 access_shopify_coupon,access_shopify_coupon,model_shopify_coupon,base.group_erp_manager,1,1,1,1
+
+access_delete_product_shopify_man,access_delete_product_shopify_man,model_delete_product_shopify,base.group_erp_manager,1,1,1,1

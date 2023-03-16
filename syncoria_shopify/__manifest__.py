@@ -22,6 +22,7 @@
         'data/update_history.xml',
         # Views
         'wizard/create_variant_shopify.xml',
+        'wizard/delete_product_wiz.xml',
         'views/res_partner.xml',
         'views/res_config_settings.xml',
         'views/product_template.xml',

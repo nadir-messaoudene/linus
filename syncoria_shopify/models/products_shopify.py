@@ -288,6 +288,44 @@ class ProductTemplate(models.Model):
         else:
             return False
 
+    def action_delete_product(self, instance_obj):
+        product_id = False
+        prod_mapping = False
+        if instance_obj == self.shopify_instance_id:
+            product_id = self.shopify_id
+        else:
+            prod_mapping = self.env['shopify.multi.store'].sudo().search(
+                [('product_tmpl_id', '=', self.id), ('shopify_instance_id', '=', instance_obj.id)])
+            product_id = prod_mapping[0].shopify_parent_id if prod_mapping else False
+        if product_id:
+            Connector = self.env['marketplace.connector']
+
+            headers = {
+                'X-Shopify-Access-Token': instance_obj.marketplace_api_password,
+                'Content-Type': 'application/json'
+            }
+            type_req = 'DELETE'
+            version = instance_obj.marketplace_api_version
+            url = instance_obj.marketplace_host + "/admin/api/%s/products/%s.json" % (version, product_id)
+            res, next_link = Connector.shopify_api_call(
+                headers=headers,
+                url=url,
+                type=type_req,
+            )
+            if res.get('errors'):
+                _logger.warning(res.get('errors'))
+            else:
+                if prod_mapping:
+                    for mapping in prod_mapping:
+                        mapping.unlink()
+                else:
+                    self.shopify_id = ''
+                    self.shopify_inventory_id = ''
+                    self.shopify_instance_id = False
+                    for variant in self.product_variant_ids:
+                        variant.shopify_id = ''
+                        variant.shopify_inventory_id = ''
+                        variant.shopify_instance_id = False
 
 class ProductProductShopify(models.Model):
     _inherit = 'product.product'
@@ -445,6 +483,44 @@ class ProductProductShopify(models.Model):
 
     shopify_vendor = fields.Char()
     shopify_collections = fields.Char()
+
+    def action_delete_product_variant(self, instance_obj):
+        variant_id = False
+        product_id = False
+        prod_mapping = False
+        if instance_obj == self.shopify_instance_id:
+            variant_id = self.shopify_id
+            product_id = self.product_tmpl_id.shopify_id
+        else:
+            prod_mapping = self.env['shopify.multi.store'].sudo().search(
+                [('product_id', '=', self.id), ('shopify_instance_id', '=', instance_obj.id)],
+                limit=1)
+            variant_id = prod_mapping.shopify_id
+            product_id = prod_mapping.shopify_parent_id
+        if variant_id and product_id:
+            Connector = self.env['marketplace.connector']
+
+            headers = {
+                'X-Shopify-Access-Token': instance_obj.marketplace_api_password,
+                'Content-Type': 'application/json'
+            }
+            type_req = 'DELETE'
+            version = instance_obj.marketplace_api_version
+            url = instance_obj.marketplace_host + "/admin/api/%s/products/%s/variants/%s.json" % (version, product_id, variant_id)
+            res, next_link = Connector.shopify_api_call(
+                headers=headers,
+                url=url,
+                type=type_req,
+            )
+            if res.get('errors'):
+                _logger.warning(res.get('errors'))
+            else:
+                if prod_mapping:
+                    prod_mapping.unlink()
+                else:
+                    self.shopify_id = ''
+                    self.shopify_inventory_id = ''
+                    self.shopify_instance_id = False
 
     def action_create_shopify_product(self, instance_obj):
         data = get_protmpl_product_product_vals(self, instance_obj)
