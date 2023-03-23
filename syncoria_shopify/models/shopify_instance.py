@@ -378,3 +378,83 @@ class ModelName(models.Model):
         action['domain'] = [('shopify_instance_id', '=', self.id)]
         return action
 
+    def map_shopify_product_id(self):
+        url = self.marketplace_host + '/admin/api/%s/products.json' % self.marketplace_api_version
+        params = {"limit": 250}
+        products = []
+        while True:
+            fetched_products, next_link = self.env['marketplace.connector'].shopify_api_call(
+                headers={'X-Shopify-Access-Token': self.marketplace_api_password},
+                url=url,
+                type='GET',
+                params=params
+            )
+            try:
+                if type(fetched_products).__name__ == 'list':
+                    products += fetched_products['products']
+                elif type(fetched_products).__name__ == 'dict':
+                    products += fetched_products.get('products') or fetched_products.get('product')
+                else:
+                    products += fetched_products['product']
+                if next_link:
+                    if next_link.get("next"):
+                        url = next_link.get("next").get("url")
+                    else:
+                        break
+                else:
+                    break
+            except Exception as e:
+                _logger.info(e)
+                raise exceptions.UserError(e)
+        active_products = [product for product in products if product['status'] == 'active']
+        missing_id = []
+        missing_product = []
+        mismatch_id = []
+        for product in active_products:
+            for variant in product.get('variants'):
+                sku = variant['sku']
+                if sku is None:
+                    continue
+                product_id = self.env['product.product'].search([('default_code', '=', sku)])
+                if self.id == 1:
+                    if product_id:
+                        if not product_id.shopify_id:
+                            missing_id.append(sku)
+                        elif int(product_id.shopify_id) != variant['id']:
+                            mismatch_id.append(sku)
+                    else:
+                        missing_product.append(sku)
+        _logger.info("MISSING ID")
+        _logger.info(missing_id)
+        _logger.info("MISSING PRODUCT")
+        _logger.info(missing_product)
+        _logger.info("MISSMATCH ID")
+        _logger.info(mismatch_id)
+        for product in active_products:
+            for variant in product.get('variants'):
+                sku = variant['sku']
+                _logger.info(sku)
+                if sku is None:
+                    continue
+                product_id = self.env['product.product'].search([('default_code', '=', sku)])
+                if product_id:
+                    if self.id == 1:
+                        product_id.shopify_id = variant['id']
+                        product_id.marketplace_type = 'shopify'
+                        product_id.shopify_instance_id = self.id
+                        product_id.shopify_inventory_id = variant['inventory_item_id']
+                    else:
+                        mapping_id = self.env['shopify.multi.store'].search([('product_id', '=', product_id.id), ('shopify_instance_id', '=', self.id)])
+                        vals = {
+                            'product_id': product_id.id,
+                            'product_tmpl_id': product_id.product_tmpl_id.id,
+                            'shopify_instance_id': self.id,
+                            'name': sku,
+                            'shopify_id': variant['id'],
+                            'shopify_parent_id': variant['product_id'],
+                            'shopify_inventory_id': variant['inventory_item_id']
+                        }
+                        if mapping_id:
+                            mapping_id.write(vals)
+                        else:
+                            self.env['shopify.multi.store'].create(vals)

@@ -25,6 +25,7 @@
           <button string="Connect" class="btn btn-primary" name="action_check_acess" type="object" attrs="{  'invisible': [('marketplace_state','in',('confirm'))]  }" />
           <button string="Disconnect" class="btn btn-primary" name="action_cancel_state" type="object" attrs="{  'invisible': [('marketplace_state','in',('draft'))]  }" />
           <!-- <button string="Activate Webhook" class="btn btn-primary" name="action_activate_webhook" type="object" attrs="{  'invisible': [('marketplace_state','in',('draft'))]  }" /> -->
+          <button string="Map Shopify Product Id" class="btn btn-primary" name="map_shopify_product_id" type="object"/>
           <field name="marketplace_state" widget="statusbar" statusbar_visible="draft,confirm"/>
         </xpath>
         <xpath expr="//field[@name='marketplace_instance_type']" position="after">
