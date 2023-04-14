@@ -21,6 +21,7 @@ class PaymentTransaction(models.Model):
         for record in self:
             if record.acquirer_id.id == 18:
                 for so in record.sale_order_ids.filtered(lambda so: so.state in ['draft', 'sent']):
+                    so.tag_ids = [(3, tag.id) for tag in so.tag_ids if tag.name != 'B2B']
                     so.sudo().action_confirm()
                     invoice_id = so.sudo()._create_invoices()
                     invoice_id.sudo().action_post()
@@ -44,3 +45,9 @@ class PaymentTransaction(models.Model):
                 if tag_id:
                     for so in tx.sale_order_ids.filtered(lambda so: so.state in ['draft', 'sent']):
                         so.tag_ids = [(4, tag_id.id)]
+
+    def _set_done(self, state_message=None):
+        super(PaymentTransaction, self)._set_done(state_message=state_message)
+        for tx in self:
+            for so in tx.sale_order_ids:
+                so.tag_ids = [(3, tag.id) for tag in so.tag_ids if tag.name != 'B2B']
