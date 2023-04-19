@@ -387,6 +387,8 @@ class ProductProductShopify(models.Model):
              "Otherwise, this includes goods stored in any Stock Location "
              "with 'internal' type.")
 
+    shopify_need_sync = fields.Boolean(string='Need to Sync To Shopify?')
+
     def _compute_shopify_quantities(self):
         instance_id = get_instance_id(self)
         warehouse_id = self.env['stock.warehouse'].browse(instance_id.warehouse_id.id)

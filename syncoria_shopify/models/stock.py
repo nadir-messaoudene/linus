@@ -287,3 +287,14 @@ class  InheritedStocklocation(models.Model):
     _inherit = 'stock.location'
 
     shopify_warehouse_ids = fields.Many2many("shopify.warehouse",string="Shopify Warehouse")
+
+
+class InheritedStockMove(models.Model):
+    _inherit = 'stock.move'
+
+    def write(self, vals):
+        res = super(InheritedStockMove, self).write(vals)
+        for rec in self:
+            if rec.state == 'done' and rec.product_id:
+                rec.product_id.shopify_need_sync = True
+        return res

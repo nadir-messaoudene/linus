@@ -1,5 +1,5 @@
 <odoo>
-  <data>
+  <data noupdate="1">
 
         <record id="update_stock_wizard_inherit" model="ir.ui.view">
             <field name="name">update.stock.wizard.inherit</field>
@@ -59,5 +59,17 @@
             <field name="interval_type">days</field>
             <field name="numbercall">-1</field>
         </record>
+
+        <record id="ir_cron_need_sync_stock" model="ir.cron">
+            <field name="name">Update Shopify Need Sync Stock</field>
+            <field name="model_id" ref="syncoria_shopify.model_update_stock_wizard"/>
+            <field name="state">code</field>
+            <field name="code">model.ir_cron_need_sync_stock()</field>
+            <field name="active" eval="False"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">hours</field>
+            <field name="numbercall">-1</field>
+        </record>
+
   </data>
 </odoo>
