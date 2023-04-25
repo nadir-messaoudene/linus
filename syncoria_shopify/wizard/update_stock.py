@@ -291,6 +291,8 @@ class ProductsFetchWizard(models.Model):
         products = self.env['product.product'].search([('shopify_id', '!=', False), ('shopify_need_sync', '=', True)])
         for product in products:
             self.ir_cron_shopify_update_stock_item(prod_id=product.id)
+        for product in products:
+            product.shopify_need_sync = False
 
     def ir_cron_shopify_update_stock_item(self, prod_id=False):
         products = self.env['product.product'].search([('shopify_id', '!=', False)])
