@@ -512,9 +512,9 @@ class ProductsFetchWizard(models.Model):
             data=data
         )
         _logger.info("stock_item: %s" % (stock_item))
-        if 'call_button' in str(request.httprequest) and stock_item.get('errors'):
-            errors = stock_item.get('errors', {})
-            raise Exception(errors)
+        # if 'call_button' in str(request.httprequest) and stock_item.get('errors'):
+        #     errors = stock_item.get('errors', {})
+        #     raise Exception(errors)
 
     def _shopify_adjust_qty(self, **kwargs):
         Connector = self.env['marketplace.connector']
@@ -547,9 +547,9 @@ class ProductsFetchWizard(models.Model):
             data=data
         )
         _logger.info("stock_item: %s" % (stock_item))
-        if 'call_button' in str(request.httprequest) and stock_item.get('errors'):
-            errors = stock_item.get('errors', {})
-            raise Exception(errors)
+        # if 'call_button' in str(request.httprequest) and stock_item.get('errors'):
+        #     errors = stock_item.get('errors', {})
+        #     raise Exception(errors)
 
     def _shopify_get_product_list(self, active_ids):
         if self._context.get('active_model') == 'product.product':
