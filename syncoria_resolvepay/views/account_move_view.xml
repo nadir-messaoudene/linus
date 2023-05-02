@@ -2,6 +2,23 @@
 
 <odoo>
     <data>
+        <record id="view_account_payment_form_linus_account_resolvepay" model="ir.ui.view">
+            <field name="name">view.account.payment.form.linus.account.resolve.pay</field>
+            <field name="model">account.payment</field>
+            <field name="inherit_id" ref="account.view_account_payment_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//group[@name='group2']" position="after">
+                    <group attrs="{'invisible':[('rp_payout_transaction_id','=', False)]}">
+                        <field name="rp_payout_id" readonly="1"/>
+                        <field name="rp_payout_transaction_id" readonly="1"/>
+                        <field name="rp_payout_transaction_type" readonly="1"/>
+                        <field name="rp_payout_transaction_amount_fee" readonly="1"/>
+                        <field name="rp_payout_transaction_amount_gross" readonly="1"/>
+                        <field name="rp_payout_transaction_amount_net" readonly="1"/>
+                    </group>
+                </xpath>
+            </field>
+        </record>
 
         <record id="account_move_resolvepay_form_inherit" model="ir.ui.view">
             <field name="name">account.move.resolvepay.form.inherit</field>
