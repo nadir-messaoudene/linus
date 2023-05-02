@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="action_move_journal" model="ir.actions.server">
-		<field name="name">Fetch QBO Payments</field>
-		<field name="model_id" ref="account.model_account_move" />
-		<field name="binding_model_id" ref="account.model_account_move"/>
-		<field name="state">code</field>
-		<field name="code">
-            if records:
-                action = records.fetch_qbo_payment()
-		</field>
-	</record>
+<!--    <record id="action_move_journal" model="ir.actions.server">-->
+<!--		<field name="name">Fetch QBO Payments</field>-->
+<!--		<field name="model_id" ref="account.model_account_move" />-->
+<!--		<field name="binding_model_id" ref="account.model_account_move"/>-->
+<!--		<field name="state">code</field>-->
+<!--		<field name="code">-->
+<!--            if records:-->
+<!--                action = records.fetch_qbo_payment()-->
+<!--		</field>-->
+<!--	</record>-->
 </odoo>
