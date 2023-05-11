@@ -556,16 +556,16 @@ class ProductsFetchWizard(models.Model):
     def _shopify_get_product_list(self, active_ids):
         if self._context.get('active_model') == 'product.product':
             products = self.env['product.product'].search([
-                ('marketplace_type', '=', 'shopify'),
+                # ('marketplace_type', '=', 'shopify'),
                 ('id', 'in', active_ids),
-                ('shopify_id', 'not in', ['', False])
+                # ('shopify_id', 'not in', ['', False])
             ])
             # product_templ_id =
         if self._context.get('active_model') == 'product.template':
             # Cannot find products
             products = self.env['product.product'].search([
-                ('marketplace_type', '=', 'shopify'),
+                # ('marketplace_type', '=', 'shopify'),
                 ('product_tmpl_id', 'in', active_ids),
-                ('shopify_id', 'not in', ['', False])
+                # ('shopify_id', 'not in', ['', False])
             ])
         return products
