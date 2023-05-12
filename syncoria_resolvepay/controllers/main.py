@@ -237,10 +237,19 @@ class ResolvepayController(WebsiteSale):
     @http.route('/shop/validate_credit', type='json', auth="public", website=True, save_session=False)
     def validate_credit(self, partner=None, amount=None):
         partner_id = request.env['res.partner'].sudo().browse(partner)
-        logging.info(partner_id.available_credit)
-        logging.info('|')
-        logging.info(amount)
-        if partner_id.available_credit > float(amount):
+        available_credit = 0
+        if partner_id.resolvepay_customer_id:
+            logging.info(partner_id.available_credit)
+            logging.info('|')
+            logging.info(amount)
+            available_credit = partner_id.available_credit
+        else:
+            if partner_id.parent_id and partner_id.parent_id.resolvepay_customer_id:
+                logging.info(partner_id.parent_id.available_credit)
+                logging.info('|')
+                logging.info(amount)
+                available_credit = partner_id.parent_id.available_credit
+        if available_credit > float(amount):
             return True
         else:
             return False
@@ -271,7 +280,15 @@ class ResolvepayController(WebsiteSale):
         if 'acquirers' in render_values:
             payment_acquirers = render_values['acquirers']
             partner_id = render_values['partner']
-            if partner_id and not partner_id.resolvepay_customer_id:
+            parent_id = partner_id.parent_id
+            resolvepay_customer = False
+            if partner_id:
+                if partner_id.resolvepay_customer_id:
+                    resolvepay_customer = True
+                if parent_id:
+                    if parent_id.resolvepay_customer_id:
+                        resolvepay_customer = True
+            if partner_id and not resolvepay_customer:
                 payment_acquirers = payment_acquirers.filtered(lambda p: p.id != 18)
                 render_values['acquirers'] = payment_acquirers
 

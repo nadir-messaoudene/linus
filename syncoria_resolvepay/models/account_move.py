@@ -72,11 +72,20 @@ class Invoice(models.Model):
                 base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
                 invoice_url = base_url + '/my/invoices/' + str(record.id)
                 print(invoice_url)
-                if not record.partner_id.resolvepay_customer_id:
+                resolvepay_customer = False
+                resolvepay_customer_id = False
+                if record.partner_id.resolvepay_customer_id:
+                    resolvepay_customer = True
+                    resolvepay_customer_id = record.partner_id.resolvepay_customer_id
+                elif record.partner_id.parent_id:
+                    if record.partner_id.parent_id.resolvepay_customer_id:
+                        resolvepay_customer = True
+                        resolvepay_customer_id = record.partner_id.parent_id.resolvepay_customer_id
+                if not resolvepay_customer:
                     raise ValidationError('This customer does not exist in ResolvePay')
                 invoice_data = dict(
                     amount=record.amount_total,
-                    customer_id=record.partner_id.resolvepay_customer_id,
+                    customer_id=resolvepay_customer_id,
                     number=record.name,
                     order_number=record.invoice_origin,
                     merchant_invoice_url=invoice_url
