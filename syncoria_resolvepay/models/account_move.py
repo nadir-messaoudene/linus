@@ -13,6 +13,7 @@ class Invoice(models.Model):
     resolvepay_charge_id = fields.Char(string='ResolvePay Charge Id')
     available_credit = fields.Integer(string='Available Credit', related='partner_id.available_credit')
 
+    payout_transaction_ids = fields.One2many(comodel_name='resolvepay.payout.transaction', inverse_name='move_id', string='Payout Transaction')
     # def action_update_resolve_pay(self):
     #     to_update = self.env['account.move'].search([('resolvepay_invoice_id', '!=', None), ('state', '=', 'posted'), ('payment_state', 'in', ('not_paid', 'in_payment', 'partial'))])
     #     _logger.info("Invoices info =====> %s", to_update)
@@ -31,13 +32,13 @@ class Invoice(models.Model):
         today_date = fields.Date.today()
         resolvepay_instance = self.env['resolvepay.instance'].search([('name', '=', 'ResolvePay')])
         url = resolvepay_instance.instance_baseurl + 'payouts'
-        complete_url = url + '?filter[expected_by][gte]=' + date_params_start + '&filter[expected_by][lte]=' + date_params_end
+        complete_url = url + '?filter[expected_by][gte]=' + date_params_start + '&filter[expected_by][lte]=' + date_params_end + '&status=paid'
         res = resolvepay_instance.get_data(complete_url)
         _logger.info(res)
         payouts = res.get('data').get('results')
         for payout in payouts:
             _logger.info(payout)
-            if payout.get('status') in ('canceled', 'failed'):
+            if payout.get('status') != 'paid':
                 continue
             payment_date = payout.get('expected_by')
             payout_id = payout.get('id')
@@ -53,6 +54,7 @@ class Invoice(models.Model):
                         _logger.info('Cannot find RP invoice: ' + invoice_id)
                     if invoice.state == 'posted' and invoice.payment_state in ('partial', 'not_paid'):
                         self.register_resolvepay_payment(invoice, payout_transaction, payment_date)
+                    self.create_payout_transaction(invoice, payout_transaction)
 
     def create_invoice_resolvepay(self):
         for record in self:
@@ -160,9 +162,22 @@ class Invoice(models.Model):
                         _logger.info(payout_transaction)
                         payout_id = payout_transaction.get('payout_id')
                         payout_info = self.get_payout_info(payout_id)
+                        if payout_info.get('status') != 'paid':
+                            return
                         payout_arrive_date = payout_info.get('expected_by')
                         self.register_resolvepay_payment(invoice, payout_transaction, payout_arrive_date)
-
+                        self.create_payout_transaction(self, payout_transaction)
                 except Exception as e:
                     _logger.info("Exception-{}".format(e))
                     raise ValidationError(e)
+
+    def create_payout_transaction(self, invoice, payout_transaction):
+        payout_transaction_field = self.env['resolvepay.payout.transaction']._fields
+        val_dict = {}
+        for key, value in payout_transaction.items():
+            val_dict['transaction_'+key] = value
+        val_dict['move_id'] = invoice.id
+        _logger.info(val_dict)
+        payout_transaction_id = self.env['resolvepay.payout.transaction'].search([('transaction_id', '=', val_dict['transaction_id'])])
+        if not payout_transaction_id:
+            self.env['resolvepay.payout.transaction'].create(val_dict)
