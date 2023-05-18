@@ -202,20 +202,20 @@ def get_protmpl_vals(record, values, instance_obj=False):
             })
 
         del product['product_type']
-    else:
-        shopify_price = record.list_price
-        if instance_id.pricelist_id.currency_id.id != record.currency_id.id:
-            shopify_price = record.shopify_price
-        product.update({
-            'id': record.shopify_id or "",
-            'title': record.name,
-            'price': shopify_price,
-            'sku': record.default_code,
-            'barcode': record.barcode,
-            'weight': record.weight,
-            'weight_unit': record.weight_uom_name,
-            'inventory_quantity': record.qty_available,
-        })
+    # else:
+    #     shopify_price = record.list_price
+    #     if instance_id.pricelist_id.currency_id.id != record.currency_id.id:
+    #         shopify_price = record.shopify_price
+    #     product.update({
+    #         'id': record.shopify_id or "",
+    #         'title': record.name,
+    #         'price': shopify_price,
+    #         'sku': record.default_code,
+    #         'barcode': record.barcode,
+    #         'weight': record.weight,
+    #         'weight_unit': record.weight_uom_name,
+    #         'inventory_quantity': record.qty_available,
+    #     })
 
     print(product)
     print(values)
