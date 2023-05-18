@@ -66,6 +66,7 @@ def get_provar_vals(record, values):
 
 
 def get_protmpl_vals(record, values, instance_obj=False):
+    default_marketplace = get_marketplace(record)
     VariantObj = record.env['product.product'].sudo()
     data = {}
     product = {}
@@ -170,9 +171,13 @@ def get_protmpl_vals(record, values, instance_obj=False):
     except Exception as e:
         _logger.info("Exception-%s", e.args)
     single_product = False
-    if "req_type" in values:
+    if "req_type" in values and 'product.template' in str(record):
         single_product = True
-        product.update({"id": record.shopify_id})
+        if default_marketplace == instance_obj:
+            product.update({"id": record.shopify_id})
+        else:
+            prod_mapping = record.env['shopify.multi.store'].sudo().search([('product_tmpl_id', '=', record.id), ('shopify_instance_id', '=', instance_obj.id)], limit=1)
+            product.update({"id": prod_mapping.shopify_parent_id})
     # print(len(product['variants']))
     if 'variants' not in product or ('variants' in product and len(product['variants']) == 0):
         shopify_price = record.list_price
