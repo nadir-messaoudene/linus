@@ -480,7 +480,12 @@ def shopify_pt_request(record, data, req_type, instance_obj=False):
         url += '/admin/api/%s/products.json' % version
     if req_type == 'update' and 'product.template' in str(record):
         type_req = 'PUT'
-        url += '/admin/api/%s/products/%s.json' % (version, record.shopify_id)
+        if default_marketplace_instance_id == instance_obj:
+            url += '/admin/api/%s/products/%s.json' % (version, record.shopify_id)
+        else:
+            prod_mapping = record.env['shopify.multi.store'].sudo().search([('product_tmpl_id', '=', record.id), ('shopify_instance_id', '=', instance_obj.id)], limit=1)
+            shopify_id = prod_mapping.shopify_parent_id
+            url += '/admin/api/%s/products/%s.json' % (version, shopify_id)
         if 'images' in data['product']:
             del data['product']['images']
 
