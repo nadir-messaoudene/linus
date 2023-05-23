@@ -66,6 +66,7 @@ def get_provar_vals(record, values):
 
 
 def get_protmpl_vals(record, values, instance_obj=False):
+    default_marketplace = get_marketplace(record)
     VariantObj = record.env['product.product'].sudo()
     data = {}
     product = {}
@@ -170,9 +171,13 @@ def get_protmpl_vals(record, values, instance_obj=False):
     except Exception as e:
         _logger.info("Exception-%s", e.args)
     single_product = False
-    if "req_type" in values:
+    if "req_type" in values and 'product.template' in str(record):
         single_product = True
-        product.update({"id": record.shopify_id})
+        if default_marketplace == instance_obj:
+            product.update({"id": record.shopify_id})
+        else:
+            prod_mapping = record.env['shopify.multi.store'].sudo().search([('product_tmpl_id', '=', record.id), ('shopify_instance_id', '=', instance_obj.id)], limit=1)
+            product.update({"id": prod_mapping.shopify_parent_id})
     # print(len(product['variants']))
     if 'variants' not in product or ('variants' in product and len(product['variants']) == 0):
         shopify_price = record.list_price
@@ -197,20 +202,20 @@ def get_protmpl_vals(record, values, instance_obj=False):
             })
 
         del product['product_type']
-    else:
-        shopify_price = record.list_price
-        if instance_id.pricelist_id.currency_id.id != record.currency_id.id:
-            shopify_price = record.shopify_price
-        product.update({
-            'id': record.shopify_id or "",
-            'title': record.name,
-            'price': shopify_price,
-            'sku': record.default_code,
-            'barcode': record.barcode,
-            'weight': record.weight,
-            'weight_unit': record.weight_uom_name,
-            'inventory_quantity': record.qty_available,
-        })
+    # else:
+    #     shopify_price = record.list_price
+    #     if instance_id.pricelist_id.currency_id.id != record.currency_id.id:
+    #         shopify_price = record.shopify_price
+    #     product.update({
+    #         'id': record.shopify_id or "",
+    #         'title': record.name,
+    #         'price': shopify_price,
+    #         'sku': record.default_code,
+    #         'barcode': record.barcode,
+    #         'weight': record.weight,
+    #         'weight_unit': record.weight_uom_name,
+    #         'inventory_quantity': record.qty_available,
+    #     })
 
     print(product)
     print(values)
@@ -475,7 +480,12 @@ def shopify_pt_request(record, data, req_type, instance_obj=False):
         url += '/admin/api/%s/products.json' % version
     if req_type == 'update' and 'product.template' in str(record):
         type_req = 'PUT'
-        url += '/admin/api/%s/products/%s.json' % (version, record.shopify_id)
+        if default_marketplace_instance_id == instance_obj:
+            url += '/admin/api/%s/products/%s.json' % (version, record.shopify_id)
+        else:
+            prod_mapping = record.env['shopify.multi.store'].sudo().search([('product_tmpl_id', '=', record.id), ('shopify_instance_id', '=', instance_obj.id)], limit=1)
+            shopify_id = prod_mapping.shopify_parent_id
+            url += '/admin/api/%s/products/%s.json' % (version, shopify_id)
         if 'images' in data['product']:
             del data['product']['images']
 

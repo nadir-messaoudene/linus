@@ -95,3 +95,18 @@ class CreateVariantShopifyWizard(models.Model):
             for store in shopify_multi_store_obj:
                 result.append(store.shopify_instance_id.id)
         return result
+
+    def action_update(self):
+        if self.product_id and self.shopify_instance_ids:
+            shopify_instance_already_created_list = self.get_product_shopify_instances(self.product_id)
+            for instance_obj in self.shopify_instance_ids:
+                if instance_obj.id in shopify_instance_already_created_list:
+                    self.product_id.action_create_shopify_product(instance_obj)
+
+        if self.product_tpml_id and self.shopify_instance_ids:
+            shopify_instance_already_created_list = self.get_product_template_shopify_instances(self.product_tpml_id)
+            for instance_obj in self.shopify_instance_ids:
+                if instance_obj.id in shopify_instance_already_created_list:
+                    self.product_tpml_id.action_update_shopify_product(instance_obj)
+        return
+

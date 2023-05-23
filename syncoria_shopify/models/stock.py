@@ -40,7 +40,7 @@ class StockPicking(models.Model):
         complete_url = 'https://' + kwargs.get('url')
         headers = kwargs.get('headers')
         data = json.dumps(kwargs.get('data')) if kwargs.get('data') else None
-        _logger.info("Request DATA==>>>" + pprint.pformat(data))
+        _logger.info("Request DATA==>>>>>>>>>>>" + pprint.pformat(data))
 
         try:
             res = requests.request(
@@ -168,9 +168,10 @@ class StockPicking(models.Model):
                 fulfillment_order_line_items = []
                 for move in move_ids:
                     shopify_line_item_id = move.sale_line_id.shopify_id
-                    fulfillment_order_line = {'id': line_map_dict.get(shopify_line_item_id),
+                    fulfillment_order_line = {'id': line_map_dict.get(shopify_line_item_id, False),
                                               'quantity': int(move.quantity_done)}
-                    fulfillment_order_line_items.append(fulfillment_order_line)
+                    if fulfillment_order_line.get('id'):
+                        fulfillment_order_line_items.append(fulfillment_order_line)
                 if move_ids:
                     fulfillment_dict = {
                         'message': 'The package was shipped',

@@ -32,6 +32,24 @@
                     <field name="resolvepay_invoice_id" readonly="1"/>
                     <field name="available_credit" readonly="1"/>
                 </xpath>
+                <xpath expr="//notebook" position="inside">
+                    <page string="RP Payout Transaction" attrs="{'invisible': [('resolvepay_invoice_id', '=', False)]}">
+                        <field name="payout_transaction_ids" mode="tree">
+                            <tree delete="0" create="0" editable="bottom">
+                                <field name="transaction_type"  readonly="1" string="Type"/>
+                                <field name="transaction_customer_id" readonly="1"/>
+                                <field name="transaction_invoice_id" readonly="1" />
+                                <field name="transaction_invoice_number" readonly="1" />
+                                <field name="transaction_amount_gross" readonly="1" />
+                                <field name="transaction_amount_fee" readonly="1" />
+                                <field name="transaction_amount_net" readonly="1" />
+                                <field name="transaction_order_id" readonly="1" />
+                                <field name="transaction_created_at" readonly="1" optional="hide"/>
+                                <field name="transaction_updated_at" readonly="1" optional="hide"/>
+                            </tree>
+                        </field>
+                    </page>
+                </xpath>
             </field>
 	    </record>
 

@@ -2,3 +2,4 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_resolvepay_instance,access.resolvepay.instance,model_resolvepay_instance,base.group_user,1,1,1,1
 access_resolvepay_fetch,access.resolvepay.fetch,model_resolvepay_fetch,base.group_user,1,1,1,1
 access_resolvepay_fetch_invoice,access.resolvepay.fetch.invoice,model_resolvepay_fetch_invoice,base.group_user,1,1,1,1
+access_resolvepay_payout_transaction,access.resolvepay.payout.transaction,model_resolvepay_payout_transaction,base.group_user,1,1,1,1

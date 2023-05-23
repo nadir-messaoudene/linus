@@ -161,9 +161,9 @@ class ProductTemplate(models.Model):
             data = get_protmpl_vals(result, values)
             shopify_pt_request(self, data, 'create')
 
-    def action_update_shopify_product(self):
-        data = get_protmpl_vals(self, {"req_type": 'update'})
-        res = shopify_pt_request(self, data, 'update')
+    def action_update_shopify_product(self, instance_obj):
+        data = get_protmpl_vals(self, {"req_type": 'update'}, instance_obj)
+        res = shopify_pt_request(self, data, 'update', instance_obj)
 
     # def server_action_shopify_create_update_product(self):
     #     for record in self:
@@ -536,7 +536,7 @@ class ProductProductShopify(models.Model):
         _logger.info("data ===>>>", data)
         shopify_pt_request_create_product_by_instance(self, data, 'create', instance_obj)
 
-    def action_update_shopify_product(self):
+    def action_update_shopify_product(self, instance_obj):
         data = get_protmpl_vals(self, {})
         res = shopify_pt_request(self, data, 'update')
         print("RES====>>>>", res)
