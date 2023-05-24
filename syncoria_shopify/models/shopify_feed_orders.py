@@ -995,8 +995,9 @@ class ShopifyFeedOrders(models.Model):
         street2 = checkout.get('address2')
         azip = checkout.get('zip')
         if partner:
-            delivery = partner.child_ids.filtered(
-                lambda c: (c.street == street or c.street2 == street2 or c.zip == azip) and c.type == contact_type and c.phone == checkout.get('phone'))
+            # delivery = partner.child_ids.filtered(
+            #     lambda c: (c.street == street or c.street2 == street2 or c.zip == azip) and c.type == contact_type and c.phone == checkout.get('phone'))
+            delivery = False
             country_domain = []
             if checkout.get('country_code'):
                 country_domain += [('code', '=', checkout.get('country_code'))]
