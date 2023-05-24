@@ -11,10 +11,12 @@
             <field name="name">view.lightspeed.order.feeds.tree</field>
             <field name="model">lightspeed.order.feeds</field>
             <field name="arch" type="xml">
-                <tree>
+                <tree create="0">
                     <field name="name" />
+                    <field name="ticket_number" />
                     <field name="instance_id" />
                     <field name="state" />
+                    <field name="sale_type" />
                 </tree>
             </field>
         </record>
@@ -23,12 +25,64 @@
             <field name="name">view.lightspeed.order.feeds.form</field>
             <field name="model">lightspeed.order.feeds</field>
             <field name="arch" type="xml">
-                <form string="Lightspeed Order Feeds" edit="0">
+                <form string="Lightspeed Order Feeds" edit="0" create="0">
                     <header>
                         <field name="state" widget="statusbar"/>
+                        <button string='Evaluate Feed' name="evaluate_feed" type="object" class="btn-primary" />
                     </header>
                     <sheet>
-                        <field name="order_data" />
+                        <group>
+                            <group>
+                                <field name="name" />
+                                <field name="create_time" />
+                                <field name="instance_id" />
+                                <field name="completed" />
+                                <field name="reference_number" />
+                                <field name="reference_number_source" />
+                                <field name="ticket_number" />
+                                <field name="total" />
+                                <field name="discount" />
+                                <field name="tax_amount" />
+                                <field name="payment_amount" />
+                                <field name="tips" />
+                            </group>
+                            <group>
+                                <field name="sale_id" />
+                                <field name="customer_id" />
+                                <field name="employee_id" />
+                                <field name="shop_id" />
+                                <field name="ship_to_id" />
+                                <field name="work_order_id" />
+                                <field name="is_shipped" />
+                            </group>
+                        </group>
+                        <group>
+                            <field name="order_line_feed_ids" nolabel="1">
+                                <tree>
+                                    <field name="lightspeed_sale_line_id"></field>
+                                    <field name="unit_qty"></field>
+                                    <field name="unit_price"></field>
+                                    <field name="is_layaway"></field>
+                                    <field name="is_workorder"></field>
+                                    <field name="is_specialorder"></field>
+                                    <field name="total_amount"></field>
+                                    <field name="subtotal_amount"></field>
+                                    <field name="is_taxed"></field>
+                                    <field name="tax1_amount"></field>
+                                    <field name="tax1_rate"></field>
+                                    <field name="tax2_amount"></field>
+                                    <field name="tax2_rate"></field>
+                                    <field name="discount_percent"></field>
+                                    <field name="lightspeed_item_id"></field>
+                                </tree>
+                            </field>
+                        </group>
+                        <group>
+                            <field name="order_data" />
+                        </group>
+                        <group>
+                            <field name="message" />
+                        </group>
                     </sheet>
                 </form>
             </field>
@@ -121,8 +175,32 @@
             <field name="model">lightspeed.product.feeds</field>
             <field name="arch" type="xml">
                 <form string="Lightspeed Product Feeds">
+                    <header>
+                        <field name="state" widget="statusbar"/>
+                    </header>
                     <sheet>
-                        <field name="product_data" />
+                        <group>
+                            <group>
+                                <field name="name" />
+                                <field name="lightspeed_item_id" />
+                                <field name="system_sku" />
+                                <field name="custom_sku" />
+                                <field name="manufacturer_sku" />
+                                <field name="default_cost" />
+                                <field name="upc" />
+                                <field name="tax_class_id" />
+                            </group>
+                            <group>
+                                <field name="discountable" />
+                                <field name="taxable" />
+                            </group>
+                        </group>
+                        <group>
+                            <field name="product_data" />
+                        </group>
+                        <group>
+                            <field name="message" />
+                        </group>
                     </sheet>
                 </form>
             </field>

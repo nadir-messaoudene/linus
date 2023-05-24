@@ -16,6 +16,9 @@
                             <group>
                                 <field name="date_from" widget="datetime" attrs="{'invisible': [('fetch_type', '!=', 'date')], 'required': [('fetch_type', '=', 'date')]}"/>
                                 <field name="date_to" widget="datetime" attrs="{'invisible': [('fetch_type', '!=', 'date')], 'required': [('fetch_type', '=', 'date')]}"/>
+                                <field name="id_to_fetch" attrs="{'invisible': [('fetch_type', '!=', 'id')], 'required': [('fetch_type', '=', 'id')]}"/>
+                                <field name="ticket_number" attrs="{'invisible': ['|',('object_to_fetch', '!=', 'order'),('fetch_type', '!=', 'all')]}"/>
+                                <field name="order_type" attrs="{'invisible': ['|',('object_to_fetch', '!=', 'order'),('fetch_type', '=', 'id')], 'required': [('object_to_fetch', '=', 'order')]}"/>
                             </group>
                         </group>
                         <p>The operation may take some time to complete. It depends on the number of records.

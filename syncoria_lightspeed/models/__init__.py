@@ -4,3 +4,7 @@ from . import product_feeds
 from . import customer_feeds
 from . import order_feeds
 from . import res_partner
+from . import product
+from . import sale
+from . import lightspeed_stock_wiz
+from . import account

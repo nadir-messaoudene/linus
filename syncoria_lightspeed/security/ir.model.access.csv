@@ -6,3 +6,7 @@ access_lightspeed_customer_feeds,access.lightspeed.customer.feeds,model_lightspe
 access_lightspeed_product_feeds,access.lightspeed.product.feeds,model_lightspeed_product_feeds,base.group_user,1,1,1,1
 access_lightspeed_shop,access.lightspeed.shop,model_lightspeed_shop,base.group_user,1,1,1,1
 access_lightspeed_payment,access.lightspeed.payment,model_lightspeed_payment,base.group_user,1,1,1,1
+access_order_line_feed,access.order.line.feed,model_order_line_feed,base.group_user,1,1,1,1
+access_lightspeed_tax_category,access.lightspeed.tax.category,model_lightspeed_tax_category,base.group_user,1,1,1,1
+access_lightspeed_tax_category_class,access.lightspeed.tax.category.class,model_lightspeed_tax_category_class,base.group_user,1,1,1,1
+access_lightspeed_stock_wiz,access.lightspeed.stock.wiz,model_lightspeed_stock_wiz,base.group_user,1,1,1,1

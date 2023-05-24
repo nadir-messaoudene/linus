@@ -17,20 +17,69 @@
             </field>
         </record>
 
+        <record id="view_lightspeed_payment_form" model="ir.ui.view">
+            <field name="name">lightspeed.payment.form</field>
+            <field name="model">lightspeed.payment</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="name" readonly="1"/>
+                            <field name="payment_type_id" readonly="1"/>
+                            <field name="journal_id" />
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_lightspeed_tax_form" model="ir.ui.view">
+            <field name="name">lightspeed.tax.form</field>
+            <field name="model">lightspeed.tax.category</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="name" readonly="1"/>
+                            <field name="lightspeed_tax_category_id" readonly="1"/>
+                            <field name="is_tax_inclusive" readonly="1"/>
+                            <field name="tax1_name" readonly="1"/>
+                            <field name="tax2_name" readonly="1"/>
+                            <field name="tax1_rate" readonly="1"/>
+                            <field name="tax2_rate" readonly="1"/>
+                            <field name="tax_id"/>
+                            <field name="tax_class_ids">
+                                <tree create="0" delete="0" editable="top">
+                                    <field name="name" readonly="1"></field>
+                                    <field name="lightspeed_tax_class_id" readonly="1"></field>
+                                    <field name="tax1_rate" readonly="1"></field>
+                                    <field name="tax2_rate" readonly="1"></field>
+                                    <field name="tax_id"></field>
+                                </tree>
+                            </field>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
         <record id="view_lightspeed_instance_form" model="ir.ui.view">
             <field name="name">lightspeed.instance.form</field>
             <field name="model">lightspeed.instance</field>
             <field name="arch" type="xml">
                 <form>
                     <header>
-                        <button string="Check Connection" class="btn btn-primary" name="check_connection" type="object"/>
+                        <button string="Check Connection" class="btn btn-primary" name="check_connection" type="object" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                        <button string="Validate Configuration" class="btn btn-primary" name="validate_config" type="object" attrs="{'invisible': [('state', '!=', 'connect')]}"/>
+                        <button string="Reset To Draft" class="btn btn-primary" name="reset_to_draft" type="object" attrs="{'invisible': [('state', '=', 'draft')]}"/>
                         <button string="Get Access Token" class="btn btn-primary" name="get_access_token" type="object" attrs="{'invisible': [('state', '!=', 'validate')]}"/>
                         <field name="state" widget="statusbar"/>
                     </header>
                     <sheet>
                         <widget name="web_ribbon" title="Draft" bg_color="bg-warning" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
 					    <widget name="web_ribbon" title="Error" bg_color="bg-danger" attrs="{'invisible': [('state', '!=', 'error')]}"/>
-					    <widget name="web_ribbon" title="Connected" bg_color="bg-success" attrs="{'invisible': [('state', '!=', 'validate')]}"/>
+					    <widget name="web_ribbon" title="Connected" bg_color="bg-success" attrs="{'invisible': [('state', '!=', 'connect')]}"/>
+                        <widget name="web_ribbon" title="Validated" bg_color="bg-success" attrs="{'invisible': [('state', '!=', 'validate')]}"/>
                         <group>
                             <field name="name" />
                             <field name="client_id" attrs="{'readonly': [('state', '=', 'validate')]}"/>
@@ -50,18 +99,77 @@
                                 </field>
                             </page>
                             <page name="lightspeed_payment" string="Payment Mapping">
-                                <field name="payment_ids">
-                                    <tree create="0" delete="0" editable="top">
+                                <field name="payment_ids" attrs="{'readonly': [('state', '=', 'validate')]}">
+                                    <tree create="0" delete="0">
                                         <field name="name" readonly="1"></field>
                                         <field name="payment_type_id" readonly="1"></field>
-                                        <field name="journal_id"></field>
+                                        <field name="journal_id" ></field>
                                     </tree>
                                 </field>
+                            </page>
+                            <page name="lightspeed_tax_category" string="Tax Mapping">
+                                <field name="tax_ids" attrs="{'readonly': [('state', '=', 'validate')]}">
+                                    <tree create="0" delete="0">
+                                        <field name="name" readonly="1"></field>
+                                        <field name="is_tax_inclusive" readonly="1"></field>
+                                        <field name="lightspeed_tax_category_id" readonly="1"></field>
+                                        <field name="tax1_rate" readonly="1"></field>
+                                        <field name="tax_id" ></field>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Other Configurations">
+                                <group>
+                                    <field name="warehouse_id" attrs="{'readonly': [('state', '=', 'validate')]}"/>
+                                </group>
+                                <group>
+                                    <field name="create_invoice" />
+                                    <field name="create_payment" attrs="{'invisible': [('create_invoice', '=', False)]}"/>
+                                    <field name="complete_delivery" />
+                                    <field name="fetch_no_customer_sale"/>
+                                    <field name="partner_id" attrs="{'invisible': [('fetch_no_customer_sale', '=', False)]}"/>
+                                </group>
                             </page>
                         </notebook>
                     </sheet>
                 </form>
             </field>
+        </record>
+
+        <record id="lightspeed_order_action" model="ir.actions.act_window">
+            <field name="name">Lightspeed Sales</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('lightspeed_sale_id', '!=', '')]</field>
+            <field name="view_id" ref="sale.view_quotation_tree_with_onboarding"/>
+        </record>
+        <record id="lightspeed_refund_action" model="ir.actions.act_window">
+            <field name="name">Lightspeed Refunds</field>
+            <field name="res_model">account.move</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('lightspeed_sale_id', '!=', ''),('move_type', '=', 'out_refund')]</field>
+            <field name="view_id" ref="account.view_out_credit_note_tree"/>
+        </record>
+        <record id="lightspeed_deposit_action" model="ir.actions.act_window">
+            <field name="name">Lightspeed Deposits</field>
+            <field name="res_model">account.payment</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('lightspeed_sale_id', '!=', '')]</field>
+            <field name="view_id" ref="account.view_account_payment_tree"/>
+        </record>
+        <record id="lightspeed_customer_action" model="ir.actions.act_window">
+            <field name="name">Lightspeed Customers</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('lightspeed_customer_id', '!=', '')]</field>
+            <field name="view_id" ref="base.view_partner_tree"/>
+        </record>
+        <record id="lightspeed_product_action" model="ir.actions.act_window">
+            <field name="name">Lightspeed Products</field>
+            <field name="res_model">product.product</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('lightspeed_item_id', '!=', '')]</field>
+            <field name="view_id" ref="product.product_product_tree_view"/>
         </record>
 
         <menuitem id="lightspeed_root" name="Lightspeed" web_icon="syncoria_lightspeed,static/description/icon.png"/>
@@ -72,6 +180,12 @@
         <menuitem
             name="Synchronize"
             id="lightspeed_fetch_feed_menu"
+            parent="lightspeed_root"
+        />
+
+        <menuitem
+            name="Lightspeed"
+            id="lightspeed_menu"
             parent="lightspeed_root"
         />
 
@@ -104,5 +218,10 @@
             name="Product Feeds" action="lightspeed_product_feed_action"
         />
 
+        <menuitem action="lightspeed_order_action" id="lightspeed_order" name="Orders" parent="lightspeed_menu" sequence="1"/>
+        <menuitem action="lightspeed_customer_action" id="lightspeed_customer" name="Customers" parent="lightspeed_menu" sequence="3"/>
+        <menuitem action="lightspeed_product_action" id="lightspeed_product" name="Products" parent="lightspeed_menu" sequence="2"/>
+        <menuitem action="lightspeed_refund_action" id="lightspeed_refund" name="Refunds" parent="lightspeed_menu" sequence="4"/>
+        <menuitem action="lightspeed_deposit_action" id="lightspeed_deposit" name="Deposits" parent="lightspeed_menu" sequence="4"/>
     </data>
 </odoo>

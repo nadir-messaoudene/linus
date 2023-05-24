@@ -12,7 +12,6 @@ class AccountInvoice(models.Model):
     lightspeed_sale_id = fields.Char(string='Lightspeed Sale Id', readonly=True)
     lightspeed_ticket_number = fields.Char(string='Lightspeed Ticket Number', readonly=True)
 
-
 class AccountPayment(models.Model):
     _inherit = 'account.payment'
 

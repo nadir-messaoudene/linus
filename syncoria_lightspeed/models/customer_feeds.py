@@ -52,6 +52,7 @@ class LightspeedCustomerFeeds(models.Model):
                 feed = self.create_feed(customer)
                 self += feed
             except Exception as e:
+                _logger.info(e)
                 continue
         return self
 
@@ -59,7 +60,7 @@ class LightspeedCustomerFeeds(models.Model):
         try:
             _logger.info('Start creating/updating feeds for customer: {} {}'.format(customer.get('firstName'), customer.get('lastName')))
             contact = customer.get('Contact')
-            addresses = contact.get('Addresses').get('ContactAddress')
+            addresses = contact.get('Addresses').get('ContactAddress') if contact.get('Addresses') else {}
             vals = {
                 'name': customer.get('firstName') + " " + customer.get('lastName'),
                 'instance_id': self.env.context.get('instance_id').id,
@@ -70,14 +71,14 @@ class LightspeedCustomerFeeds(models.Model):
                 'company': customer.get('company'),
                 'vat_number': customer.get('vatNumber'),
                 'lightspeed_contact_id': customer.get('contactID'),
-                'street1': addresses.get('address1'),
-                'street2': addresses.get('address2'),
-                'city': addresses.get('city'),
-                'state_name': addresses.get('state'),
-                'state_code': addresses.get('stateCode'),
-                'zip': addresses.get('zip'),
-                'country': addresses.get('country'),
-                'country_code': addresses.get('countryCode'),
+                'street1': addresses.get('address1', ''),
+                'street2': addresses.get('address2', ''),
+                'city': addresses.get('city', ''),
+                'state_name': addresses.get('state', ''),
+                'state_code': addresses.get('stateCode', ''),
+                'zip': addresses.get('zip', ''),
+                'country': addresses.get('country', ''),
+                'country_code': addresses.get('countryCode', ''),
                 'message': '',
                 'state': 'draft'
             }
@@ -107,13 +108,10 @@ class LightspeedCustomerFeeds(models.Model):
                 customer_feed_id = self.create(vals)
             return customer_feed_id
         except Exception as e:
-            self.state = 'error'
-            self.message = e
             _logger.info(e)
             raise ValidationError(e)
 
     def evaluate_feed(self):
-        _logger.info(self)
         for feed in self:
             try:
                 _logger.info('Start evaluating feeds for customer: {}'.format(feed.name))
@@ -137,7 +135,7 @@ class LightspeedCustomerFeeds(models.Model):
                 state_id = self.env['res.country.state'].search([('code', '=', feed.state_code), ('country_id', '=', country_id.id)])
                 if state_id:
                     vals['state_id'] = state_id.id
-                res_partner = self.env['res.partner'].search([('lightspeed_customer_id', '=', feed.lightspeed_customer_id)])
+                res_partner = self.env['res.partner'].search([('lightspeed_customer_id', '=', feed.lightspeed_customer_id), ('type', '=', 'contact')], limit=1)
                 _logger.info(vals)
                 if res_partner:
                     res_partner.write(vals)
@@ -145,7 +143,8 @@ class LightspeedCustomerFeeds(models.Model):
                     res_partner = self.env['res.partner'].create(vals)
                 feed.state = 'done'
             except Exception as e:
-                self.state = 'error'
-                self.message = e
-                _logger.info(e)
-                raise ValidationError(e)
+                feed.state = 'error'
+                err_message = f'Customer Feed {feed.name}. Error: {str(e)}'
+                feed.message += err_message
+                _logger.info(err_message)
+                continue

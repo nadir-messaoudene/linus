@@ -9,4 +9,5 @@ _logger = logging.getLogger(__name__)
 class ResPartner(models.Model):
     _inherit = "res.partner"
 
-    lightspeed_customer_id = fields.Char(string='Customer ID')
+    lightspeed_customer_id = fields.Char(string='Lightspeed Customer ID')
+    lightspeed_ship_id = fields.Char(string='Lightspeed Ship Address ID')

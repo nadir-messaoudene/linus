@@ -12,15 +12,24 @@ class FetchWizard(models.TransientModel):
     _description = 'Lightspeed Fetch Wizard'
 
     object_to_fetch = fields.Selection([('order', 'Order'), ('product', 'Product'), ('customer', 'Customer')], default='order', string="Object")
-    fetch_type = fields.Selection([('date', 'Date Range'), ('id', 'ID')], default='date', string="Operation Type")
-
+    fetch_type = fields.Selection([('date', 'Date Range'), ('id', 'ID'), ('all', 'All')], default='date', string="Operation Type")
+    order_type = fields.Selection([('all', 'All'), ('completed', 'Completed')], default='completed', string="Order Type")
     instance_id = fields.Many2one(string='Lightspeed Instance', comodel_name='lightspeed.instance')
 
     date_from = fields.Datetime('From')
     date_to = fields.Datetime('To')
+    id_to_fetch = fields.Integer('ID')
+    ticket_number = fields.Char('Ticket Number')
 
     def lightspeed_fetch_objects(self):
+        kwargs = dict(
+            date_from=self.date_from,
+            date_to=self.date_to,
+            id_to_fetch=self.id_to_fetch,
+            ticket_number=self.ticket_number
+        )
         if self.object_to_fetch == 'order':
-            return self.instance_id.fetch_orders(self.date_from, self.date_to)
+            kwargs['completed'] = True if self.order_type == 'completed' else False
+            return self.instance_id.fetch_orders(kwargs)
         elif self.object_to_fetch == 'customer':
-            return self.instance_id.fetch_customers()
+            return self.instance_id.fetch_customers(kwargs)
