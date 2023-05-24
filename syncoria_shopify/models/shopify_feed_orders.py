@@ -621,8 +621,8 @@ class ShopifyFeedOrders(models.Model):
                     try:
                         tag_ids = []
                         for tag in tags:
-                            if "B2B" in tag:
-                                tag_b2b = self.env['crm.tag'].sudo().search([('name', '=', 'B2B')])
+                            if "B2C" in tag and marketplace_instance_id.id == 1:
+                                tag_b2b = self.env['crm.tag'].sudo().search([('name', '=', 'B2C')])
                                 if tag_b2b:
                                     order_vals['tag_ids'] = [(4, tag_b2b.id)]
                             tag_id = self.env['crm.tag'].search(
@@ -633,7 +633,7 @@ class ShopifyFeedOrders(models.Model):
                                 tag_ids.append((4,tag_id.id))
                         order_vals['shopify_tag_ids'] = tag_ids
                         if not order_vals.get('tag_ids'):
-                            tag_b2c = self.env['crm.tag'].sudo().search([('name', '=', 'B2C')])
+                            tag_b2c = self.env['crm.tag'].sudo().search([('name', '=', 'B2B')])
                             if tag_b2c:
                                 order_vals['tag_ids'] = [(4, tag_b2c.id)]
                     except Exception as e:

@@ -27,6 +27,7 @@ class SaleOrder(models.Model):
         invoice_vals['shopify_tag_ids'] = self.shopify_tag_ids
         invoice_vals['order_type_ids'] = self.tag_ids
         invoice_vals['coupon_ids'] = self.coupon_ids
+        invoice_vals['shopify_instance_id'] = self.shopify_instance_id.id
         return invoice_vals
 
     def action_update_shopify_tag_ids(self):
