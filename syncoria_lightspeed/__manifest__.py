@@ -8,6 +8,7 @@
         'views/feeds.xml',
         'views/lightspeed_view.xml',
         'views/lightspeed_stock_wiz_view.xml',
+        'views/product.xml'
 
     ],
     'application': True,

@@ -287,7 +287,7 @@ class LightspeedInstance(models.Model):
                 item_list = res.get('Item')
             try:
                 feeds = self.env['lightspeed.product.feeds'].with_context(instance_id=self).create_feeds(item_list)
-                feeds.evaluate_feed()
+                feeds.with_context(fetch_prod=True).evaluate_feed()
                 return {
                     'type': 'ir.actions.client',
                     'tag': 'reload'

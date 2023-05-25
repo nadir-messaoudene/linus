@@ -51,7 +51,7 @@ class LightspeedProductFeeds(models.Model):
                 'state': 'draft',
                 'name': item.get('description'),
                 'instance_id': self.env.context.get('instance_id').id,
-                'product_data': item,
+                'product_data': json.dumps(item),
                 'lightspeed_item_id': item.get('itemID'),
                 'system_sku': item.get('systemSku'),
                 'default_cost': item.get('defaultCost'),
@@ -80,23 +80,42 @@ class LightspeedProductFeeds(models.Model):
                 feed.message = ''
                 vals = {'lightspeed_item_id': feed.lightspeed_item_id}
                 product_id = self.env['product.product'].search([('lightspeed_item_id', '=', feed.lightspeed_item_id)])
-                if not product_id:
-                    product_id = self.env['product.product'].search([('default_code', '=', feed.custom_sku)])
+                product = json.loads(feed.product_data)
+                # if not product_id:
+                #     product_id = self.env['product.product'].search([('default_code', '=', feed.custom_sku)])
                 if product_id:
-                    _logger.info(vals)
-                    product_id.write(vals)
+                    _logger.info("Product EXISTS")
+                    _logger.info(product)
+                    # product_id.write(vals)
                 else:
-                    # vals['name'] = feed.name
-                    # vals['detailed_type'] = 'product'
-                    # vals['active'] = True
-                    # vals['sale_ok'] = True
-                    # vals['purchase_ok'] = True
-                    # vals['default_code'] = feed.custom_sku
-                    # vals['barcode'] = feed.upc
-                    # categ_id = self.env['product.category'].search([('name', '=', category.name)])
-                    # vals['categ_id'] = categ_id.id
-                    # product_id = self.env['product.template'].create(vals)
-                    raise ValidationError(f'Cannot find productid {feed.lightspeed_item_id}')
+                    category_data = product.get('Category')
+                    prices = product.get('Prices')
+                    amount = 0
+                    for price in prices.get('ItemPrice'):
+                        if price.get('useType') == 'Default':
+                            amount = float(price.get('amount'))
+                            break
+                    vals = {
+                        'lightspeed_item_id': product.get('itemID'),
+                        'lightspeed_system_sku': product.get('systemSku'),
+                        'standard_price': float(product.get('defaultCost')),
+                        'taxable': product.get('taxable'),
+                        'lightspeed_taxable': product.get('taxable'),
+                        'lightspeed_discountable': product.get('discountable'),
+                        'name': product.get('description'),
+                        'lightspeed_upc': product.get('upc'),
+                        'default_code': product.get('customSku'),
+                        'lightspeed_manufacturer_sku': product.get('manufacturerSku'),
+                        'lightspeed_publish_to_ecom': product.get('publishToEcom'),
+                        'lightspeed_category_id': int(product.get('categoryID')),
+                        'lightspeed_tax_class_id': int(product.get('taxClassID')),
+                        'lst_price': amount,
+                        'detailed_type': 'service' if product.get('itemType') == 'non_inventory' else 'product'
+                    }
+                    if self._context.get('fetch_prod'):
+                        product_id = self.env['product.product'].create(vals)
+                    else:
+                        raise ValidationError(f'Cannot find productID {feed.lightspeed_item_id} {feed.custom_sku}')
                 feed.state = 'done'
             except Exception as e:
                 feed.state = 'error'

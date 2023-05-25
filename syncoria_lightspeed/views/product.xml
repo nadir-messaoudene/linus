@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+
+        <record id="lightspeed_product_normal_form_view" model="ir.ui.view">
+            <field name="name">lightspeed.product.normal.form.view.inherit</field>
+            <field name="model">product.product</field>
+            <field name="inherit_id" ref="product.product_normal_form_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//notebook" position="inside">
+                    <page string="Lightspeed" attrs="{'invisible':[('lightspeed_item_id', '=', False)]}">
+                        <group>
+                            <field name="lightspeed_item_id" readonly="1"/>
+                            <field name="lightspeed_system_sku" readonly="1"/>
+                            <field name="lightspeed_taxable" readonly="1" />
+                            <field name="lightspeed_discountable" readonly="1" />
+                            <field name="lightspeed_upc" readonly="1" />
+                            <field name="lightspeed_manufacturer_sku" readonly="1" />
+                            <field name="lightspeed_publish_to_ecom" readonly="1" />
+                            <field name="lightspeed_category_id" readonly="1" />
+                            <field name="lightspeed_tax_class_id" readonly="1" />
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+	    </record>
+
+    </data>
+</odoo>
