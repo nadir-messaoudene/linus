@@ -81,8 +81,8 @@ class LightspeedProductFeeds(models.Model):
                 vals = {'lightspeed_item_id': feed.lightspeed_item_id}
                 product_id = self.env['product.product'].search([('lightspeed_item_id', '=', feed.lightspeed_item_id)])
                 product = json.loads(feed.product_data)
-                # if not product_id:
-                #     product_id = self.env['product.product'].search([('default_code', '=', feed.custom_sku)])
+                if not product_id:
+                    product_id = self.env['product.product'].search([('default_code', '=', feed.custom_sku)])
                 if product_id:
                     _logger.info("Product EXISTS")
                     _logger.info(product)
