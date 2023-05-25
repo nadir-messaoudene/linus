@@ -170,6 +170,7 @@ class LightspeedOrderFeeds(models.Model):
                     vals['lightspeed_shop'] = lightspeed_shop.id
                     vals['warehouse_id'] = feed.instance_id.warehouse_id.id
                     vals['lightspeed_ticket_number'] = feed.ticket_number
+                    vals['lightspeed_instance'] = feed.instance_id.id
                     tag_id = self.env['crm.tag'].search([('name', '=', 'Retail')], limit=1)
                     if tag_id:
                         vals['tag_ids'] = [(4, tag_id.id)]
@@ -383,7 +384,7 @@ class LightspeedOrderFeeds(models.Model):
                                     'amount': payment.get('amount'),
                                     'payment_date': payment.get('createTime')[:10],
                                 })
-                                payment_res = register_wizard_obj.action_create_payments()
+                                payment_res = register_wizard_obj._create_payments()
                                 payment_res.write({'lightspeed_sale_id': self.sale_id,
                                                    'lightspeed_instance': self.instance_id,
                                                    'lightspeed_ticket_number': self.ticket_number})
