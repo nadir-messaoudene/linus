@@ -151,7 +151,7 @@
             <field name="view_id" ref="account.view_out_credit_note_tree"/>
         </record>
         <record id="lightspeed_deposit_action" model="ir.actions.act_window">
-            <field name="name">Lightspeed Deposits</field>
+            <field name="name">Lightspeed Payments</field>
             <field name="res_model">account.payment</field>
             <field name="view_mode">tree,form</field>
             <field name="domain">[('lightspeed_sale_id', '!=', '')]</field>
@@ -222,6 +222,6 @@
         <menuitem action="lightspeed_customer_action" id="lightspeed_customer" name="Customers" parent="lightspeed_menu" sequence="3"/>
         <menuitem action="lightspeed_product_action" id="lightspeed_product" name="Products" parent="lightspeed_menu" sequence="2"/>
         <menuitem action="lightspeed_refund_action" id="lightspeed_refund" name="Refunds" parent="lightspeed_menu" sequence="4"/>
-        <menuitem action="lightspeed_deposit_action" id="lightspeed_deposit" name="Deposits" parent="lightspeed_menu" sequence="4"/>
+        <menuitem action="lightspeed_deposit_action" id="lightspeed_deposit" name="Payments" parent="lightspeed_menu" sequence="4"/>
     </data>
 </odoo>
