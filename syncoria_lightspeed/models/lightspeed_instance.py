@@ -46,13 +46,13 @@ class LightspeedInstance(models.Model):
             for tax in tax_mapping:
                 tax_name += tax.name + ', '
             raise ValidationError('Please map [{}] taxes.'.format(tax_name))
-        else:
-            tax_mapping_wrong = self.tax_ids.filtered(lambda l:  float_compare(l.tax1_rate * 100, l.tax_id.amount, precision_digits=4) != 0)
-            msg = ''
-            for tax in tax_mapping_wrong:
-                msg += '{} has rate {}% but is mapped to Odoo rate {}%\n'.format(tax.name, tax.tax1_rate*100, tax.tax_id.amount)
-            if tax_mapping_wrong:
-                raise ValidationError('Rate of tax mapping does not match.\n'+msg)
+        # else:
+        #     tax_mapping_wrong = self.tax_ids.filtered(lambda l:  float_compare(l.tax1_rate * 100, l.tax_id.amount, precision_digits=4) != 0)
+        #     msg = ''
+        #     for tax in tax_mapping_wrong:
+        #         msg += '{} has rate {}% but is mapped to Odoo rate {}%\n'.format(tax.name, tax.tax1_rate*100, tax.tax_id.amount)
+        #     if tax_mapping_wrong:
+        #         raise ValidationError('Rate of tax mapping does not match.\n'+msg)
             # else:
             #     for tax in self.tax_ids:
             #         tax_mapping_wrong = tax.tax_class_ids.filtered(
@@ -221,7 +221,7 @@ class LightspeedInstance(models.Model):
             date_from = kwargs.get('date_from')
             date_from_convert = date_from.isoformat() + tz_offset
             date_to_convert = date_to.isoformat() + tz_offset
-            time_range = '&createTime=><,{},{}'.format(date_from_convert, date_to_convert)
+            time_range = '&timeStamp=><,{},{}'.format(date_from_convert, date_to_convert)
             if kwargs.get('completed'):
                 completed = '&completed=true'
         elif kwargs.get('id_to_fetch'):

@@ -139,7 +139,7 @@ class LightspeedOrderFeeds(models.Model):
 
     def evaluate_feed(self):
         _logger.info(self)
-        for feed in self:
+        for feed in self.filtered(lambda f: f.state != 'done'):
             try:
                 feed.message = ''
                 message = ''
@@ -347,11 +347,12 @@ class LightspeedOrderFeeds(models.Model):
             raise ValidationError(e)
 
     def set_order_state(self, order_id, completed, instance_id, payments, shipped=True, order_date=False):
+        self.ensure_one()
         status_message = "Order %s " % order_id.name
         if instance_id and completed:
             try:
                 """ PROCESS SALE ORDER """
-                if order_id.state == 'draft':
+                if order_id.state == 'draft' and round(self.total, 2) == order_id.amount_total:
                     order_id.with_context({'date_order': order_date}).action_confirm()
                     # if order_date:
                     #     order_id.write()
@@ -367,7 +368,7 @@ class LightspeedOrderFeeds(models.Model):
                 """ PROCESS PAYMENT """
                 if completed and instance_id.create_payment and payments and len(order_id.invoice_ids) == 1:
                     invoice_id = order_id.invoice_ids
-                    if invoice_id.payment_state == 'not_paid':
+                    if invoice_id.payment_state in ('not_paid', 'partial'):
                         for payment in payments:
                             if payment.get('archived') == 'true' or float(payment.get('amount')) == 0:
                                 continue
@@ -383,6 +384,9 @@ class LightspeedOrderFeeds(models.Model):
                                     'payment_date': payment.get('createTime')[:10],
                                 })
                                 payment_res = register_wizard_obj.action_create_payments()
+                                payment_res.write({'lightspeed_sale_id': self.sale_id,
+                                                   'lightspeed_instance': self.instance_id,
+                                                   'lightspeed_ticket_number': self.ticket_number})
                             else:
                                 raise ValidationError('There is no mapping for Payment Type {}'.format(payment.get('paymentTypeID')))
                         status_message += '===> Payments Created'
@@ -458,7 +462,8 @@ class LightspeedOrderFeeds(models.Model):
                     'payment_type': 'inbound',
                     'lightspeed_sale_id': feed.sale_id,
                     'lightspeed_ticket_number': feed.ticket_number,
-                    'ref': feed.ticket_number
+                    'ref': feed.ticket_number,
+                    'lightspeed_instance': feed.instance_id.id
                 }
         return vals
 

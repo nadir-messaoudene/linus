@@ -100,10 +100,10 @@
                             </page>
                             <page name="lightspeed_payment" string="Payment Mapping">
                                 <field name="payment_ids" attrs="{'readonly': [('state', '=', 'validate')]}">
-                                    <tree create="0" delete="0">
+                                    <tree create="0" delete="0" editable="bottom">
                                         <field name="name" readonly="1"></field>
                                         <field name="payment_type_id" readonly="1"></field>
-                                        <field name="journal_id" ></field>
+                                        <field name="journal_id" domain="[('type', 'in', ('bank', 'cash'))]" />
                                     </tree>
                                 </field>
                             </page>

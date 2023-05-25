@@ -18,6 +18,7 @@ class SaleOrder(models.Model):
     lightspeed_sale_id = fields.Char(string='Lightspeed Sale Id', readonly=True)
     lightspeed_shop = fields.Many2one('lightspeed.shop', string='Lightspeed Shop', readonly=True)
     lightspeed_ticket_number = fields.Char(string='Lightspeed Ticket Number', readonly=True)
+    lightspeed_instance = fields.Many2one('lightspeed.instance')
 
 
 class SaleOrderLine(models.Model):

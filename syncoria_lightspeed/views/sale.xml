@@ -12,5 +12,23 @@
                 </xpath>
             </field>
         </record>
+
+        <record id="lightspeed_sale_order_form" model="ir.ui.view">
+            <field name="name">sale.order.form.sale.linus</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//notebook" position="inside">
+                    <page string="Lightspeed" attrs="{'invisible':[('lightspeed_ticket_number', '=', False)]}">
+                        <group>
+                            <field name="lightspeed_sale_id" readonly="1"/>
+                            <field name="lightspeed_ticket_number" readonly="1"/>
+                            <field name="lightspeed_instance" readonly="1" />
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+	    </record>
+
     </data>
 </odoo>

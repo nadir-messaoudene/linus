@@ -18,7 +18,7 @@ class FetchWizard(models.TransientModel):
 
     date_from = fields.Datetime('From')
     date_to = fields.Datetime('To')
-    id_to_fetch = fields.Integer('ID')
+    id_to_fetch = fields.Char('ID')
     ticket_number = fields.Char('Ticket Number')
 
     def lightspeed_fetch_objects(self):
@@ -30,6 +30,12 @@ class FetchWizard(models.TransientModel):
         )
         if self.object_to_fetch == 'order':
             kwargs['completed'] = True if self.order_type == 'completed' else False
-            return self.instance_id.fetch_orders(kwargs)
+            self.instance_id.fetch_orders(kwargs)
         elif self.object_to_fetch == 'customer':
-            return self.instance_id.fetch_customers(kwargs)
+            self.instance_id.fetch_customers(kwargs)
+        elif self.object_to_fetch == 'product':
+            self.instance_id.fetch_products(kwargs)
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload',
+        }
