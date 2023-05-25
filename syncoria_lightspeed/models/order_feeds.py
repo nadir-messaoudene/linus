@@ -353,7 +353,7 @@ class LightspeedOrderFeeds(models.Model):
         if instance_id and completed:
             try:
                 """ PROCESS SALE ORDER """
-                if order_id.state == 'draft' and round(self.total, 2) == order_id.amount_total:
+                if order_id.state == 'draft' and round(self.total, 2) == round(order_id.amount_total, 2):
                     order_id.with_context({'date_order': order_date}).action_confirm()
                     # if order_date:
                     #     order_id.write()
