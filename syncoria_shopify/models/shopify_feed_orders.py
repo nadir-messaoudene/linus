@@ -458,6 +458,8 @@ class ShopifyFeedOrders(models.Model):
                             #     prod_dom += ['|']
                             # prod_dom += [('shopify_id', '=', str(line['product_id']))]
                             prod_dom = [('default_code', '=', str(line['sku']))]
+                            if not line['sku']:
+                                prod_dom = [('default_code', '=', str(line['name']))]
                             # else:
                             #     prod_dom += [('shopify_id', '=', str(line['variant_id']))]
                             prod_rec = product_product.search(prod_dom, limit=1)
