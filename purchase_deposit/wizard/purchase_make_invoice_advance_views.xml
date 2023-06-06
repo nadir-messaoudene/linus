@@ -49,12 +49,12 @@
                         context="{'create_bills': True}"
                         class="btn-primary"
                     />
-                    <button
-                        name="create_invoices"
-                        string="Create deposit"
-                        type="object"
-                        class="btn-primary"
-                    />
+<!--                    <button-->
+<!--                        name="create_invoices"-->
+<!--                        string="Create deposit"-->
+<!--                        type="object"-->
+<!--                        class="btn-primary"-->
+<!--                    />-->
                     <button string="Cancel" class="btn-default" special="cancel" />
                 </footer>
             </form>

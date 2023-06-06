@@ -37,7 +37,10 @@
 <!--                    <button name="fetch_shopify_payments" string="Fetch Shopify Payments" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />-->
 <!--                    <button name="fetch_shopify_refunds" string="Fetch Shopify Refunds" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />-->
 <!--                    <button name="process_shopify_invoice" string="Process Shopify Invoice" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />-->
-                    <button name="shopify_invoice_register_payments" string="Invoice Register Payments" type="object" attrs="{ 'invisible': [('state','in',['in_payment','paid'])] }" />
+                    <field name="shopify_instance_id" invisible="1"/>
+                    <button name="shopify_invoice_register_payments" string="Invoice Register Payments" type="object"
+                            groups="base.group_no_one"
+                            attrs="{'invisible': ['|', ('payment_state', 'in', ('in_payment','paid')), ('shopify_instance_id', '=', False)]}" />
 <!--                    <button name="process_shopify_credit_note" string="Process Shopify Credit" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />-->
 <!--                    <button name="shopify_credit_note_register_payments" string="Register Credit" type="object" attrs="{ 'invisible': [('shopify_id','=',False)] }" />-->
                 </xpath>
