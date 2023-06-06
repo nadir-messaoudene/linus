@@ -15,6 +15,8 @@ from odoo.tools.float_utils import float_round
 class StockPicking(models.Model):
     _inherit = "stock.picking"
 
+    do_not_send_email = fields.Boolean('Do not send Delivery email notification?')
+
     def action_draft(self):
         self.state = 'draft'
 
